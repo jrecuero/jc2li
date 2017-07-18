@@ -229,10 +229,12 @@ def setsyntax(f):
         ruleIndex = 0
         rules = getattr(f, '_rules', None)
         listKeys = list(dictargs)
+        foundCounter = 0
         for index, passarg in enumerate(passargs):
             rule = rules[ruleIndex]
             if rule['type'] == '0':
-                break
+                print "Error: End rule found: Too many arguments"
+                return None
             elif rule['type'] == '1':
                 key = listKeys[index]
                 dictargs[key]['value'] = dictargs[key]['type']._(passarg)
@@ -249,17 +251,27 @@ def setsyntax(f):
                             if argentry is not None:
                                 argentry['value'] = argentry['type']._(argvalue)
                             found = True
+                            foundCounter += 1
                             break
-                    if not found:
-                        print 'Error, argument not found'
+                    if rule['type'] == '?' and found and foundCounter > 1:
+                        print 'Error: Too many arguments'
+                        return None
+                    elif rule['type'] == '+' and foundCounter == 0:
+                        print 'Error: too few arguments'
+                        return None
                 else:
-                    print 'Invalid named argument'
-            ruleIndex += 1
+                    print 'Error: Invalid named argument'
+                    return None
+            if (rule['type'] in '1?') or \
+               (rule['type'] in '*+' and not found):
+                ruleIndex += 1
+                foundCounter = 0
         useargs = [y['value'] for x, y in dictargs.items()]
         if all(map(lambda x: x is not None, useargs)):
             return f(self, *useargs)
         else:
             print 'Mandatory argument is not present"'
+            return None
 
     return _wrapper
 
