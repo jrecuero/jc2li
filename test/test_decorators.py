@@ -5,7 +5,14 @@ sys.path.append(cliPath)
 
 from base import CliBase
 from decorators import params, arguments, defaults, argo, setargos, setdictos, syntax, setsyntax
+from decorators import command, mode
 from argtypes import Int, Str
+
+
+class CliTestModeClass(CliBase):
+
+    def cmdloop(self):
+        pass
 
 
 class CliTestClass(CliBase):
@@ -40,6 +47,34 @@ class CliTestClass(CliBase):
     @argo('f2', Str, 'field 2')
     def do_test_setsyntax(self, f1, f2):
         return f1, f2
+
+
+@command(CliBase)
+def local_command(self, line):
+    return 'local cmd command'
+
+
+@mode(CliBase, CliTestModeClass)
+def local_mode(self, line):
+    return 'local cmd mode'
+
+
+@command(CliBase)
+@setsyntax
+@syntax('local name [id]?')
+@argo('name', Str, None)
+@argo('id', Int, 0)
+def local(self, name, id):
+    return 'local cmd command: {}'.format(name), id
+
+
+@mode(CliBase, CliTestModeClass)
+@setsyntax
+@syntax('lmode name [id]?')
+@argo('name', Str, None)
+@argo('id', Int, 0)
+def localmode(self, name, id):
+    return 'local cmd mode: {}'.format(name), id
 
 
 def test_decorator_params():
@@ -84,3 +119,23 @@ def test_decorator_setsyntax():
     cli = CliTestClass()
     assert cli.do_test_setsyntax('50') == (50, 'field 2')
     assert cli.do_test_setsyntax('101 f2="custom field 2"') == (101, 'custom field 2')
+
+
+def test_decorator_command():
+    cli = CliTestClass()
+    assert cli.do_local_command('') == 'local cmd command'
+
+
+def test_decorator_command_with_syntax():
+    cli = CliTestClass()
+    assert cli.do_local('"shelf"') == ('local cmd command: shelf', 0)
+
+
+def test_decorator_mode():
+    cli = CliTestClass()
+    assert cli.do_local_mode('') == 'local cmd mode'
+
+
+def test_decorator_mode_with_syntax():
+    cli = CliTestClass()
+    assert cli.do_localmode('"shelf"') == ('local cmd mode: shelf', 0)

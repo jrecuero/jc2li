@@ -291,7 +291,7 @@ def mode(parent, module, prompt=None):
 
         @wraps(f)
         def _wrapper(self, line):
-            f(self, line)
+            return f(self, line)
             mode = module()
             mode.prompt = '({}) '.format(prompt)
             mode.cmdloop()
