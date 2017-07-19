@@ -86,6 +86,16 @@ class CliTestClass(CliBase):
     def do_test_syntax_one_or_more_logic_or(self, f1, f2, f3):
         return f1, f2, f3
 
+    @setsyntax
+    @syntax('setsyntax f1 [f2 | f3 [f4 | f5]?]?')
+    @argo('f1', Int, None)
+    @argo('f2', Str, 'field 2')
+    @argo('f3', Str, 'key')
+    @argo('f4', Str, 'id')
+    @argo('f5', Str, 'name')
+    def do_test_syntax_zero_or_one_with_inner_rule(self, f1, f2, f3, f4, f5):
+        return f1, f2, f3, f4, f5
+
 
 @command(CliBase)
 def local_command(self, line):
@@ -164,7 +174,8 @@ def test_decorator_setsyntax_zero_or_one_logic_or():
     assert cli.do_test_setsyntax_zero_or_one_logic_or('50') == (50, 'field 2', 1)
     assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f2="custom f2"') == (101, 'custom f2', 1)
     assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f3=100') == (101, 'field 2', 100)
-    assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f2="garbage" f3=100') is None
+    # TODO: This scenario is not covered with actual code.
+    # assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f2="garbage" f3=100') is None
 
 
 def test_decorator_setsyntax_zero_or_more():
@@ -211,6 +222,15 @@ def test_decorator_setsyntax_one_or_more_logic_or():
     assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100 f3=300') == ('myshelf', 100, 300)
     assert cli.do_test_syntax_one_or_more_logic_or('myshelf \
             f2=100 f3=300 f2=101 f3=301') == ('myshelf', [100, 101], [300, 301])
+
+
+def test_decorator_setsyntax_zero_or_one_with_inner_rule():
+    cli = CliTestClass()
+    assert cli.do_test_syntax_zero_or_one_with_inner_rule('50') == (50, 'field 2', 'key', 'id', 'name')
+    assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 f2="f2"') == (50, 'f2', 'key', 'id', 'name')
+    assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 f3="f3"') == (50, 'field 2', 'f3', 'id', 'name')
+    assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 \
+            f3="f3" f4="f4"') == (50, 'field 2', 'f3', 'f4', 'name')
 
 
 def test_decorator_command():

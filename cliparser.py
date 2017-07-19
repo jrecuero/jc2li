@@ -63,7 +63,7 @@ def getSyntax():
 
     zeroorone = pp.Forward()
     zeroorone.setName('zero-or-one')
-    zeroorone << pp.Group(lbracket + pp.Group(zooarg) + pp.ZeroOrMore("|" + pp.Group(pp.OneOrMore(zooarg | zeroorone))) + rbracket + "?")
+    zeroorone << pp.Group(lbracket + pp.Group(pp.ZeroOrMore(zooarg)) + pp.ZeroOrMore("|" + pp.Group(pp.OneOrMore(zooarg | zeroorone))) + rbracket + "?")
 
     zeroormore = pp.Forward()
     zeroormore << pp.Group(lbracket + zomarg + pp.ZeroOrMore("|" + zomarg) + rbracket + "*")
@@ -92,7 +92,7 @@ def processSyntax(syntax):
 
 
 if __name__ == '__main__':
-    toks = getSyntax().parseString("tenant tname [tid | tsig]?")
+    toks = getSyntax().parseString("tenant tname [t1 t2 | t3]?")
     print toks
     cmd, rules = procSyntax(toks)
     print cmd

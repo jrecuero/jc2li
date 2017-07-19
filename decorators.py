@@ -4,6 +4,10 @@ from collections import OrderedDict
 import cliparser
 
 
+def _checkForInnerRule(rule):
+    return rule['type'] in '?*+' or type(rule['args']) == list
+
+
 def _checkArgNameInRule(rule, argname):
     if rule['type'] == '1' and rule['args'] == argname:
         return True
@@ -18,6 +22,65 @@ def _syntaxMinArgs(rules):
 def _HANDLE_ERROR(st):
     print st
     return None
+
+
+def _processRule(rule, passarg, dictargs, key, foundCounter):
+    ruleIndex = 0
+    found = False
+    if rule['type'] == '0':
+        return _HANDLE_ERROR("Error: End rule found: Too many arguments")
+    elif rule['type'] == '1' and '=' not in passarg:
+        dictargs[key]['value'] = dictargs[key]['type']._(passarg)
+        dictargs[key]['matched'] = 1
+    else:
+        if '=' in passarg:
+            found, foundCounter = _processInnerRule(rule, passarg, dictargs, key, foundCounter)
+        else:
+            return _HANDLE_ERROR('Error: Invalid named argument')
+    if _checkMoveToNextRule(rule, found):
+        ruleIndex += 1
+        foundCounter = 0
+    return ruleIndex, foundCounter
+
+
+def _processInnerRule(rule, passarg, dictargs, key, foundCounter):
+    argname, argvalue = passarg.split('=')
+    # for rules like [f1 [f2 | f3]? ]? we have to be able to process f1, which
+    # should have a type of "1" and the pair key-f3=f3 in the command line.
+    argRules = rule['args'] if type(rule['args']) == list else [rule, ]
+    found = False
+    for travRule in argRules:
+        if _checkForInnerRule(travRule):
+            for innerRule in travRule['args']:
+                # _, foundCounter = _processRule(innerRule, passarg, dictargs, key, foundCounter)
+                found, foundCounter = _processInnerRule(innerRule, passarg, dictargs, key, foundCounter)
+                if found:
+                    break
+        elif _checkArgNameInRule(travRule, argname):
+            argentry = dictargs.get(argname, None)
+            if argentry is not None:
+                if argentry['matched'] == 0:
+                    argentry['value'] = argentry['type']._(argvalue)
+                elif argentry['matched'] == 1:
+                    argentry['value'] = [argentry['value'],
+                                         argentry['type']._(argvalue)]
+                else:
+                    argentry['value'].append(argentry['type']._(argvalue))
+                argentry['matched'] += 1
+            found = True
+            foundCounter += 1
+        if found:
+            break
+    # if rule['type'] == '?' and found and foundCounter > 1:
+    #     return _HANDLE_ERROR('Error: Too many arguments'), None
+    # elif rule['type'] == '+' and foundCounter == 0:
+    if rule['type'] == '+' and foundCounter == 0:
+        return _HANDLE_ERROR('Error: too few arguments'), None
+    return found, foundCounter
+
+
+def _checkMoveToNextRule(rule, found):
+    return (rule['type'] in '1?') or (rule['type'] in '*+' and not found)
 
 
 def lineSplit(line, instr=False):
@@ -245,41 +308,45 @@ def setsyntax(f):
         foundCounter = 0
         for index, passarg in enumerate(passargs):
             rule = rules[ruleIndex]
+            found = False
             if rule['type'] == '0':
                 return _HANDLE_ERROR("Error: End rule found: Too many arguments")
-            elif rule['type'] == '1':
+            elif rule['type'] == '1' and '=' not in passarg:
                 key = listKeys[index]
                 dictargs[key]['value'] = dictargs[key]['type']._(passarg)
                 dictargs[key]['matched'] = 1
             # elif rule['type'] == '?':
             else:
                 if '=' in passarg:
-                    argname, argvalue = passarg.split('=')
-                    argRules = rule['args']
-                    found = False
-                    for travRule in argRules:
-                        if _checkArgNameInRule(travRule, argname):
-                            argentry = dictargs.get(argname, None)
-                            if argentry is not None:
-                                if argentry['matched'] == 0:
-                                    argentry['value'] = argentry['type']._(argvalue)
-                                elif argentry['matched'] == 1:
-                                    argentry['value'] = [argentry['value'],
-                                                         argentry['type']._(argvalue)]
-                                else:
-                                    argentry['value'].append(argentry['type']._(argvalue))
-                                argentry['matched'] += 1
-                            found = True
-                            foundCounter += 1
-                            break
-                    if rule['type'] == '?' and found and foundCounter > 1:
-                        return _HANDLE_ERROR('Error: Too many arguments')
-                    elif rule['type'] == '+' and foundCounter == 0:
-                        return _HANDLE_ERROR('Error: too few arguments')
+                    found, foundCounter = _processInnerRule(rule, passarg, dictargs, None, foundCounter)
+                    # argname, argvalue = passarg.split('=')
+                    # argRules = rule['args']
+                    # found = False
+                    # for travRule in argRules:
+                    #     if _checkArgNameInRule(travRule, argname):
+                    #         argentry = dictargs.get(argname, None)
+                    #         if argentry is not None:
+                    #             if argentry['matched'] == 0:
+                    #                 argentry['value'] = argentry['type']._(argvalue)
+                    #             elif argentry['matched'] == 1:
+                    #                 argentry['value'] = [argentry['value'],
+                    #                                      argentry['type']._(argvalue)]
+                    #             else:
+                    #                 argentry['value'].append(argentry['type']._(argvalue))
+                    #             argentry['matched'] += 1
+                    #         found = True
+                    #         foundCounter += 1
+                    #         break
+                    # if rule['type'] == '?' and found and foundCounter > 1:
+                    #     return _HANDLE_ERROR('Error: Too many arguments')
+                    # elif rule['type'] == '+' and foundCounter == 0:
+                    #     return _HANDLE_ERROR('Error: too few arguments')
                 else:
                     return _HANDLE_ERROR('Error: Invalid named argument')
-            if (rule['type'] in '1?') or \
-               (rule['type'] in '*+' and not found):
+            # if (rule['type'] in '1?') or \
+            #    (rule['type'] in '*+' and not found):
+            # if _checkMoveToNextRule(rule, found):
+            if not found:
                 ruleIndex += 1
                 foundCounter = 0
         useargs = [y['value'] for x, y in dictargs.items()]
