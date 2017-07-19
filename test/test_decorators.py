@@ -74,9 +74,17 @@ class CliTestClass(CliBase):
     @setsyntax
     @syntax('setsyntax f1 [f2]+')
     @argo('f1', Str, None)
-    @argo('f2', Int, None)
+    @argo('f2', Int, 0)
     def do_test_syntax_one_or_more(self, f1, f2):
         return f1, f2
+
+    @setsyntax
+    @syntax('setsyntax f1 [f2 | f3]+')
+    @argo('f1', Str, None)
+    @argo('f2', Int, 0)
+    @argo('f3', Int, 1)
+    def do_test_syntax_one_or_more_logic_or(self, f1, f2, f3):
+        return f1, f2, f3
 
 
 @command(CliBase)
@@ -163,6 +171,7 @@ def test_decorator_setsyntax_zero_or_more():
     cli = CliTestClass()
     assert cli.do_test_syntax_zero_or_more('myshelf') == ('myshelf', 0)
     assert cli.do_test_syntax_zero_or_more('myshelf f2=100') == ('myshelf', 100)
+    assert cli.do_test_syntax_zero_or_more('myshelf f2=100 f2=101') == ('myshelf', [100, 101])
 
 
 def test_decorator_setsyntax_zero_or_more_logic_or():
@@ -170,13 +179,38 @@ def test_decorator_setsyntax_zero_or_more_logic_or():
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf') == ('myshelf', 0, 'field 3')
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf f2=100') == ('myshelf', 100, 'field 3')
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf f3="custom f3"') == ('myshelf', 0, 'custom f3')
-    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf f2=100 f3="custom f3"') == ('myshelf', 100, 'custom f3')
+    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
+            f2=100 f3="custom f3"') == ('myshelf', 100, 'custom f3')
+    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
+            f2=100 f2=102') == ('myshelf', [100, 102], 'field 3')
+    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
+            f3="f3-1" f3="f3-2"') == ('myshelf', 0, ['f3-1', 'f3-2'])
+    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
+            f2=100 f3="custom f3" f2=200') == ('myshelf', [100, 200], 'custom f3')
+    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
+            f2=100 f3="f3-1" f3="f3-2"') == ('myshelf', 100, ['f3-1', 'f3-2'])
+    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
+            f2=200 f3="f3-1" f3="f3-2" f2=300') == ('myshelf', [200, 300], ['f3-1', 'f3-2'])
 
 
 def test_decorator_setsyntax_one_or_more():
     cli = CliTestClass()
     assert cli.do_test_syntax_one_or_more('myshelf') is None
     assert cli.do_test_syntax_one_or_more('myshelf f2=100') == ('myshelf', 100)
+    assert cli.do_test_syntax_one_or_more('myshelf f2=100 f2=101') == ('myshelf', [100, 101])
+
+
+def test_decorator_setsyntax_one_or_more_logic_or():
+    pass
+    cli = CliTestClass()
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf') is None
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100') == ('myshelf', 100, 1)
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100 f2=101') == ('myshelf', [100, 101], 1)
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f3=300') == ('myshelf', 0, 300)
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f3=300 f3=301') == ('myshelf', 0, [300, 301])
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100 f3=300') == ('myshelf', 100, 300)
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf \
+            f2=100 f3=300 f2=101 f3=301') == ('myshelf', [100, 101], [300, 301])
 
 
 def test_decorator_command():

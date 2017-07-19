@@ -4,6 +4,22 @@ from collections import OrderedDict
 import cliparser
 
 
+def _checkArgNameInRule(rule, argname):
+    if rule['type'] == '1' and rule['args'] == argname:
+        return True
+    return False
+
+
+def _syntaxMinArgs(rules):
+    counter = sum([1 if rule['type'] in '1+' else 0 for rule in rules])
+    return counter
+
+
+def _HANDLE_ERROR(st):
+    print st
+    return None
+
+
 def lineSplit(line, instr=False):
     """Split line in arguments.
     TODO: Use shlex.split() method instead of.
@@ -42,7 +58,7 @@ def params(*args):
                     useArgs[i] = v
                 return f(self, useArgs[0], useArgs[1])
             except IndexError:
-                print 'too many arguments for command'
+                _HANDLE_ERROR('too many arguments for command')
 
         return _wrapper
 
@@ -59,14 +75,14 @@ def arguments(*args):
         def _wrapper(self, line):
             passargs = shlex.split(line)
             if len(args) != len(passargs):
-                print 'Wrong number of arguments'
+                _HANDLE_ERROR('Wrong number of arguments')
             else:
                 try:
                     return f(self, *[x._(y) for x, y in zip(args, passargs)])
                 except ValueError:
-                    print 'Wrong type of argument'
+                    _HANDLE_ERROR('Wrong type of argument')
                 except OverflowError:
-                    print 'Overflow value for argument'
+                    _HANDLE_ERROR('Overflow value for argument')
 
         return _wrapper
 
@@ -83,14 +99,14 @@ def defaults(*args):
         def _wrapper(self, line):
             passargs = shlex.split(line)
             if len(args) < len(passargs):
-                print 'Wrong number of arguments'
+                return _HANDLE_ERROR('Wrong number of arguments')
             else:
                 try:
                     return f(self, *[x._(z) if z is not None else y for (x, y), z in map(None, args, passargs)])
                 except ValueError:
-                    print 'Wrong type of argument'
+                    _HANDLE_ERROR('Wrong type of argument')
                 except OverflowError:
-                    print 'Overflow value for argument'
+                    _HANDLE_ERROR('Overflow value for argument')
 
         return _wrapper
 
@@ -150,7 +166,7 @@ def setargos(f):
             if all(map(lambda x: x is not None, useargs)):
                 return f(self, *useargs)
             else:
-                print 'Mandatory argument is not present'
+                return _HANDLE_ERROR('Mandatory argument is not present')
 
     return _wrapper
 
@@ -182,7 +198,7 @@ def setdictos(f):
             if all(map(lambda x: x is not None, useargs)):
                 return f(self, *useargs)
             else:
-                print 'Mandatory argument is not present"'
+                return _HANDLE_ERROR('Mandatory argument is not present"')
 
     return _wrapper
 
@@ -206,13 +222,6 @@ def syntax(theSyntax):
     return f_syntax
 
 
-def _checkArgNameInRule(rule, argname):
-    if rule['type'] == '1':
-        if rule['args'] == argname:
-            return True
-    return False
-
-
 def setsyntax(f):
     """Decorator that setup the command syntax
     """
@@ -223,45 +232,52 @@ def setsyntax(f):
         if fargs is None:
             return f(self, line)
         passargs = shlex.split(line)
+        rules = getattr(f, '_rules', None)
+        if len(passargs) < _syntaxMinArgs(rules):
+            return _HANDLE_ERROR("Error: Number of Args: Too few arguments")
         dictargs = OrderedDict()
         for x in fargs:
-            dictargs.update({x['name']: {'type': x['type'], 'value': x['default']}})
+            dictargs.update({x['name']: {'type': x['type'],
+                                         'value': x['default'],
+                                         'matched': 0, }})
         ruleIndex = 0
-        rules = getattr(f, '_rules', None)
         listKeys = list(dictargs)
         foundCounter = 0
         for index, passarg in enumerate(passargs):
             rule = rules[ruleIndex]
             if rule['type'] == '0':
-                print "Error: End rule found: Too many arguments"
-                return None
+                return _HANDLE_ERROR("Error: End rule found: Too many arguments")
             elif rule['type'] == '1':
                 key = listKeys[index]
                 dictargs[key]['value'] = dictargs[key]['type']._(passarg)
+                dictargs[key]['matched'] = 1
             # elif rule['type'] == '?':
             else:
                 if '=' in passarg:
                     argname, argvalue = passarg.split('=')
                     argRules = rule['args']
-                    # argRuleIndex = 0
                     found = False
                     for travRule in argRules:
                         if _checkArgNameInRule(travRule, argname):
                             argentry = dictargs.get(argname, None)
                             if argentry is not None:
-                                argentry['value'] = argentry['type']._(argvalue)
+                                if argentry['matched'] == 0:
+                                    argentry['value'] = argentry['type']._(argvalue)
+                                elif argentry['matched'] == 1:
+                                    argentry['value'] = [argentry['value'],
+                                                         argentry['type']._(argvalue)]
+                                else:
+                                    argentry['value'].append(argentry['type']._(argvalue))
+                                argentry['matched'] += 1
                             found = True
                             foundCounter += 1
                             break
                     if rule['type'] == '?' and found and foundCounter > 1:
-                        print 'Error: Too many arguments'
-                        return None
+                        return _HANDLE_ERROR('Error: Too many arguments')
                     elif rule['type'] == '+' and foundCounter == 0:
-                        print 'Error: too few arguments'
-                        return None
+                        return _HANDLE_ERROR('Error: too few arguments')
                 else:
-                    print 'Error: Invalid named argument'
-                    return None
+                    return _HANDLE_ERROR('Error: Invalid named argument')
             if (rule['type'] in '1?') or \
                (rule['type'] in '*+' and not found):
                 ruleIndex += 1
@@ -270,8 +286,7 @@ def setsyntax(f):
         if all(map(lambda x: x is not None, useargs)):
             return f(self, *useargs)
         else:
-            print 'Mandatory argument is not present"'
-            return None
+            return _HANDLE_ERROR('Error: Mandatory argument is not present"')
 
     return _wrapper
 
