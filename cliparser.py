@@ -63,14 +63,14 @@ def getSyntax():
 
     zeroorone = pp.Forward()
     zeroorone.setName('zero-or-one')
-    zeroorone << pp.Group(lbracket + pp.Group(pp.ZeroOrMore(zooarg)) + pp.ZeroOrMore("|" + pp.Group(pp.OneOrMore(zooarg | zeroorone))) + rbracket + "?")
+    zeroorone << pp.Group(lbracket + pp.ZeroOrMore(zooarg) + pp.ZeroOrMore(("|"  + pp.OneOrMore(zooarg | zeroorone)) | pp.OneOrMore(zeroorone)) + rbracket + "?")
 
     zeroormore = pp.Forward()
-    zeroormore << pp.Group(lbracket + zomarg + pp.ZeroOrMore("|" + zomarg) + rbracket + "*")
+    zeroormore << pp.Group(lbracket + pp.ZeroOrMore(zomarg) + pp.ZeroOrMore(("|"  + pp.OneOrMore(zomarg | zeroormore)) | pp.OneOrMore(zeroormore)) + rbracket + "*")
     zeroormore.setResultsName('zero-or-more')
 
     oneormore = pp.Forward()
-    oneormore << pp.Group(lbracket + oomarg + pp.ZeroOrMore("|" + oomarg) + rbracket + "+")
+    oneormore << pp.Group(lbracket + pp.ZeroOrMore(oomarg) + pp.ZeroOrMore(("|"  + pp.OneOrMore(oomarg | oneormore)) | pp.OneOrMore(oneormore)) + rbracket + "+")
     oneormore.setName('one-or-more')
 
     syntax = command + pp.ZeroOrMore(posarg) + pp.ZeroOrMore(pp.Group(zeroorone | zeroormore | oneormore))
@@ -82,17 +82,17 @@ def processSyntax(syntax):
     cmd, rules = procSyntax(toks)
     return cmd, rules
 
-# toks = (syntax + pp.stringEnd).parseString("tenant tname [t1|t2]? [t3|t4]* [t10]? [t5|t6]+")
-# toks = (syntax + pp.stringEnd).parseString("tenant tpos1 [tzoo1 | tzoo2 tzoo3 [ tzoo31 ]? ]? [tzom1]* [toom1]+")
-# toks = (syntax + pp.stringEnd).parseString("tenant tpos1 [tzoo1 | tzoo2 tzoo3 [tzoo31 | tzoo32 | tzoo33]? ]? [tzom1]* [toom1]+")
-
-# toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tsignature]? [talias]* [tdesc | thelp]+ [tclose]?")
-# toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tdesc talias | tsignature | tuser [tuname | tuid]? ]?")
-# toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
-
 
 if __name__ == '__main__':
-    toks = getSyntax().parseString("tenant tname [t1 t2 | t3]?")
+    # toks = (syntax + pp.stringEnd).parseString("tenant tname [t1|t2]? [t3|t4]* [t10]? [t5|t6]+")
+    # toks = (syntax + pp.stringEnd).parseString("tenant tpos1 [tzoo1 | tzoo2 tzoo3 [ tzoo31 ]? ]? [tzom1]* [toom1]+")
+    # toks = (syntax + pp.stringEnd).parseString("tenant tpos1 [tzoo1 | tzoo2 tzoo3 [tzoo31 | tzoo32 | tzoo33]? ]? [tzom1]* [toom1]+")
+
+    # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tsignature]? [talias]* [tdesc | thelp]+ [tclose]?")
+    # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tdesc talias | tsignature | tuser [tuname | tuid]? ]?")
+    # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
+    toks = getSyntax().parseString("tenant tname [t1 [t2 | t3]? | t4 t5 ]?")
+
     print toks
     cmd, rules = procSyntax(toks)
     print cmd

@@ -2,6 +2,7 @@ from functools import wraps
 import shlex
 from collections import OrderedDict
 import cliparser
+from common import _HANDLE_ERROR
 
 
 def _checkForInnerRule(rule):
@@ -19,9 +20,9 @@ def _syntaxMinArgs(rules):
     return counter
 
 
-def _HANDLE_ERROR(st):
-    print st
-    return None
+# def _HANDLE_ERROR(st):
+#     print st
+#     return None
 
 
 def _processRule(rule, passarg, dictargs, key, foundCounter):
