@@ -6,6 +6,7 @@ def procTokens(tokens, withEnd=True):
     for tok in tokens:
         toktype = type(tok)
         if tok == '|':
+            counter = 0
             continue
         elif toktype == str:
             rules.append({'counter': counter, 'type': '1', 'args': tok})
@@ -91,7 +92,7 @@ if __name__ == '__main__':
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tsignature]? [talias]* [tdesc | thelp]+ [tclose]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tdesc talias | tsignature | tuser [tuname | tuid]? ]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
-    toks = getSyntax().parseString("tenant tname [t1 [t2 | t3]? | t4 t5 ]?")
+    toks = getSyntax().parseString("tenant t1 [t2 | t3]?")
 
     print toks
     cmd, rules = procSyntax(toks)

@@ -112,5 +112,16 @@ def test_build_tree_prototype():
     assert nodePath[0].name == 'tsig'
 
 
+def test_build_tree_from_rules():
+    rules = [{'counter': 0, 'type': '1', 'args': 't1'},
+             {'counter': 1, 'type': '?', 'args': [{'counter': 0, 'type': '1', 'args': 't2'},
+                                                  {'counter': 0, 'type': '1', 'args': 't3'}]},
+             {'counter': 2, 'type': '0', 'args': None}, ]
+    trav = Start()
+    for rule in rules:
+        newtrav = trav.buildChildrenNodeFromRule(rule)
+        trav = newtrav
+
+
 if __name__ == '__main__':
     pass
