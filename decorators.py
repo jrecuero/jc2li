@@ -1,96 +1,64 @@
 from functools import wraps
 import shlex
-from collections import OrderedDict
 import cliparser
-from common import _HANDLE_ERROR
+from common import _HANDLE_ERROR, Argument, Arguments
 
 
-def _checkForInnerRule(rule):
-    return rule['type'] in '?*+' or type(rule['args']) == list
+def _checkForInnerRule(thRule):
+    return thRule['type'] in '?*+' or type(thRule['args']) == list
 
 
-def _checkArgNameInRule(rule, argname):
-    if rule['type'] == '1' and rule['args'] == argname:
+def _checkArgNameInRule(thRule, theArgname):
+    if thRule['type'] == '1' and thRule['args'] == theArgname:
         return True
     return False
 
 
-def _syntaxMinArgs(rules):
-    counter = sum([1 if rule['type'] in '1+' else 0 for rule in rules])
+def _syntaxMinArgs(theRules):
+    counter = sum([1 if rule['type'] in '1+' else 0 for rule in theRules])
     return counter
 
 
-# def _HANDLE_ERROR(st):
-#     print st
-#     return None
-
-
-def _processRule(rule, passarg, dictargs, key, foundCounter):
-    ruleIndex = 0
-    found = False
-    if rule['type'] == '0':
-        return _HANDLE_ERROR("Error: End rule found: Too many arguments")
-    elif rule['type'] == '1' and '=' not in passarg:
-        dictargs[key]['value'] = dictargs[key]['type']._(passarg)
-        dictargs[key]['matched'] = 1
-    else:
-        if '=' in passarg:
-            found, foundCounter = _processInnerRule(rule, passarg, dictargs, key, foundCounter)
-        else:
-            return _HANDLE_ERROR('Error: Invalid named argument')
-    if _checkMoveToNextRule(rule, found):
-        ruleIndex += 1
-        foundCounter = 0
-    return ruleIndex, foundCounter
-
-
-def _processInnerRule(rule, passarg, dictargs, key, foundCounter):
-    argname, argvalue = passarg.split('=')
-    # for rules like [f1 [f2 | f3]? ]? we have to be able to process f1, which
-    # should have a type of "1" and the pair key-f3=f3 in the command line.
-    argRules = rule['args'] if type(rule['args']) == list else [rule, ]
+def _processInnerRule(theRule, thePassArg, theArgs, theFoundCounter):
+    argName, argValue = thePassArg.split('=')
+    argRules = theRule['args'] if type(theRule['args']) == list else [theRule, ]
     found = False
     for travRule in argRules:
         if _checkForInnerRule(travRule):
             for innerRule in travRule['args']:
-                # _, foundCounter = _processRule(innerRule, passarg, dictargs, key, foundCounter)
-                found, foundCounter = _processInnerRule(innerRule, passarg, dictargs, key, foundCounter)
+                found, theFoundCounter = _processInnerRule(innerRule, thePassArg, theArgs, theFoundCounter)
                 if found:
                     break
-        elif _checkArgNameInRule(travRule, argname):
-            argentry = dictargs.get(argname, None)
-            if argentry is not None:
-                if argentry['matched'] == 0:
-                    argentry['value'] = argentry['type']._(argvalue)
-                elif argentry['matched'] == 1:
-                    argentry['value'] = [argentry['value'],
-                                         argentry['type']._(argvalue)]
+        elif _checkArgNameInRule(travRule, argName):
+            argEntry = theArgs.getArgoFromName(argName)
+            if argEntry is not None:
+                if argEntry.Matched == 0:
+                    argEntry.Value = argEntry.Type._(argValue)
+                elif argEntry.Matched == 1:
+                    argEntry.Value = [argEntry.Value, argEntry.Type._(argValue)]
                 else:
-                    argentry['value'].append(argentry['type']._(argvalue))
-                argentry['matched'] += 1
+                    argEntry.Value.append(argEntry.Type._(argValue))
+                argEntry.Matched += 1
             found = True
-            foundCounter += 1
+            theFoundCounter += 1
         if found:
             break
-    # if rule['type'] == '?' and found and foundCounter > 1:
-    #     return _HANDLE_ERROR('Error: Too many arguments'), None
-    # elif rule['type'] == '+' and foundCounter == 0:
-    if rule['type'] == '+' and foundCounter == 0:
+    if theRule['type'] == '+' and theFoundCounter == 0:
         return _HANDLE_ERROR('Error: too few arguments'), None
-    return found, foundCounter
+    return found, theFoundCounter
 
 
-def _checkMoveToNextRule(rule, found):
-    return (rule['type'] in '1?') or (rule['type'] in '*+' and not found)
+def _checkMoveToNextRule(theRule, theFound):
+    return (theRule['type'] in '1?') or (theRule['type'] in '*+' and not theFound)
 
 
-def lineSplit(line, instr=False):
-    """Split line in arguments.
+def lineSplit(theLine, theInstr=False):
+    """Split theLine in arguments.
     TODO: Use shlex.split() method instead of.
     """
-    part = line.partition('"')
+    part = theLine.partition('"')
     if '"' in part[1]:
-        if instr:
+        if theInstr:
             return [part[0]] + lineSplit(part[2], False)
         else:
             return part[0].split() + lineSplit(part[2], True)
@@ -101,8 +69,8 @@ def lineSplit(line, instr=False):
 def linesplit(f):
 
     @wraps(f)
-    def _wrapper(self, line):
-        return f(self, shlex.split(line))
+    def _wrapper(self, theLine):
+        return f(self, shlex.split(theLine))
 
     return _wrapper
 
@@ -114,8 +82,8 @@ def params(*args):
     def f_params(f):
 
         @wraps(f)
-        def _wrapper(self, line):
-            passArgs = shlex.split(line)
+        def _wrapper(self, theLine):
+            passArgs = shlex.split(theLine)
             useArgs = list(args)
             try:
                 for i, v in enumerate(passArgs):
@@ -136,13 +104,13 @@ def arguments(*args):
     def f_arguments(f):
 
         @wraps(f)
-        def _wrapper(self, line):
-            passargs = shlex.split(line)
-            if len(args) != len(passargs):
+        def _wrapper(self, theLine):
+            passArgs = shlex.split(theLine)
+            if len(args) != len(passArgs):
                 _HANDLE_ERROR('Wrong number of arguments')
             else:
                 try:
-                    return f(self, *[x._(y) for x, y in zip(args, passargs)])
+                    return f(self, *[x._(y) for x, y in zip(args, passArgs)])
                 except ValueError:
                     _HANDLE_ERROR('Wrong type of argument')
                 except OverflowError:
@@ -160,13 +128,13 @@ def defaults(*args):
     def f_defaults(f):
 
         @wraps(f)
-        def _wrapper(self, line):
-            passargs = shlex.split(line)
-            if len(args) < len(passargs):
+        def _wrapper(self, theLine):
+            passArgs = shlex.split(theLine)
+            if len(args) < len(passArgs):
                 return _HANDLE_ERROR('Wrong number of arguments')
             else:
                 try:
-                    return f(self, *[x._(z) if z is not None else y for (x, y), z in map(None, args, passargs)])
+                    return f(self, *[x._(z) if z is not None else y for (x, y), z in map(None, args, passArgs)])
                 except ValueError:
                     _HANDLE_ERROR('Wrong type of argument')
                 except OverflowError:
@@ -177,7 +145,7 @@ def defaults(*args):
     return f_defaults
 
 
-def argo(thename, thetype, thedefault):
+def argo(theName, theType, theDefault):
     """Decorator that provides to add an argument to a command.
     """
 
@@ -186,32 +154,32 @@ def argo(thename, thetype, thedefault):
         @wraps(f)
         def _wrapper(self, *args):
             return f(self, *args)
-        fargs = getattr(_wrapper, '_arguments', [])
-        fargs.insert(0, {'name': thename, 'type': thetype, 'default': thedefault})
-        setattr(_wrapper, '_arguments', fargs)
+        fArgs = getattr(_wrapper, '_Arguments', Arguments())
+        fArgs.insertArgument(Argument(theName, theType, theDefault))
+        setattr(_wrapper, '_Arguments', fArgs)
 
         return _wrapper
 
     return f_argo
 
 
-def argos(theargos):
+def argos(theArgos):
     """Decorator that provides to create a group of arguments to a command.
     """
 
-    def f_setjson(f):
+    def f_setargos(f):
 
         @wraps(f)
         def _wrapper(self, *args):
             return f(self, *args)
 
-        fargs = getattr(_wrapper, '_arguments', [])
-        for arg in reversed(theargos):
-            fargs.insert(0, arg)
-        setattr(_wrapper, '_arguments', fargs)
+        fArgs = getattr(_wrapper, '_Arguments', Arguments())
+        for arg in theArgos.reversed():
+            fArgs.insert(arg)
+        setattr(_wrapper, '_Arguments', fArgs)
         return _wrapper
 
-    return f_setjson
+    return f_setargos
 
 
 def setargos(f):
@@ -219,16 +187,17 @@ def setargos(f):
     """
 
     @wraps(f)
-    def _wrapper(self, line):
-        fargs = getattr(f, '_arguments', None)
-        if fargs is None:
-            return f(self, line)
+    def _wrapper(self, theLine):
+        fArgs = getattr(f, '_Arguments', None)
+        if fArgs is None:
+            return f(self, theLine)
         else:
-            passargs = shlex.split(line)
-            defargs = [(x['type'], x['default']) for x in fargs]
-            useargs = [x._(z) if z is not None else y for (x, y), z in map(None, defargs, passargs)]
-            if all(map(lambda x: x is not None, useargs)):
-                return f(self, *useargs)
+            fArgs.index()
+            passArgs = shlex.split(theLine)
+            defArgs = [(x.Type, x.Default) for x in fArgs.arguments]
+            useArgs = [x._(z) if z is not None else y for (x, y), z in map(None, defArgs, passArgs)]
+            if all(map(lambda x: x is not None, useArgs)):
+                return f(self, *useArgs)
             else:
                 return _HANDLE_ERROR('Mandatory argument is not present')
 
@@ -240,27 +209,25 @@ def setdictos(f):
     """
 
     @wraps(f)
-    def _wrapper(self, line):
-        fargs = getattr(f, '_arguments', None)
-        if fargs is None:
-            return f(self, line)
+    def _wrapper(self, theLine):
+        fArgs = getattr(f, '_Arguments', None)
+        if fArgs is None:
+            return f(self, theLine)
         else:
-            passargs = shlex.split(line)
-            dictargs = OrderedDict()
-            for x in fargs:
-                dictargs.update({x['name']: {'type': x['type'], 'value': x['default']}})
-            for index, passarg in enumerate(passargs):
-                if '=' in passarg:
-                    argname, argvalue = passarg.split('=')
-                    argentry = dictargs.get(argname, None)
-                    if argentry is not None:
-                        argentry['value'] = argentry['type']._(argvalue)
+            fArgs.index()
+            passArgs = shlex.split(theLine)
+            for index, passArg in enumerate(passArgs):
+                if '=' in passArg:
+                    argName, argValue = passArg.split('=')
+                    argEntry = fArgs.getArgoFromName(argName)
+                    if argEntry is not None:
+                        argEntry.Value = argEntry.Type._(argValue)
                 else:
-                    entry = fargs[index]
-                    dictargs[entry['name']]['value'] = entry['type']._(passarg)
-            useargs = [y['value'] for x, y in dictargs.items()]
-            if all(map(lambda x: x is not None, useargs)):
-                return f(self, *useargs)
+                    entry = fArgs.getArgoFromIndex(index)
+                    fArgs.setIndexedValueFromName(entry.Name, entry.Type._(passArg))
+            useArgs = fArgs.getIndexedValues()
+            if all(map(lambda x: x is not None, useArgs)):
+                return f(self, *useArgs)
             else:
                 return _HANDLE_ERROR('Mandatory argument is not present"')
 
@@ -291,107 +258,76 @@ def setsyntax(f):
     """
 
     @wraps(f)
-    def _wrapper(self, line):
-        fargs = getattr(f, '_arguments', None)
-        if fargs is None:
-            return f(self, line)
-        passargs = shlex.split(line)
+    def _wrapper(self, theLine):
+        fArgs = getattr(f, '_Arguments', None)
+        if fArgs is None:
+            return f(self, theLine)
+        fArgs.index()
+        passArgs = shlex.split(theLine)
         rules = getattr(f, '_rules', None)
-        if len(passargs) < _syntaxMinArgs(rules):
+        if len(passArgs) < _syntaxMinArgs(rules):
             return _HANDLE_ERROR("Error: Number of Args: Too few arguments")
-        dictargs = OrderedDict()
-        for x in fargs:
-            dictargs.update({x['name']: {'type': x['type'],
-                                         'value': x['default'],
-                                         'matched': 0, }})
         ruleIndex = 0
-        listKeys = list(dictargs)
         foundCounter = 0
-        for index, passarg in enumerate(passargs):
+        for index, passArg in enumerate(passArgs):
             rule = rules[ruleIndex]
             found = False
             if rule['type'] == '0':
                 return _HANDLE_ERROR("Error: End rule found: Too many arguments")
-            elif rule['type'] == '1' and '=' not in passarg:
-                key = listKeys[index]
-                dictargs[key]['value'] = dictargs[key]['type']._(passarg)
-                dictargs[key]['matched'] = 1
-            # elif rule['type'] == '?':
+            elif rule['type'] == '1' and '=' not in passArg:
+                matchArg = fArgs.getArgoFromIndex(index)
+                fArgs.setIndexedValueFromIndex(index, matchArg.Type._(passArg))
+                matchArg.Matched = 1
             else:
-                if '=' in passarg:
-                    found, foundCounter = _processInnerRule(rule, passarg, dictargs, None, foundCounter)
-                    # argname, argvalue = passarg.split('=')
-                    # argRules = rule['args']
-                    # found = False
-                    # for travRule in argRules:
-                    #     if _checkArgNameInRule(travRule, argname):
-                    #         argentry = dictargs.get(argname, None)
-                    #         if argentry is not None:
-                    #             if argentry['matched'] == 0:
-                    #                 argentry['value'] = argentry['type']._(argvalue)
-                    #             elif argentry['matched'] == 1:
-                    #                 argentry['value'] = [argentry['value'],
-                    #                                      argentry['type']._(argvalue)]
-                    #             else:
-                    #                 argentry['value'].append(argentry['type']._(argvalue))
-                    #             argentry['matched'] += 1
-                    #         found = True
-                    #         foundCounter += 1
-                    #         break
-                    # if rule['type'] == '?' and found and foundCounter > 1:
-                    #     return _HANDLE_ERROR('Error: Too many arguments')
-                    # elif rule['type'] == '+' and foundCounter == 0:
-                    #     return _HANDLE_ERROR('Error: too few arguments')
+                if '=' in passArg:
+                    found, foundCounter = _processInnerRule(rule, passArg, fArgs, foundCounter)
                 else:
                     return _HANDLE_ERROR('Error: Invalid named argument')
-            # if (rule['type'] in '1?') or \
-            #    (rule['type'] in '*+' and not found):
-            # if _checkMoveToNextRule(rule, found):
             if not found:
                 ruleIndex += 1
                 foundCounter = 0
-        useargs = [y['value'] for x, y in dictargs.items()]
-        if all(map(lambda x: x is not None, useargs)):
-            return f(self, *useargs)
+        useArgs = fArgs.getIndexedValues()
+        if all(map(lambda x: x is not None, useArgs)):
+            return f(self, *useArgs)
         else:
             return _HANDLE_ERROR('Error: Mandatory argument is not present"')
 
     return _wrapper
 
 
-def command(module):
+def command(theModule):
     """Decorator that setup a function as a command.
     """
 
     def f_command(f):
 
         @wraps(f)
-        def _wrapper(self, line):
-            return f(self, line)
+        def _wrapper(self, theLine):
+            return f(self, theLine)
 
-        module.extend(f.func_name, _wrapper)
+        theModule.extend(f.func_name, _wrapper)
         return _wrapper
 
     return f_command
 
 
-def mode(parent, module, prompt=None):
+def mode(theParent, theModule, thePrompt=None):
     """Decorator that setup a function as a mode.
     """
 
-    if prompt is None:
-        prompt = module.__name__
+    if thePrompt is None:
+        thePrompt = theModule.__name__
 
     def f_command(f):
 
         @wraps(f)
-        def _wrapper(self, line):
-            return f(self, line)
-            mode = module()
-            mode.prompt = '({}) '.format(prompt)
+        def _wrapper(self, theLine):
+            return f(self, theLine)
+            mode = theModule()
+            mode.prompt = '({}) '.format(thePrompt)
             mode.cmdloop()
 
-        parent.extend(f.func_name, _wrapper)
+        theParent.extend(f.func_name, _wrapper)
         return _wrapper
 
     return f_command
