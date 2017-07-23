@@ -5,7 +5,8 @@ cliPath = '.'
 sys.path.append(cliPath)
 
 from node import Node, Hook, Start, End
-from argument import Argo
+from common import Argument, Arguments
+from argtypes import Int, Str
 
 
 def test_node():
@@ -34,12 +35,12 @@ def test_hook():
 
 def test_build_nodes():
     root = Start()
-    argos = [{'name': 'tname', 'type': str, 'default': 'myname'},
-             {'name': 'tid', 'type': str, 'default': 'myid'},
-             {'name': 'tsig', 'type': str, 'default': 'mysig'}, ]
+    argos = [Argument('tname', str, 'myname'),
+             Argument('tid', str, 'myid'),
+             Argument('tsig', str, 'mysig')]
     travWrite = root
-    for x in argos:
-        child = Node(Argo(x))
+    for arg in argos:
+        child = Node(arg)
         travWrite.addChild(child)
         travWrite = child
     travWrite.addChild(End())
@@ -67,10 +68,10 @@ def test_build_nodes():
 
 
 def test_build_tree_prototype():
-    node1 = Node(Argo({'name': 'tname', 'type': str, 'default': 'myname'}))
+    node1 = Node(Argument('tname', str, 'myname'))
     hookEnter = Hook()
-    node21 = Node(Argo({'name': 'tid', 'type': str, 'default': 'myid'}))
-    node22 = Node(Argo({'name': 'tsig', 'type': str, 'default': 'mysig'}))
+    node21 = Node(Argument('tid', str, 'myid'))
+    node22 = Node(Argument('tsig', str, 'mysig'))
     end = End()
 
     root = Start()
@@ -113,13 +114,18 @@ def test_build_tree_prototype():
 
 
 def test_build_tree_from_rules():
+    argos = Arguments()
+    argos.addArgument(Argument('t1', Str, None))
+    argos.addArgument(Argument('t2', Int, 0))
+    argos.addArgument(Argument('t3', Str, 'myself'))
+    argos.index()
     rules = [{'counter': 0, 'type': '1', 'args': 't1'},
              {'counter': 1, 'type': '?', 'args': [{'counter': 0, 'type': '1', 'args': 't2'},
                                                   {'counter': 0, 'type': '1', 'args': 't3'}]},
              {'counter': 2, 'type': '0', 'args': None}, ]
     trav = Start()
     for rule in rules:
-        newtrav = trav.buildChildrenNodeFromRule(rule)
+        newtrav = trav.buildChildrenNodeFromRule(rule, argos)
         trav = newtrav
 
 

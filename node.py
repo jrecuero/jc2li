@@ -1,5 +1,4 @@
-from common import _HANDLE_ERROR
-from argument import Argo
+from common import _HANDLE_ERROR, RuleHandler
 
 
 class Node(object):
@@ -48,15 +47,15 @@ class Node(object):
 
     @property
     def name(self):
-        return self.argo.name if self.argo else None
+        return self.argo.Name if self.argo else None
 
     @property
     def type(self):
-        return self.argo.type if self.argo else None
+        return self.argo.Type if self.argo else None
 
     @property
     def default(self):
-        return self.argo.default if self.argo else None
+        return self.argo.Default if self.argo else None
 
     @property
     def ancestor(self):
@@ -137,16 +136,14 @@ class Node(object):
                 nodePath.append(trav)
         return nodePath
 
-    def buildChildrenNodeFromRule(self, theRule):
-        if theRule['type'] == '1':
-            # TODO : this shoudl be a lookup in the _arguments attribute to
-            # retrieve the proper information.
-            child = Node(Argo({'name': theRule['args'], 'type': str, 'default': 'none'}), theParent=self)
-        elif theRule['type'] == '0':
+    def buildChildrenNodeFromRule(self, theRule, theArgs):
+        if RuleHandler.isOnlyOneRule(theRule):
+            child = Node(theArgs.getArgoFromName(RuleHandler.getArgsFromRule(theRule)), theParent=self)
+        elif RuleHandler.isEndRule(theRule):
             child = End(theParent=self)
         else:
             child = Hook(theParent=self)
-            child.buildHookFromRule(theRule['args'])
+            child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs)
         self.addChild(child)
         return child
 
@@ -199,7 +196,7 @@ class Hook(Node):
     def findByName(self, theName):
         return self.findChildByName(theName)
 
-    def buildHookFromRule(self, theRule):
+    def buildHookFromRule(self, theRule, theArgs):
 
         def addGrantChild(child, grantchild):
             if child:
@@ -209,13 +206,13 @@ class Hook(Node):
         if type(theRule) in [list, dict]:
             child = None
             for rule in theRule:
-                if rule['type'] == '0':
+                if RuleHandler.isEndRule(rule):
                     raise TypeError('Error : Hook : endpoint not allowed in rule')
                 if rule['counter'] == 0:
                     addGrantChild(child, endHook)
-                    child = self.buildChildrenNodeFromRule(rule)
+                    child = self.buildChildrenNodeFromRule(rule, theArgs)
                 else:
-                    grantchild = child.buildChildrenNodeFromRule(rule)
+                    grantchild = child.buildChildrenNodeFromRule(rule, theArgs)
                     child.addChild(grantchild)
                     child = grantchild
             addGrantChild(child, endHook)
@@ -238,7 +235,7 @@ class End(Hook):
     def label(self):
         return 'End'
 
-    def buildHookFromRule(self, theRule):
+    def buildHookFromRule(self, theRule, theArgs):
         raise TypeError('Error: End : can not build nodes after end')
 
 

@@ -146,6 +146,10 @@ class RuleHandler(object):
         return theRule['args'] if type(theRule['args']) == list else [theRule, ]
 
     @staticmethod
+    def getArgsFromRule(theRule):
+        return theRule['args']
+
+    @staticmethod
     def traverseArgsInRule(theRule):
         for rule in theRule['args']:
             yield rule

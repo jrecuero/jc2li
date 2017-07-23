@@ -68,18 +68,3 @@ class CliBase(Cmd, object):
         else:
             argotype = None
         return processArgoNo, argotype
-
-    # def default(self, line):
-    #     if line:
-    #         listline = line.split()
-    #         if '-' in listline[0]:
-    #             listline[0] = listline[0].replace('-', '_')
-    #         newline = ' '.join(listline)
-    #     else:
-    #         newline = line
-    #     return super(CliBase, self)..onecmd(newline)
-
-    # def do_help(self, line):
-    #     # super(CliBase, self).do_help(line)
-    #     for x in [x for x in dir(self) if x.startswith('do_')]:
-    #         print x[3:] if '_' not in x else x[3:].replace('_', '-')
