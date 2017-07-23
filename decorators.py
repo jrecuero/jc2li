@@ -2,6 +2,7 @@ from functools import wraps
 import shlex
 import cliparser
 from common import _HANDLE_ERROR, Argument, Arguments, RuleHandler
+from node import Start
 
 
 def _processInnerRule(theRule, thePassArg, theArgs, theFoundCounter):
@@ -256,6 +257,15 @@ def setsyntax(f):
         else:
             return _HANDLE_ERROR('Error: Mandatory argument is not present"')
 
+    root = Start()
+    argos = getattr(f, '_Arguments', None)
+    argos.index()
+    rules = getattr(f, '_rules', list())
+    trav = root
+    for rule in rules:
+        newTrav = trav.buildChildrenNodeFromRule(rule, argos)
+        trav = newTrav
+    setattr(f, '_tree', root)
     return _wrapper
 
 
