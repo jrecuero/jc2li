@@ -265,7 +265,7 @@ def setsyntax(f):
     for rule in rules:
         newTrav = trav.buildChildrenNodeFromRule(rule, argos)
         trav = newTrav
-    setattr(f, '_tree', root)
+    setattr(_wrapper, '_tree', root)
     return _wrapper
 
 

@@ -150,6 +150,10 @@ class RuleHandler(object):
         return theRule['args']
 
     @staticmethod
+    def getCounterFromRule(theRule):
+        return theRule['counter']
+
+    @staticmethod
     def traverseArgsInRule(theRule):
         for rule in theRule['args']:
             yield rule

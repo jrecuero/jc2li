@@ -137,15 +137,24 @@ class Node(object):
         return nodePath
 
     def buildChildrenNodeFromRule(self, theRule, theArgs):
+        """
+        child is the Node that has to be added inmidiatly.
+        nextChild is the Node that has to be returned as the next node in the
+        sequence. For OnlyOneRule or endDrule it does not matter, because it
+        the same node, but for any other rule that includes Hook, child will
+        be the first/start hook, and next child will be last/end hook.
+        """
         if RuleHandler.isOnlyOneRule(theRule):
             child = Node(theArgs.getArgoFromName(RuleHandler.getArgsFromRule(theRule)), theParent=self)
+            nextChild = child
         elif RuleHandler.isEndRule(theRule):
             child = End(theParent=self)
+            nextChild = child
         else:
             child = Hook(theParent=self)
-            child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs)
+            nextChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs)
         self.addChild(child)
-        return child
+        return nextChild
 
 
 class Hook(Node):
@@ -208,7 +217,7 @@ class Hook(Node):
             for rule in theRule:
                 if RuleHandler.isEndRule(rule):
                     raise TypeError('Error : Hook : endpoint not allowed in rule')
-                if rule['counter'] == 0:
+                if RuleHandler.getCounterFromRule(rule) == 0:
                     addGrantChild(child, endHook)
                     child = self.buildChildrenNodeFromRule(rule, theArgs)
                 else:
