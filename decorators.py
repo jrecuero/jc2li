@@ -1,7 +1,7 @@
 from functools import wraps
 import shlex
 import cliparser
-from common import _HANDLE_ERROR, Argument, Arguments, RuleHandler
+from common import _HANDLE_ERROR, Argument, Arguments, RuleHandler, getPathFromLine
 from node import Start
 
 
@@ -225,6 +225,7 @@ def setsyntax(f):
     @wraps(f)
     def _wrapper(self, theLine):
         fArgs = getattr(f, '_Arguments', None)
+        root = getattr(f, '_tree', None)
         if fArgs is None:
             return f(self, theLine)
         fArgs.index()
@@ -232,26 +233,39 @@ def setsyntax(f):
         rules = getattr(f, '_rules', None)
         if len(passArgs) < RuleHandler.syntaxMinArgs(rules):
             return _HANDLE_ERROR("Error: Number of Args: Too few arguments")
-        ruleIndex = 0
-        foundCounter = 0
-        for index, passArg in enumerate(passArgs):
-            rule = rules[ruleIndex]
-            found = False
-            if RuleHandler.isEndRule(rule):
-                return _HANDLE_ERROR("Error: End rule found: Too many arguments")
-            elif RuleHandler.isOnlyOneRule(rule) and '=' not in passArg:
-                matchArg = fArgs.getArgoFromIndex(index)
-                fArgs.setIndexedValueFromIndex(index, matchArg.Type._(passArg))
-                matchArg.Matched = 1
+
+        path = getPathFromLine(passArgs)
+        nodePath = root.findPath(path)
+        nodes = root.findNodes()
+        for n, v in zip(nodePath, passArgs):
+            if '=' in v:
+                _, argValue = v.split('=')
             else:
-                if '=' in passArg:
-                    found, foundCounter = _processInnerRule(rule, passArg, fArgs, foundCounter)
-                else:
-                    return _HANDLE_ERROR('Error: Invalid named argument')
-            if not found:
-                ruleIndex += 1
-                foundCounter = 0
+                argValue = v
+            n.argo.Value = n.argo.Type._(argValue)
         useArgs = fArgs.getIndexedValues()
+
+        # ruleIndex = 0
+        # foundCounter = 0
+        # for index, passArg in enumerate(passArgs):
+        #     rule = rules[ruleIndex]
+        #     found = False
+        #     if RuleHandler.isEndRule(rule):
+        #         return _HANDLE_ERROR("Error: End rule found: Too many arguments")
+        #     elif RuleHandler.isOnlyOneRule(rule) and '=' not in passArg:
+        #         matchArg = fArgs.getArgoFromIndex(index)
+        #         fArgs.setIndexedValueFromIndex(index, matchArg.Type._(passArg))
+        #         matchArg.Matched = 1
+        #     else:
+        #         if '=' in passArg:
+        #             found, foundCounter = _processInnerRule(rule, passArg, fArgs, foundCounter)
+        #         else:
+        #             return _HANDLE_ERROR('Error: Invalid named argument')
+        #     if not found:
+        #         ruleIndex += 1
+        #         foundCounter = 0
+        # useArgs = fArgs.getIndexedValues()
+
         if all(map(lambda x: x is not None, useArgs)):
             return f(self, *useArgs)
         else:
@@ -265,7 +279,7 @@ def setsyntax(f):
     for rule in rules:
         newTrav = trav.buildChildrenNodeFromRule(rule, argos)
         trav = newTrav
-    setattr(_wrapper, '_tree', root)
+    setattr(f, '_tree', root)
     return _wrapper
 
 

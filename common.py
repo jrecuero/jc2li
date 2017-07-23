@@ -30,6 +30,16 @@ def linesplit(f):
 
     return _wrapper
 
+def getPathFromLine(theLine):
+    path = list()
+    for arg in theLine:
+        if '=' in arg:
+            argName, _ = arg.split('=')
+            path.append(argName)
+        else:
+            path.append(arg)
+    return path
+
 
 class Argument(object):
 

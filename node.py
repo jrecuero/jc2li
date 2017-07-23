@@ -81,10 +81,10 @@ class Node(object):
             self._addChild(theChild)
 
     def childrenNames(self):
-        return [child.name for child in self.children]
+        return [child.name for child in self.traverseChildren()]
 
     def childrenTypes(self):
-        return [child.type for child in self.children]
+        return [child.type for child in self.traverseChildren()]
 
     def isRoot(self):
         return self.parent is None
@@ -107,14 +107,24 @@ class Node(object):
         for ancestor in self.ancestors:
             yield ancestor
 
-    def findByName(self, theName):
-        if self.name == theName:
+    def findByName(self, theName, theCheckDefault=False):
+        """
+        When looking for nodes in a path from the arguments passed in the
+        command line, required arguments don't use the argument name, just
+        the value, when looking for those in the parsing tree, they will not
+        be found, but such as a mandatory and positional arguments, they
+        should be a direct match for the direct position, that is the reason
+        whe use the argument theCheckDefault=True when we want to make a path
+        search, for any other scenario, where just the argument name will be
+        used, set that argument to False.
+        """
+        if theCheckDefault and self.default is None:
             return self
-        return None
+        return self if self.name == theName else None
 
-    def findChildByName(self, theName):
+    def findChildByName(self, theName, theCheckDefault=False):
         for child in self.traverseChildren():
-            foundNode = child.findByName(theName)
+            foundNode = child.findByName(theName, theCheckDefault)
             if foundNode is not None:
                 return foundNode
         return None
@@ -129,7 +139,7 @@ class Node(object):
         nodePath = []
         trav = self
         for pattern in thePathPatterns:
-            trav = trav.findChildByName(pattern)
+            trav = trav.findChildByName(pattern, theCheckDefault=True)
             if trav is None:
                 raise NameError('<{}> not found'.format(pattern))
             else:
@@ -155,6 +165,25 @@ class Node(object):
             nextChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs)
         self.addChild(child)
         return nextChild
+
+    def findNodes(self):
+        nodes = [self, ]
+        for child in self.traverseChildren():
+            nodes += child.findNodes()
+        return nodes
+
+    def _toString(self, level):
+        indent = "--" * level
+        return "{}Node.{}\n".format(indent, self.label)
+
+    def toStr(self, level):
+        st = self._toString(level)
+        for child in self.traverseChildren():
+            st += child.toStr(level + 1)
+        return st
+
+    def __str__(self):
+        return self.toStr(0)
 
 
 class Hook(Node):
@@ -202,8 +231,8 @@ class Hook(Node):
     def addChild(self, theChild):
         self._addChild(theChild)
 
-    def findByName(self, theName):
-        return self.findChildByName(theName)
+    def findByName(self, theName, theCheckDefault=False):
+        return self.findChildByName(theName, theCheckDefault)
 
     def buildHookFromRule(self, theRule, theArgs):
 
@@ -230,12 +259,26 @@ class Hook(Node):
         else:
             raise TypeError('Error: Hook : node requires a list of rules')
 
+    def findNodes(self):
+        nodes = list()
+        for child in self.traverseChildren():
+            nodes += child.findNodes()
+        return nodes
+
+    def _toString(self, level):
+        indent = "--" * level
+        return "{}Hook.{}\n".format(indent, self.label)
+
 
 class Start(Hook):
 
     @property
     def label(self):
         return 'Start'
+
+    def _toString(self, level):
+        indent = "--" * level
+        return "{}Start.{}\n".format(indent, self.label)
 
 
 class End(Hook):
@@ -247,6 +290,9 @@ class End(Hook):
     def buildHookFromRule(self, theRule, theArgs):
         raise TypeError('Error: End : can not build nodes after end')
 
+    def _toString(self, level):
+        indent = "--" * level
+        return "{}End.{}\n".format(indent, self.label)
 
 if __name__ == '__main__':
     pass
