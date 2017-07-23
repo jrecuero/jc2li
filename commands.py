@@ -1,7 +1,7 @@
 from base import CliBase
 from argtypes import Int, Str
 from decorators import lineSplit, linesplit
-from decorators import params, arguments, defaults, argo, setargos, setdictos, argos
+from decorators import params, arguments, defaults, argo, setargos, setdictos
 from decorators import syntax, setsyntax
 # import shlex
 
@@ -120,29 +120,29 @@ class Cli(CliBase):
         """
         print 'DICTO CARD id: {}, name: {}, age: {}'.format(id, name, age)
 
-    @setdictos
-    @argos(argsdata['nameid'])
-    def do_jsoncard(self, id, name):
-        """Command with arguments as json decorators.
-        """
-        print 'JSON CARD id: {}, name: {}'.format(id, name)
+    # @setdictos
+    # @argos(argsdata['nameid'])
+    # def do_jsoncard(self, id, name):
+    #     """Command with arguments as json decorators.
+    #     """
+    #     print 'JSON CARD id: {}, name: {}'.format(id, name)
 
-    @setdictos
-    @argos(argsdata['nameid'])
-    @argo('age', Age, 30)
-    def do_jsoncard2(self, id, name, age):
-        """Command with arguments as json decorators.
-        """
-        print 'JSON CARD 2 id: {}, name: {}, age: {}'.format(id, name, age)
+    # @setdictos
+    # @argos(argsdata['nameid'])
+    # @argo('age', Age, 30)
+    # def do_jsoncard2(self, id, name, age):
+    #     """Command with arguments as json decorators.
+    #     """
+    #     print 'JSON CARD 2 id: {}, name: {}, age: {}'.format(id, name, age)
 
-    @setdictos
-    @argo('nat', Str, "american")
-    @argos(argsdata['nameid'])
-    @argo('age', Age, 30)
-    def do_jsoncard3(self, nat, id, name, age):
-        """Command with arguments as json decorators.
-        """
-        print 'JSON CARD 3 nationality: {}, id: {}, name: {}, age: {}'.format(nat, id, name, age)
+    # @setdictos
+    # @argo('nat', Str, "american")
+    # @argos(argsdata['nameid'])
+    # @argo('age', Age, 30)
+    # def do_jsoncard3(self, nat, id, name, age):
+    #     """Command with arguments as json decorators.
+    #     """
+    #     print 'JSON CARD 3 nationality: {}, id: {}, name: {}, age: {}'.format(nat, id, name, age)
 
     @setdictos
     @argo('place', Room(["garage", "yard"]), "garage")
