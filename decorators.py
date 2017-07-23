@@ -1,35 +1,20 @@
 from functools import wraps
 import shlex
 import cliparser
-from common import _HANDLE_ERROR, Argument, Arguments
-
-
-def _checkForInnerRule(thRule):
-    return thRule['type'] in '?*+' or type(thRule['args']) == list
-
-
-def _checkArgNameInRule(thRule, theArgname):
-    if thRule['type'] == '1' and thRule['args'] == theArgname:
-        return True
-    return False
-
-
-def _syntaxMinArgs(theRules):
-    counter = sum([1 if rule['type'] in '1+' else 0 for rule in theRules])
-    return counter
+from common import _HANDLE_ERROR, Argument, Arguments, RuleHandler
 
 
 def _processInnerRule(theRule, thePassArg, theArgs, theFoundCounter):
     argName, argValue = thePassArg.split('=')
-    argRules = theRule['args'] if type(theRule['args']) == list else [theRule, ]
+    argRules = RuleHandler.getArgsFromRuleAsList(theRule)
     found = False
     for travRule in argRules:
-        if _checkForInnerRule(travRule):
-            for innerRule in travRule['args']:
+        if RuleHandler.checkForInnerRule(travRule):
+            for innerRule in RuleHandler.traverseArgsInRule(travRule):
                 found, theFoundCounter = _processInnerRule(innerRule, thePassArg, theArgs, theFoundCounter)
                 if found:
                     break
-        elif _checkArgNameInRule(travRule, argName):
+        elif RuleHandler.checkArgNameInRule(travRule, argName):
             argEntry = theArgs.getArgoFromName(argName)
             if argEntry is not None:
                 if argEntry.Matched == 0:
@@ -43,36 +28,15 @@ def _processInnerRule(theRule, thePassArg, theArgs, theFoundCounter):
             theFoundCounter += 1
         if found:
             break
-    if theRule['type'] == '+' and theFoundCounter == 0:
+    if RuleHandler.isZeroOrMoreRule(theRule)  and theFoundCounter == 0:
         return _HANDLE_ERROR('Error: too few arguments'), None
     return found, theFoundCounter
 
 
 def _checkMoveToNextRule(theRule, theFound):
-    return (theRule['type'] in '1?') or (theRule['type'] in '*+' and not theFound)
-
-
-def lineSplit(theLine, theInstr=False):
-    """Split theLine in arguments.
-    TODO: Use shlex.split() method instead of.
-    """
-    part = theLine.partition('"')
-    if '"' in part[1]:
-        if theInstr:
-            return [part[0]] + lineSplit(part[2], False)
-        else:
-            return part[0].split() + lineSplit(part[2], True)
-    else:
-        return part[0].split()
-
-
-def linesplit(f):
-
-    @wraps(f)
-    def _wrapper(self, theLine):
-        return f(self, shlex.split(theLine))
-
-    return _wrapper
+    return ((RuleHandler.isOnlyOneRule(theRule) or RuleHandler.isZeroOrOneRule(theRule)) or
+            (RuleHandler.isZeroOrMoreRule(theRule) or RuleHandler.isOneOrMoreRule(theRule) and
+             not theFound))
 
 
 def params(*args):
@@ -265,16 +229,16 @@ def setsyntax(f):
         fArgs.index()
         passArgs = shlex.split(theLine)
         rules = getattr(f, '_rules', None)
-        if len(passArgs) < _syntaxMinArgs(rules):
+        if len(passArgs) < RuleHandler.syntaxMinArgs(rules):
             return _HANDLE_ERROR("Error: Number of Args: Too few arguments")
         ruleIndex = 0
         foundCounter = 0
         for index, passArg in enumerate(passArgs):
             rule = rules[ruleIndex]
             found = False
-            if rule['type'] == '0':
+            if RuleHandler.isEndRule(rule):
                 return _HANDLE_ERROR("Error: End rule found: Too many arguments")
-            elif rule['type'] == '1' and '=' not in passArg:
+            elif RuleHandler.isOnlyOneRule(rule) and '=' not in passArg:
                 matchArg = fArgs.getArgoFromIndex(index)
                 fArgs.setIndexedValueFromIndex(index, matchArg.Type._(passArg))
                 matchArg.Matched = 1

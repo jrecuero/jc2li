@@ -1,9 +1,34 @@
+from functools import wraps
+import shlex
 from collections import OrderedDict
 
 
 def _HANDLE_ERROR(st):
     print st
     return None
+
+
+def lineSplit(theLine, theInstr=False):
+    """Split theLine in arguments.
+    TODO: Use shlex.split() method instead of.
+    """
+    part = theLine.partition('"')
+    if '"' in part[1]:
+        if theInstr:
+            return [part[0]] + lineSplit(part[2], False)
+        else:
+            return part[0].split() + lineSplit(part[2], True)
+    else:
+        return part[0].split()
+
+
+def linesplit(f):
+
+    @wraps(f)
+    def _wrapper(self, theLine):
+        return f(self, shlex.split(theLine))
+
+    return _wrapper
 
 
 class Argument(object):
@@ -97,6 +122,53 @@ class Arguments(object):
 
     def getNames(self):
         return list(self.Indexed)
+
+
+class RuleHandler(object):
+
+    @staticmethod
+    def checkForInnerRule(theRule):
+        return theRule['type'] in '?*+' or type(theRule['args']) == list
+
+    @staticmethod
+    def checkArgNameInRule(theRule, theArgname):
+        if theRule['type'] == '1' and theRule['args'] == theArgname:
+            return True
+        return False
+
+    @staticmethod
+    def syntaxMinArgs(theRules):
+        counter = sum([1 if rule['type'] in '1+' else 0 for rule in theRules])
+        return counter
+
+    @staticmethod
+    def getArgsFromRuleAsList(theRule):
+        return theRule['args'] if type(theRule['args']) == list else [theRule, ]
+
+    @staticmethod
+    def traverseArgsInRule(theRule):
+        for rule in theRule['args']:
+            yield rule
+
+    @staticmethod
+    def isOnlyOneRule(theRule):
+        return theRule['type'] == '1'
+
+    @staticmethod
+    def isEndRule(theRule):
+        return theRule['type'] == '0'
+
+    @staticmethod
+    def isZeroOrOneRule(theRule):
+        return theRule['type'] == '?'
+
+    @staticmethod
+    def isZeroOrMoreRule(theRule):
+        return theRule['type'] == '*'
+
+    @staticmethod
+    def isOneOrMoreRule(theRule):
+        return theRule['type'] == '+'
 
 
 if __name__ == '__main__':
