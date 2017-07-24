@@ -6,39 +6,69 @@ from common import _HANDLE_ERROR, Argument, Arguments, RuleHandler
 from node import Start
 
 
-def _processInnerRule(theRule, thePassArg, theArgs, theFoundCounter):
-    argName, argValue = thePassArg.split('=')
-    argRules = RuleHandler.getArgsFromRuleAsList(theRule)
-    found = False
-    for travRule in argRules:
-        if RuleHandler.checkForInnerRule(travRule):
-            for innerRule in RuleHandler.traverseArgsInRule(travRule):
-                found, theFoundCounter = _processInnerRule(innerRule, thePassArg, theArgs, theFoundCounter)
-                if found:
-                    break
-        elif RuleHandler.checkArgNameInRule(travRule, argName):
-            argEntry = theArgs.getArgoFromName(argName)
-            if argEntry is not None:
-                if argEntry.Matched == 0:
-                    argEntry.Value = argEntry.Type._(argValue)
-                elif argEntry.Matched == 1:
-                    argEntry.Value = [argEntry.Value, argEntry.Type._(argValue)]
-                else:
-                    argEntry.Value.append(argEntry.Type._(argValue))
-                argEntry.Matched += 1
-            found = True
-            theFoundCounter += 1
-        if found:
-            break
-    if RuleHandler.isZeroOrMoreRule(theRule)  and theFoundCounter == 0:
-        return _HANDLE_ERROR('Error: too few arguments'), None
-    return found, theFoundCounter
+ARGOS_ATTR = '_Arguments'
+RULES_ATTR = '_Rules'
+SYNTAX_ATTR = '_Syntax'
+CMD_ATTR = '_Cmd'
+TREE_ATTR = '_Tree'
 
 
-def _checkMoveToNextRule(theRule, theFound):
-    return ((RuleHandler.isOnlyOneRule(theRule) or RuleHandler.isZeroOrOneRule(theRule)) or
-            (RuleHandler.isZeroOrMoreRule(theRule) or RuleHandler.isOneOrMoreRule(theRule) and
-             not theFound))
+def _getCmdAndCliArgos(f, theInst, theLine):
+    """Retrieve the command arguments stored in the command function and
+    provided by @argo and @argos decorators; and the arguments passed by
+    the user in the command line.
+    """
+    cmdArgos = getattr(f, ARGOS_ATTR, None)
+    if cmdArgos is None:
+        return f(theInst, theLine)
+    cmdArgos.index()
+    cliArgos = shlex.split(theLine)
+    return cmdArgos, cliArgos
+
+
+def _mapPassedArgosToCommandArgos(theRoot, theCmdArgos, theCliArgos):
+    """Using the command arguments and argument values passed by the user
+    in the CLI, map those using the command parsing tree in order to generate
+    all arguments to be passed to the command function.
+    """
+    # path = getPathFromLine(theCliArgos)
+    nodePath = theRoot.findPath(theCliArgos)
+    # nodes = theRoot.findNodes()
+    matchedNodes = list()
+    for nod, val in zip(nodePath, theCliArgos):
+        if '=' in val:
+            _, argValue = val.split('=')
+        else:
+            argValue = val
+        argValue = nod.Argo.Type._(argValue)
+        if nod not in matchedNodes:
+            nod.Argo.Value = argValue
+        else:
+            if type(nod.Argo.Value) == list:
+                nod.Argo.Value.append(argValue)
+            else:
+                nod.Argo.Value = [nod.Argo.Value, argValue]
+        matchedNodes.append(nod)
+    useArgs = theCmdArgos.getIndexedValues()
+    return useArgs
+
+
+def _buildCommandParsingTree(f):
+    """Build the command parsing tree using the command arguments and the
+    command syntax.
+    """
+    root = Start()
+    argos = getattr(f, ARGOS_ATTR, None)
+    if argos:
+        argos.index()
+        rules = getattr(f, RULES_ATTR, list())
+        trav = root
+        for rule in rules:
+            newTrav = trav.buildChildrenNodeFromRule(rule, argos)
+            trav = newTrav
+        setattr(f, TREE_ATTR, root)
+        return True
+    return _HANDLE_ERROR("Error: Building Command Parsing Tree: arguments not defined")
 
 
 def params(*args):
@@ -49,10 +79,10 @@ def params(*args):
 
         @wraps(f)
         def _wrapper(self, theLine):
-            passArgs = shlex.split(theLine)
+            cliArgos = shlex.split(theLine)
             useArgs = list(args)
             try:
-                for i, v in enumerate(passArgs):
+                for i, v in enumerate(cliArgos):
                     useArgs[i] = v
                 return f(self, useArgs[0], useArgs[1])
             except IndexError:
@@ -71,12 +101,12 @@ def arguments(*args):
 
         @wraps(f)
         def _wrapper(self, theLine):
-            passArgs = shlex.split(theLine)
-            if len(args) != len(passArgs):
+            cliArgos = shlex.split(theLine)
+            if len(args) != len(cliArgos):
                 _HANDLE_ERROR('Wrong number of arguments')
             else:
                 try:
-                    return f(self, *[x._(y) for x, y in zip(args, passArgs)])
+                    return f(self, *[x._(y) for x, y in zip(args, cliArgos)])
                 except ValueError:
                     _HANDLE_ERROR('Wrong type of argument')
                 except OverflowError:
@@ -95,12 +125,12 @@ def defaults(*args):
 
         @wraps(f)
         def _wrapper(self, theLine):
-            passArgs = shlex.split(theLine)
-            if len(args) < len(passArgs):
+            cliArgos = shlex.split(theLine)
+            if len(args) < len(cliArgos):
                 return _HANDLE_ERROR('Wrong number of arguments')
             else:
                 try:
-                    return f(self, *[x._(z) if z is not None else y for (x, y), z in map(None, args, passArgs)])
+                    return f(self, *[x._(z) if z is not None else y for (x, y), z in map(None, args, cliArgos)])
                 except ValueError:
                     _HANDLE_ERROR('Wrong type of argument')
                 except OverflowError:
@@ -120,9 +150,9 @@ def argo(theName, theType, theDefault):
         @wraps(f)
         def _wrapper(self, *args):
             return f(self, *args)
-        fArgs = getattr(_wrapper, '_Arguments', Arguments())
-        fArgs.insertArgument(Argument(theName, theType, theDefault))
-        setattr(_wrapper, '_Arguments', fArgs)
+        cmdArgos = getattr(_wrapper, ARGOS_ATTR, Arguments())
+        cmdArgos.insertArgument(Argument(theName, theType, theDefault))
+        setattr(_wrapper, ARGOS_ATTR, cmdArgos)
 
         return _wrapper
 
@@ -139,10 +169,10 @@ def argos(theArgos):
         def _wrapper(self, *args):
             return f(self, *args)
 
-        fArgs = getattr(_wrapper, '_Arguments', Arguments())
+        cmdArgos = getattr(_wrapper, ARGOS_ATTR, Arguments())
         for arg in theArgos.reversed():
-            fArgs.insert(arg)
-        setattr(_wrapper, '_Arguments', fArgs)
+            cmdArgos.insert(arg)
+        setattr(_wrapper, ARGOS_ATTR, cmdArgos)
         return _wrapper
 
     return f_setargos
@@ -154,14 +184,14 @@ def setargos(f):
 
     @wraps(f)
     def _wrapper(self, theLine):
-        fArgs = getattr(f, '_Arguments', None)
-        if fArgs is None:
+        cmdArgos = getattr(f, ARGOS_ATTR, None)
+        if cmdArgos is None:
             return f(self, theLine)
         else:
-            fArgs.index()
-            passArgs = shlex.split(theLine)
-            defArgs = [(x.Type, x.Default) for x in fArgs.arguments]
-            useArgs = [x._(z) if z is not None else y for (x, y), z in map(None, defArgs, passArgs)]
+            cmdArgos.index()
+            cliArgos = shlex.split(theLine)
+            defArgs = [(x.Type, x.Default) for x in cmdArgos.Arguments]
+            useArgs = [x._(z) if z is not None else y for (x, y), z in map(None, defArgs, cliArgos)]
             if all(map(lambda x: x is not None, useArgs)):
                 return f(self, *useArgs)
             else:
@@ -176,22 +206,22 @@ def setdictos(f):
 
     @wraps(f)
     def _wrapper(self, theLine):
-        fArgs = getattr(f, '_Arguments', None)
-        if fArgs is None:
+        cmdArgos = getattr(f, ARGOS_ATTR, None)
+        if cmdArgos is None:
             return f(self, theLine)
         else:
-            fArgs.index()
-            passArgs = shlex.split(theLine)
-            for index, passArg in enumerate(passArgs):
+            cmdArgos.index()
+            cliArgos = shlex.split(theLine)
+            for index, passArg in enumerate(cliArgos):
                 if '=' in passArg:
                     argName, argValue = passArg.split('=')
-                    argEntry = fArgs.getArgoFromName(argName)
+                    argEntry = cmdArgos.getArgoFromName(argName)
                     if argEntry is not None:
                         argEntry.Value = argEntry.Type._(argValue)
                 else:
-                    entry = fArgs.getArgoFromIndex(index)
-                    fArgs.setIndexedValueFromName(entry.Name, entry.Type._(passArg))
-            useArgs = fArgs.getIndexedValues()
+                    entry = cmdArgos.getArgoFromIndex(index)
+                    cmdArgos.setIndexedValueFromName(entry.Name, entry.Type._(passArg))
+            useArgs = cmdArgos.getIndexedValues()
             if all(map(lambda x: x is not None, useArgs)):
                 return f(self, *useArgs)
             else:
@@ -210,9 +240,9 @@ def syntax(theSyntax):
         def _wrapper(self, *args):
             return f(self, *args)
         cmd, rules = cliparser.processSyntax(theSyntax)
-        setattr(_wrapper, '_syntax', theSyntax)
-        setattr(_wrapper, '_cmd', cmd)
-        setattr(_wrapper, '_rules', rules)
+        setattr(_wrapper, SYNTAX_ATTR, theSyntax)
+        setattr(_wrapper, CMD_ATTR, cmd)
+        setattr(_wrapper, RULES_ATTR, rules)
 
         return _wrapper
 
@@ -225,71 +255,21 @@ def setsyntax(f):
 
     @wraps(f)
     def _wrapper(self, theLine):
-        fArgs = getattr(f, '_Arguments', None)
-        root = getattr(f, '_tree', None)
-        if fArgs is None:
-            return f(self, theLine)
-        fArgs.index()
-        passArgs = shlex.split(theLine)
-        rules = getattr(f, '_rules', None)
-        if len(passArgs) < RuleHandler.syntaxMinArgs(rules):
+
+        cmdArgos, cliArgos = _getCmdAndCliArgos(f, self, theLine)
+
+        root = getattr(f, TREE_ATTR, None)
+        rules = getattr(f, RULES_ATTR, None)
+        if len(cliArgos) < RuleHandler.syntaxMinArgs(rules):
             return _HANDLE_ERROR("Error: Number of Args: Too few arguments")
 
-        # path = getPathFromLine(passArgs)
-        nodePath = root.findPath(passArgs)
-        # nodes = root.findNodes()
-        matchedNodes = list()
-        for nod, val in zip(nodePath, passArgs):
-            if '=' in val:
-                _, argValue = val.split('=')
-            else:
-                argValue = val
-            argValue = nod.argo.Type._(argValue)
-            if nod not in matchedNodes:
-                nod.argo.Value = argValue
-            else:
-                if type(nod.argo.Value) == list:
-                    nod.argo.Value.append(argValue)
-                else:
-                    nod.argo.Value = [nod.argo.Value, argValue]
-            matchedNodes.append(nod)
-        useArgs = fArgs.getIndexedValues()
-
-        # ruleIndex = 0
-        # foundCounter = 0
-        # for index, passArg in enumerate(passArgs):
-        #     rule = rules[ruleIndex]
-        #     found = False
-        #     if RuleHandler.isEndRule(rule):
-        #         return _HANDLE_ERROR("Error: End rule found: Too many arguments")
-        #     elif RuleHandler.isOnlyOneRule(rule) and '=' not in passArg:
-        #         matchArg = fArgs.getArgoFromIndex(index)
-        #         fArgs.setIndexedValueFromIndex(index, matchArg.Type._(passArg))
-        #         matchArg.Matched = 1
-        #     else:
-        #         if '=' in passArg:
-        #             found, foundCounter = _processInnerRule(rule, passArg, fArgs, foundCounter)
-        #         else:
-        #             return _HANDLE_ERROR('Error: Invalid named argument')
-        #     if not found:
-        #         ruleIndex += 1
-        #         foundCounter = 0
-        # useArgs = fArgs.getIndexedValues()
-
+        useArgs = _mapPassedArgosToCommandArgos(root, cmdArgos, cliArgos)
         if all(map(lambda x: x is not None, useArgs)):
             return f(self, *useArgs)
         else:
             return _HANDLE_ERROR('Error: Mandatory argument is not present"')
 
-    root = Start()
-    argos = getattr(f, '_Arguments', None)
-    argos.index()
-    rules = getattr(f, '_rules', list())
-    trav = root
-    for rule in rules:
-        newTrav = trav.buildChildrenNodeFromRule(rule, argos)
-        trav = newTrav
-    setattr(f, '_tree', root)
+    _buildCommandParsingTree(f)
     return _wrapper
 
 

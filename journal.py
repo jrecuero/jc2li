@@ -7,30 +7,30 @@ class Journal(object):
         self._root = None
 
     @property
-    def root(self):
+    def Root(self):
         return self._root
 
     @property
-    def path(self):
+    def Path(self):
         return self._path
 
     @property
-    def argos(self):
+    def Argos(self):
         return self._argos
 
     @property
-    def traverseNode(self):
+    def TraverseNode(self):
         return self._traverseNode
 
-    @traverseNode.setter
-    def traverseNode(self, theNode):
-        self._traverseNonde = theNode
+    @TraverseNode.setter
+    def TraverseNode(self, theNode):
+        self.TraverseNode = theNode
 
     def addNode(self, theNode):
         if theNode:
-            self.path.append(theNode)
-            self.argos.update(theNode.argo)
-            self.traverseNode = theNode
+            self.Path.append(theNode)
+            self.Argos.update(theNode.argo)
+            self.TraverseNode = theNode
 
     def moveToChildByName(self, theNode, theName):
         childNode = theNode.findChildByName(theName)

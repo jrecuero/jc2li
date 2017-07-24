@@ -8,107 +8,107 @@ class Node(object):
         self._children = list()
         self._argo = theArgo
         self._browsable = True
-        self._label = theLabel if theLabel else self.name
+        self._label = theLabel if theLabel else self.Name
 
     @property
-    def browsable(self):
+    def Browsable(self):
         return self._browsable
 
     @property
-    def parent(self):
+    def Parent(self):
         return self._parent
 
     @property
-    def parents(self):
+    def Parents(self):
         return _HANDLE_ERROR('Error:  Node: parents() operation not allowed.')
 
-    @parent.setter
-    def parent(self, theParent):
+    @Parent.setter
+    def Parent(self, theParent):
         self._parent = theParent
 
     @property
-    def argo(self):
+    def Argo(self):
         return self._argo
 
     @property
-    def children(self):
+    def Children(self):
         return self._children
 
     @property
-    def siblings(self):
+    def Siblings(self):
         if self.parent and self.parent.hasChildren():
-            return self.parent.children
+            return self.parent.Children
         else:
             return list()
 
     @property
-    def label(self):
+    def Label(self):
         return self._label
 
-    @label.setter
-    def label(self, theValue):
-        self.label = theValue
+    @Label.setter
+    def Label(self, theValue):
+        self.Label = theValue
 
     @property
-    def name(self):
-        return self.argo.Name if self.argo else None
+    def Name(self):
+        return self.Argo.Name if self.Argo else None
 
     @property
-    def type(self):
-        return self.argo.Type if self.argo else None
+    def Type(self):
+        return self.Argo.Type if self.Argo else None
 
     @property
-    def default(self):
-        return self.argo.Default if self.argo else None
+    def Default(self):
+        return self.Argo.Default if self.Argo else None
 
     @property
-    def ancestor(self):
+    def Ancestor(self):
         return self.parent
 
     @property
-    def ancestors(self):
+    def Ancestors(self):
         allAncestors = list()
         traverse = self.parent
         while traverse:
             allAncestors.append(traverse)
-            traverse = traverse.ancestor
+            traverse = traverse.Ancestor
         return allAncestors
 
     def _addChild(self, theChild):
-        self.children.append(theChild)
+        self.Children.append(theChild)
         theChild.parent = self
 
     def addChild(self, theChild):
-        if theChild.parent:
+        if theChild.Parent:
             return _HANDLE_ERROR('Error:  Node: addChild() not allowed on child with parent.')
         else:
             self._addChild(theChild)
 
     def childrenNames(self):
-        return [child.name for child in self.traverseChildren()]
+        return [child.Name for child in self.traverseChildren()]
 
     def childrenTypes(self):
-        return [child.type for child in self.traverseChildren()]
+        return [child.Type for child in self.traverseChildren()]
 
     def isRoot(self):
-        return self.parent is None
+        return self.Parent is None
 
     def hasChildren(self):
-        return len(self.children) > 0
+        return len(self.Children) > 0
 
     def hasSiblings(self):
-        return self.parent and self.parent.hasChildren()
+        return self.Parent and self.Parent.hasChildren()
 
     def traverseChildren(self):
-        for child in self.children:
+        for child in self.Children:
             yield child
 
     def traverseSiblings(self):
-        for sibling in self.siblings:
+        for sibling in self.Siblings:
             yield sibling
 
     def traverseAncestors(self):
-        for ancestor in self.ancestors:
+        for ancestor in self.Ancestors:
             yield ancestor
 
     def findByName(self, theName, theCheckDefault=False):
@@ -122,9 +122,9 @@ class Node(object):
         search, for any other scenario, where just the argument name will be
         used, set that argument to False.
         """
-        if theCheckDefault and self.default is None:
+        if theCheckDefault and self.Default is None:
             return self
-        return self if self.name == theName else None
+        return self if self.Name == theName else None
 
     def findChildByName(self, theName, theCheckDefault=False):
         for child in self.traverseChildren():
@@ -137,6 +137,9 @@ class Node(object):
         for child in self.traverseChildren():
             if child.browsable:
                 return True
+        return False
+
+    def isLoop(self):
         return False
 
     def findPath(self, thePathPatterns):
@@ -172,19 +175,17 @@ class Node(object):
             endChild = child
         elif RuleHandler.isZeroOrOneRule(theRule):
             child = Hook(theParent=self, theLabel="Hook-Start")
-            endChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs)
+            endChild = Hook(theLabel="Hook-End")
+            endChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs, endChild)
             child.addChild(endChild)
         elif RuleHandler.isZeroOrMoreRule(theRule) or RuleHandler.isOneOrMoreRule(theRule):
-            hookToEnd = True if RuleHandler.isZeroOrMoreRule(theRule) else False
-            endChild = Hook(theParent=self, theLabel="Hook-End")
             child = Hook(theParent=self, theLabel="Hook-Start")
-            loopHook = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule),
-                                               theArgs,
-                                               theHookToEnd=hookToEnd)
-            loopHook._label = "Hook-Loop"
-            loopHook.addChild(endChild)
-            loopHook.addChild(child)
-            if hookToEnd:
+            loopChild = Loop(theParent=self, theLabel="Hook-Loop")
+            endChild = Hook(theParent=self, theLabel="Hook-End")
+            loopChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs, loopChild)
+            loopChild.addChild(endChild)
+            loopChild.addChild(child)
+            if RuleHandler.isZeroOrMoreRule(theRule):
                 child.addChild(endChild)
         else:
             return _HANDLE_ERROR('Error:  Node: Unkown type of rule.')
@@ -199,7 +200,7 @@ class Node(object):
 
     def _toString(self, level):
         indent = "--" * level
-        return "{}Node.{}\n".format(indent, self.label)
+        return "{}Node.{}\n".format(indent, self.Label)
 
     def toStr(self, level):
         st = self._toString(level)
@@ -223,31 +224,31 @@ class Hook(Node):
         self._label = theLabel if theLabel else "Hook"
 
     @property
-    def parent(self):
+    def Parent(self):
         return None
 
-    @parent.setter
-    def parent(self, theParent):
+    @Parent.setter
+    def Parent(self, theParent):
         self._parent.append(theParent)
 
     @property
-    def ancestor(self):
+    def Ancestor(self):
         return None
 
     @property
-    def parents(self):
+    def Parents(self):
         return self._parent
 
     @property
-    def name(self):
+    def Name(self):
         return None
 
     @property
-    def type(self):
+    def Type(self):
         return None
 
     @property
-    def default(self):
+    def Default(self):
         return None
 
     def addChild(self, theChild):
@@ -256,29 +257,26 @@ class Hook(Node):
     def findByName(self, theName, theCheckDefault=False):
         return self.findChildByName(theName, theCheckDefault)
 
-    def buildHookFromRule(self, theRule, theArgs, theHookToEnd=True):
+    def buildHookFromRule(self, theRule, theArgs, theEndHook):
 
         def addGrantChild(child, grantchild):
             if child:
                 child.addChild(grantchild)
 
-        endHook = Hook(theLabel="Hook-End")
         if type(theRule) in [list, dict]:
             child = None
             for rule in theRule:
                 if RuleHandler.isEndRule(rule):
                     raise TypeError('Error : Hook : endpoint not allowed in rule')
                 if RuleHandler.getCounterFromRule(rule) == 0:
-                    addGrantChild(child, endHook)
+                    addGrantChild(child, theEndHook)
                     child = self.buildChildrenNodeFromRule(rule, theArgs)
                 else:
                     grantchild = child.buildChildrenNodeFromRule(rule, theArgs)
                     child.addChild(grantchild)
                     child = grantchild
-            addGrantChild(child, endHook)
-            # if theHookToEnd:
-            #     self.addChild(endHook)
-            return endHook
+            addGrantChild(child, theEndHook)
+            return theEndHook
         else:
             raise TypeError('Error: Hook : node requires a list of rules')
 
@@ -290,7 +288,21 @@ class Hook(Node):
 
     def _toString(self, level):
         indent = "--" * level
-        return "{}Hook.{}\n".format(indent, self.label)
+        return "{}Hook.{}\n".format(indent, self.Label)
+
+
+class Loop(Hook):
+
+    def __init__(self, theParent=None, theLabel=None):
+        super(Loop, self).__init__(None, theLabel)
+        self._label = theLabel if theLabel else "Loop"
+
+    def isLoop(self):
+        return True
+
+    def _toString(self, level):
+        indent = "--" * level
+        return "{}Loop.{}\n".format(indent, self.Label)
 
 
 class Start(Hook):
@@ -301,7 +313,7 @@ class Start(Hook):
 
     def _toString(self, level):
         indent = "--" * level
-        return "{}Start.{}\n".format(indent, self.label)
+        return "{}Start.{}\n".format(indent, self.Label)
 
 
 class End(Hook):
@@ -310,12 +322,12 @@ class End(Hook):
         super(End, self).__init__(None, theLabel)
         self._label = theLabel if theLabel else "End"
 
-    def buildHookFromRule(self, theRule, theArgs):
+    def buildHookFromRule(self, theRule, theArgs, theEndHook):
         raise TypeError('Error: End : can not build nodes after end')
 
     def _toString(self, level):
         indent = "--" * level
-        return "{}End.{}\n".format(indent, self.label)
+        return "{}End.{}\n".format(indent, self.Label)
 
 
 if __name__ == '__main__':

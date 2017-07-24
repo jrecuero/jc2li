@@ -11,26 +11,26 @@ from argtypes import Int, Str
 
 def test_node():
     node = Node(None)
-    assert node.parent is None
-    assert node.argo is None
-    assert len(node.children) == 0
+    assert node.Parent is None
+    assert node.Argo is None
+    assert len(node.Children) == 0
 
 
 def test_hook():
     node = Hook(None)
-    assert node.parent is None
-    assert node.parents == []
-    assert node.argo is None
-    assert len(node.children) == 0
-    assert node.name is None
-    assert node.type is None
-    assert node.label == 'Hook'
-    assert node.default is None
-    node.parent = None
-    assert node.parents == [None]
-    node.parent = None
-    assert node.parents == [None, None]
-    assert node.ancestor is None
+    assert node.Parent is None
+    assert node.Parents == []
+    assert node.Argo is None
+    assert len(node.Children) == 0
+    assert node.Name is None
+    assert node.Type is None
+    assert node.Label == 'Hook'
+    assert node.Default is None
+    node.Parent = None
+    assert node.Parents == [None]
+    node.Parent = None
+    assert node.Parents == [None, None]
+    assert node.Ancestor is None
 
 
 def test_build_nodes():
@@ -46,25 +46,25 @@ def test_build_nodes():
     travWrite.addChild(End())
 
     travRead = root
-    while travRead.children == 0:
-        children = travRead.children
-        assert len(children) == 1, 'node: {}'.format(travRead.name)
+    while travRead.Children == 0:
+        children = travRead.Children
+        assert len(children) == 1, 'node: {}'.format(travRead.Name)
         travRead = children[0]
 
     travRead = root
-    assert travRead.label == 'Start'
-    travRead = travRead.children[0]
-    assert travRead.name == 'tname'
-    assert travRead.label == 'tname'
-    travRead = travRead.children[0]
-    assert travRead.name == 'tid'
-    assert travRead.label == 'tid'
-    travRead = travRead.children[0]
-    assert travRead.name == 'tsig'
-    assert travRead.label == 'tsig'
-    travRead = travRead.children[0]
-    assert travRead.name is None
-    assert travRead.label == 'End'
+    assert travRead.Label == 'Start'
+    travRead = travRead.Children[0]
+    assert travRead.Name == 'tname'
+    assert travRead.Label == 'tname'
+    travRead = travRead.Children[0]
+    assert travRead.Name == 'tid'
+    assert travRead.Label == 'tid'
+    travRead = travRead.Children[0]
+    assert travRead.Name == 'tsig'
+    assert travRead.Label == 'tsig'
+    travRead = travRead.Children[0]
+    assert travRead.Name is None
+    assert travRead.Label == 'End'
 
 
 def test_build_tree_prototype():
@@ -85,11 +85,11 @@ def test_build_tree_prototype():
 
     path = ['tname', 'tid']
     nodePath = root.findPath(path)
-    assert [x.name for x in nodePath] == path
+    assert [x.Name for x in nodePath] == path
 
     path = ['tname', 'tsig']
     nodePath = root.findPath(path)
-    assert [x.name for x in nodePath] == path
+    assert [x.Name for x in nodePath] == path
 
     path = ['tid', 'tid']
     with pytest.raises(NameError) as err:
@@ -104,13 +104,13 @@ def test_build_tree_prototype():
     path = ['tname', ]
     nodePath = root.findPath(path)
     assert len(nodePath) == 1
-    assert [x.name for x in nodePath] == path
-    assert nodePath[0].name == 'tname'
+    assert [x.Name for x in nodePath] == path
+    assert nodePath[0].Name == 'tname'
     path = ['tsig', ]
     nodePath = nodePath[0].findPath(path)
     assert len(nodePath) == 1
-    assert [x.name for x in nodePath] == path
-    assert nodePath[0].name == 'tsig'
+    assert [x.Name for x in nodePath] == path
+    assert nodePath[0].Name == 'tsig'
 
 
 def test_build_tree_from_rules():

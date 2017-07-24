@@ -87,7 +87,7 @@ class Arguments(object):
         self._indexed = None
 
     @property
-    def arguments(self):
+    def Arguments(self):
         return self._arguments
 
     @property
@@ -99,23 +99,23 @@ class Arguments(object):
         self._indexed = theValue
 
     def addArgument(self, theArgument):
-        self.arguments.append(theArgument)
+        self.Arguments.append(theArgument)
 
     def insertArgument(self, theArgument):
-        self.arguments.insert(0, theArgument)
+        self.Arguments.insert(0, theArgument)
 
     def reversed(self):
-        return reversed(self.arguments)
+        return reversed(self.Arguments)
 
     def getArgoFromIndex(self, theIndex):
-        return self.arguments[theIndex]
+        return self.Arguments[theIndex]
 
     def getArgoFromName(self, theName):
         return self.Indexed.get(theName, None)
 
     def index(self):
         self.Indexed = OrderedDict()
-        for arg in self.arguments:
+        for arg in self.Arguments:
             arg.Value = arg.Default
             arg.Matched = 0
             self.Indexed.update({arg.Name: arg})

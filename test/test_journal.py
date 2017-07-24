@@ -8,6 +8,6 @@ from journal import Journal
 
 def test_journal():
     journal = Journal()
-    assert len(journal.path) == 0
-    assert len(journal.argos.keys()) == 0
-    assert journal.traverseNode is None
+    assert len(journal.Path) == 0
+    assert len(journal.Argos.keys()) == 0
+    assert journal.TraverseNode is None
