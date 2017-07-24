@@ -183,7 +183,7 @@ def test_decorator_setsyntax_zero_or_more():
     assert cli.do_test_syntax_zero_or_more('myshelf') == ('myshelf', 0)
     assert cli.do_test_syntax_zero_or_more('myshelf f2=100') == ('myshelf', 100)
     # TODO still Hook Loop is not being implemented
-    # assert cli.do_test_syntax_zero_or_more('myshelf f2=100 f2=101') == ('myshelf', [100, 101])
+    assert cli.do_test_syntax_zero_or_more('myshelf f2=100 f2=101') == ('myshelf', [100, 101])
 
 
 def test_decorator_setsyntax_zero_or_more_logic_or():

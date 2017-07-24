@@ -1,7 +1,8 @@
 from functools import wraps
 import shlex
 import cliparser
-from common import _HANDLE_ERROR, Argument, Arguments, RuleHandler, getPathFromLine
+from common import _HANDLE_ERROR, Argument, Arguments, RuleHandler
+# from common import getPathFromLine
 from node import Start
 
 
@@ -234,15 +235,24 @@ def setsyntax(f):
         if len(passArgs) < RuleHandler.syntaxMinArgs(rules):
             return _HANDLE_ERROR("Error: Number of Args: Too few arguments")
 
-        path = getPathFromLine(passArgs)
-        nodePath = root.findPath(path)
-        nodes = root.findNodes()
-        for n, v in zip(nodePath, passArgs):
-            if '=' in v:
-                _, argValue = v.split('=')
+        # path = getPathFromLine(passArgs)
+        nodePath = root.findPath(passArgs)
+        # nodes = root.findNodes()
+        matchedNodes = list()
+        for nod, val in zip(nodePath, passArgs):
+            if '=' in val:
+                _, argValue = val.split('=')
             else:
-                argValue = v
-            n.argo.Value = n.argo.Type._(argValue)
+                argValue = val
+            argValue = nod.argo.Type._(argValue)
+            if nod not in matchedNodes:
+                nod.argo.Value = argValue
+            else:
+                if type(nod.argo.Value) == list:
+                    nod.argo.Value.append(argValue)
+                else:
+                    nod.argo.Value = [nod.argo.Value, argValue]
+            matchedNodes.append(nod)
         useArgs = fArgs.getIndexedValues()
 
         # ruleIndex = 0

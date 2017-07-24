@@ -30,6 +30,7 @@ def linesplit(f):
 
     return _wrapper
 
+
 def getPathFromLine(theLine):
     path = list()
     for arg in theLine:

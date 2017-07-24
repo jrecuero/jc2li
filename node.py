@@ -3,12 +3,12 @@ from common import _HANDLE_ERROR, RuleHandler
 
 class Node(object):
 
-    def __init__(self, theArgo, theParent=None):
+    def __init__(self, theArgo, theParent=None, theLabel=None):
         self._parent = theParent
         self._children = list()
         self._argo = theArgo
         self._browsable = True
-        self._label = self.name
+        self._label = theLabel if theLabel else self.name
 
     @property
     def browsable(self):
@@ -44,6 +44,10 @@ class Node(object):
     @property
     def label(self):
         return self._label
+
+    @label.setter
+    def label(self, theValue):
+        self.label = theValue
 
     @property
     def name(self):
@@ -139,7 +143,13 @@ class Node(object):
         nodePath = []
         trav = self
         for pattern in thePathPatterns:
-            trav = trav.findChildByName(pattern, theCheckDefault=True)
+            if '=' in pattern:
+                name, _ = pattern.split("=")
+                checkDefault = False
+            else:
+                checkDefault = True
+                name = pattern
+            trav = trav.findChildByName(name, theCheckDefault=checkDefault)
             if trav is None:
                 raise NameError('<{}> not found'.format(pattern))
             else:
@@ -149,22 +159,37 @@ class Node(object):
     def buildChildrenNodeFromRule(self, theRule, theArgs):
         """
         child is the Node that has to be added inmidiatly.
-        nextChild is the Node that has to be returned as the next node in the
+        endChild is the Node that has to be returned as the next node in the
         sequence. For OnlyOneRule or endDrule it does not matter, because it
         the same node, but for any other rule that includes Hook, child will
         be the first/start hook, and next child will be last/end hook.
         """
         if RuleHandler.isOnlyOneRule(theRule):
             child = Node(theArgs.getArgoFromName(RuleHandler.getArgsFromRule(theRule)), theParent=self)
-            nextChild = child
+            endChild = child
         elif RuleHandler.isEndRule(theRule):
             child = End(theParent=self)
-            nextChild = child
+            endChild = child
+        elif RuleHandler.isZeroOrOneRule(theRule):
+            child = Hook(theParent=self, theLabel="Hook-Start")
+            endChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs)
+            child.addChild(endChild)
+        elif RuleHandler.isZeroOrMoreRule(theRule) or RuleHandler.isOneOrMoreRule(theRule):
+            hookToEnd = True if RuleHandler.isZeroOrMoreRule(theRule) else False
+            endChild = Hook(theParent=self, theLabel="Hook-End")
+            child = Hook(theParent=self, theLabel="Hook-Start")
+            loopHook = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule),
+                                               theArgs,
+                                               theHookToEnd=hookToEnd)
+            loopHook._label = "Hook-Loop"
+            loopHook.addChild(endChild)
+            loopHook.addChild(child)
+            if hookToEnd:
+                child.addChild(endChild)
         else:
-            child = Hook(theParent=self)
-            nextChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs)
+            return _HANDLE_ERROR('Error:  Node: Unkown type of rule.')
         self.addChild(child)
-        return nextChild
+        return endChild
 
     def findNodes(self):
         nodes = [self, ]
@@ -188,13 +213,14 @@ class Node(object):
 
 class Hook(Node):
 
-    def __init__(self, theParent=None):
+    def __init__(self, theParent=None, theLabel=None):
         super(Hook, self).__init__(None, theParent)
         self._browsable = False
         if theParent is None:
             self._parent = []
         else:
             self._parent = [self._parent, ]
+        self._label = theLabel if theLabel else "Hook"
 
     @property
     def parent(self):
@@ -217,10 +243,6 @@ class Hook(Node):
         return None
 
     @property
-    def label(self):
-        return 'Hook'
-
-    @property
     def type(self):
         return None
 
@@ -234,13 +256,13 @@ class Hook(Node):
     def findByName(self, theName, theCheckDefault=False):
         return self.findChildByName(theName, theCheckDefault)
 
-    def buildHookFromRule(self, theRule, theArgs):
+    def buildHookFromRule(self, theRule, theArgs, theHookToEnd=True):
 
         def addGrantChild(child, grantchild):
             if child:
                 child.addChild(grantchild)
 
-        endHook = Hook()
+        endHook = Hook(theLabel="Hook-End")
         if type(theRule) in [list, dict]:
             child = None
             for rule in theRule:
@@ -254,7 +276,8 @@ class Hook(Node):
                     child.addChild(grantchild)
                     child = grantchild
             addGrantChild(child, endHook)
-            self.addChild(endHook)
+            # if theHookToEnd:
+            #     self.addChild(endHook)
             return endHook
         else:
             raise TypeError('Error: Hook : node requires a list of rules')
@@ -272,9 +295,9 @@ class Hook(Node):
 
 class Start(Hook):
 
-    @property
-    def label(self):
-        return 'Start'
+    def __init__(self, theParent=None, theLabel=None):
+        super(Start, self).__init__(None, theLabel)
+        self._label = theLabel if theLabel else "Start"
 
     def _toString(self, level):
         indent = "--" * level
@@ -283,9 +306,9 @@ class Start(Hook):
 
 class End(Hook):
 
-    @property
-    def label(self):
-        return 'End'
+    def __init__(self, theParent=None, theLabel=None):
+        super(End, self).__init__(None, theLabel)
+        self._label = theLabel if theLabel else "End"
 
     def buildHookFromRule(self, theRule, theArgs):
         raise TypeError('Error: End : can not build nodes after end')
@@ -293,6 +316,7 @@ class End(Hook):
     def _toString(self, level):
         indent = "--" * level
         return "{}End.{}\n".format(indent, self.label)
+
 
 if __name__ == '__main__':
     pass
