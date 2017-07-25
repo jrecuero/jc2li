@@ -1,74 +1,11 @@
 from functools import wraps
 import shlex
 import cliparser
-from common import _HANDLE_ERROR, Argument, Arguments, RuleHandler
-# from common import getPathFromLine
-from node import Start
-
-
-ARGOS_ATTR = '_Arguments'
-RULES_ATTR = '_Rules'
-SYNTAX_ATTR = '_Syntax'
-CMD_ATTR = '_Cmd'
-TREE_ATTR = '_Tree'
-
-
-def _getCmdAndCliArgos(f, theInst, theLine):
-    """Retrieve the command arguments stored in the command function and
-    provided by @argo and @argos decorators; and the arguments passed by
-    the user in the command line.
-    """
-    cmdArgos = getattr(f, ARGOS_ATTR, None)
-    if cmdArgos is None:
-        return f(theInst, theLine)
-    cmdArgos.index()
-    cliArgos = shlex.split(theLine)
-    return cmdArgos, cliArgos
-
-
-def _mapPassedArgosToCommandArgos(theRoot, theCmdArgos, theCliArgos):
-    """Using the command arguments and argument values passed by the user
-    in the CLI, map those using the command parsing tree in order to generate
-    all arguments to be passed to the command function.
-    """
-    # path = getPathFromLine(theCliArgos)
-    nodePath = theRoot.findPath(theCliArgos)
-    # nodes = theRoot.findNodes()
-    matchedNodes = list()
-    for nod, val in zip(nodePath, theCliArgos):
-        if '=' in val:
-            _, argValue = val.split('=')
-        else:
-            argValue = val
-        argValue = nod.Argo.Type._(argValue)
-        if nod not in matchedNodes:
-            nod.Argo.Value = argValue
-        else:
-            if type(nod.Argo.Value) == list:
-                nod.Argo.Value.append(argValue)
-            else:
-                nod.Argo.Value = [nod.Argo.Value, argValue]
-        matchedNodes.append(nod)
-    useArgs = theCmdArgos.getIndexedValues()
-    return useArgs
-
-
-def _buildCommandParsingTree(f):
-    """Build the command parsing tree using the command arguments and the
-    command syntax.
-    """
-    root = Start()
-    argos = getattr(f, ARGOS_ATTR, None)
-    if argos:
-        argos.index()
-        rules = getattr(f, RULES_ATTR, list())
-        trav = root
-        for rule in rules:
-            newTrav = trav.buildChildrenNodeFromRule(rule, argos)
-            trav = newTrav
-        setattr(f, TREE_ATTR, root)
-        return True
-    return _HANDLE_ERROR("Error: Building Command Parsing Tree: arguments not defined")
+from common import _HANDLE_ERROR, Argument, Arguments
+from common import ARGOS_ATTR, RULES_ATTR, SYNTAX_ATTR, CMD_ATTR
+# from common import getPathFromLine, RuleHandler TREE_ATTR
+# from node import Start
+from journal import Journal
 
 
 def params(*args):
@@ -239,6 +176,7 @@ def syntax(theSyntax):
         @wraps(f)
         def _wrapper(self, *args):
             return f(self, *args)
+
         cmd, rules = cliparser.processSyntax(theSyntax)
         setattr(_wrapper, SYNTAX_ATTR, theSyntax)
         setattr(_wrapper, CMD_ATTR, cmd)
@@ -253,23 +191,15 @@ def setsyntax(f):
     """Decorator that setup the command syntax
     """
 
+    journal = Journal()
+
     @wraps(f)
     def _wrapper(self, theLine):
-
-        cmdArgos, cliArgos = _getCmdAndCliArgos(f, self, theLine)
-
-        root = getattr(f, TREE_ATTR, None)
-        rules = getattr(f, RULES_ATTR, None)
-        if len(cliArgos) < RuleHandler.syntaxMinArgs(rules):
-            return _HANDLE_ERROR("Error: Number of Args: Too few arguments")
-
-        useArgs = _mapPassedArgosToCommandArgos(root, cmdArgos, cliArgos)
-        if all(map(lambda x: x is not None, useArgs)):
+        useArgs = journal.buildCommandArgumentsFromSyntax(f, self, theLine)
+        if useArgs is not None:
             return f(self, *useArgs)
-        else:
-            return _HANDLE_ERROR('Error: Mandatory argument is not present"')
 
-    _buildCommandParsingTree(f)
+    journal.buildCommandParsingTree(f)
     return _wrapper
 
 

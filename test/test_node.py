@@ -1,5 +1,5 @@
 import sys
-import pytest
+# import pytest
 
 cliPath = '.'
 sys.path.append(cliPath)
@@ -92,14 +92,12 @@ def test_build_tree_prototype():
     assert [x.Name for x in nodePath] == path
 
     path = ['tid', 'tid']
-    with pytest.raises(NameError) as err:
-        nodePath = root.findPath(path)
-    assert err.value.message == '<tid> not found'
+    nodePath = root.findPath(path)
+    assert nodePath is None
 
     path = ['tname', 'talias']
-    with pytest.raises(NameError) as err:
-        nodePath = root.findPath(path)
-    assert err.value.message == '<talias> not found'
+    nodePath = root.findPath(path)
+    assert nodePath is None
 
     path = ['tname', ]
     nodePath = root.findPath(path)

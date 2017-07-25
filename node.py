@@ -115,7 +115,7 @@ class Node(object):
         for ancestor in self.Ancestors:
             yield ancestor
 
-    def findByName(self, theName, theCheckDefault=False):
+    def findByName(self, theName, **kwargs):
         """
         When looking for nodes in a path from the arguments passed in the
         command line, required arguments don't use the argument name, just
@@ -126,13 +126,13 @@ class Node(object):
         search, for any other scenario, where just the argument name will be
         used, set that argument to False.
         """
-        if theCheckDefault and self.Default is None:
+        if kwargs.get('theCheckDefault', None) and self.Default is None:
             return self
         return self if self.Name == theName else None
 
-    def findChildByName(self, theName, theCheckDefault=False):
+    def findChildByName(self, theName, **kwargs):
         for child in self.traverseChildren():
-            foundNode = child.findByName(theName, theCheckDefault)
+            foundNode = child.findByName(theName, **kwargs)
             if foundNode is not None:
                 return foundNode
         return None
@@ -161,7 +161,7 @@ class Node(object):
                 name = pattern
             trav = trav.findChildByName(name, theCheckDefault=checkDefault)
             if trav is None:
-                raise NameError('<{}> not found'.format(pattern))
+                return _HANDLE_ERROR('<{}> not found'.format(pattern))
             else:
                 nodePath.append(trav)
         return nodePath
@@ -261,8 +261,8 @@ class Hook(Node):
     def addChild(self, theChild, theIsLoop=False):
         self._addChild(theChild, theIsLoop)
 
-    def findByName(self, theName, theCheckDefault=False):
-        return self.findChildByName(theName, theCheckDefault)
+    def findByName(self, theName, **kwargs):
+        return self.findChildByName(theName, **kwargs)
 
     def buildHookFromRule(self, theRule, theArgs, theEndHook):
 
@@ -310,6 +310,19 @@ class Loop(Hook):
     def _toString(self, level):
         indent = "--" * level
         return "{}Loop.{}\n".format(indent, self.Label)
+
+    def findChildByName(self, theName, **kwargs):
+        if kwargs.get('theMatched', None):
+            kwargs.pop('theMatched')
+            noLoop = True
+        else:
+            kwargs.setdefault('theMatched', True)
+            noLoop = False
+        for child in self.traverseChildren(theNoLoop=noLoop):
+            foundNode = child.findByName(theName, **kwargs)
+            if foundNode is not None:
+                return foundNode
+        return None
 
 
 class Start(Hook):
