@@ -9,6 +9,7 @@ class Node(object):
         self._argo = theArgo
         self._browsable = True
         self._label = theLabel if theLabel else self.Name
+        self._loops = set()
 
     @property
     def Browsable(self):
@@ -74,15 +75,17 @@ class Node(object):
             traverse = traverse.Ancestor
         return allAncestors
 
-    def _addChild(self, theChild):
+    def _addChild(self, theChild, theIsLoop=False):
         self.Children.append(theChild)
         theChild.parent = self
+        if theIsLoop:
+            self._loops.add(theChild)
 
-    def addChild(self, theChild):
+    def addChild(self, theChild, theIsLoop=False):
         if theChild.Parent:
             return _HANDLE_ERROR('Error:  Node: addChild() not allowed on child with parent.')
         else:
-            self._addChild(theChild)
+            self._addChild(theChild, theIsLoop)
 
     def childrenNames(self):
         return [child.Name for child in self.traverseChildren()]
@@ -99,8 +102,9 @@ class Node(object):
     def hasSiblings(self):
         return self.Parent and self.Parent.hasChildren()
 
-    def traverseChildren(self):
-        for child in self.Children:
+    def traverseChildren(self, theNoLoop=False):
+        children = self.Children if not theNoLoop else [x for x in self.Children if not self.isLoopChild(x)]
+        for child in children:
             yield child
 
     def traverseSiblings(self):
@@ -141,6 +145,9 @@ class Node(object):
 
     def isLoop(self):
         return False
+
+    def isLoopChild(self, theChild):
+        return theChild in self._loops
 
     def findPath(self, thePathPatterns):
         nodePath = []
@@ -184,7 +191,7 @@ class Node(object):
             endChild = Hook(theParent=self, theLabel="Hook-End")
             loopChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs, loopChild)
             loopChild.addChild(endChild)
-            loopChild.addChild(child)
+            loopChild.addChild(child, theIsLoop=True)
             if RuleHandler.isZeroOrMoreRule(theRule):
                 child.addChild(endChild)
         else:
@@ -204,7 +211,7 @@ class Node(object):
 
     def toStr(self, level):
         st = self._toString(level)
-        for child in self.traverseChildren():
+        for child in self.traverseChildren(theNoLoop=True):
             st += child.toStr(level + 1)
         return st
 
@@ -251,8 +258,8 @@ class Hook(Node):
     def Default(self):
         return None
 
-    def addChild(self, theChild):
-        self._addChild(theChild)
+    def addChild(self, theChild, theIsLoop=False):
+        self._addChild(theChild, theIsLoop)
 
     def findByName(self, theName, theCheckDefault=False):
         return self.findChildByName(theName, theCheckDefault)
