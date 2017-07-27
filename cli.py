@@ -2,6 +2,7 @@ from commands import Cli
 import os
 from importlib import import_module
 import readline
+import loggerator
 
 
 class Completer(object):
@@ -26,6 +27,9 @@ if __name__ == '__main__':
     # old_delims = readline.get_completer_delims()
     # readline.set_completer(new_completer)
     # readline.set_completer_delims(old_delims.replace('-', '_'))
+
+    logger = loggerator.getLoggerator('cli')
+    logger.info("CLI APPLICATION")
 
     directory = 'extended'
     files = [f[:-3] for f in os.listdir(directory) if ('.py' == f[-3:])]

@@ -1,9 +1,8 @@
 from base import CliBase
 from argtypes import Int, Str
-from decorators import lineSplit, linesplit
+import shlex
 from decorators import params, arguments, defaults, argo, setargos, setdictos
 from decorators import syntax, setsyntax
-# import shlex
 
 # import os
 # sys.path.append(os.path.join('/Users/jorecuer', 'Repository/winpdb'))
@@ -71,18 +70,12 @@ class Cli(CliBase):
         """This is the basic CLI command.
         \n\t(Cmd) cli arg1 arg2 arg3 ...
         """
-        print 'cli arguments: {}'.format(lineSplit(line))
+        print 'cli arguments: {}'.format(shlex.split(line))
 
     def complete_cli(self, text, line, begidx, endidx):
         # print '\ntext: {} line: {}, bidx: {}, eidx: {}'.format(text, line, begidx, endidx)
         # print '{}'.format(line[begidx:endidx])
         return ["cmd1", "cmd2"]
-
-    @linesplit
-    def do_cmd(self, line):
-        """Other command that split the line.
-        """
-        print 'cmd arguments: {}'.format(line)
 
     @params("CLI command", 0)
     def do_thename(self, name, id):
@@ -184,14 +177,4 @@ class Cli(CliBase):
 
 
 if __name__ == "__main__":
-    import sys
-    x = lineSplit(sys.argv[1])
-    print x
-
-    # import main
-    # import json
-    # main
-    # with open('data.json') as dfile:
-    #     data = json.load(dfile)
-    # for k, v in data.iteritems():
-    #     eval(v['cmd'])()
+    pass
