@@ -5,9 +5,13 @@ from node import Start
 
 
 class Journal(object):
+    """Journal class that provides a container with all matching required for
+    checking if the commmand syntax is valid and napping arguments entered in
+    the command line with command arguments.
+    """
 
     def __init__(self):
-        """
+        """Journal class initialization method.
         """
         self._path = list()
         self._argos = dict()
@@ -16,53 +20,69 @@ class Journal(object):
 
     @property
     def Root(self):
-        """
+        """Get property that returns _root attribute.
+
+        Returns:
+            Node: root node instance.
         """
         return self._root
 
     @property
     def Path(self):
-        """
+        """Get property that returns _path attribute.
+
+        Returns:
+            list: list with all nodes in a path.
         """
         return self._path
 
     @property
     def Argos(self):
-        """
+        """Get property that returns _argos attribute.
+
+        Return:
+            Arguments: Arguments instance with all command arguments.
         """
         return self._argos
 
     @property
     def TraverseNode(self):
-        """
+        """Get property that returns _traverseNode attribute.
+
+        Returns:
+            Node: Node being traversed at any point.
         """
         return self._traverseNode
 
     @TraverseNode.setter
     def TraverseNode(self, theNode):
-        """
+        """Set property that assigns a value to the _traverseNode attibute.
+
+        Args:
+            theNode (Node): new Node instance to assign as a traverse node.
         """
         self.TraverseNode = theNode
 
     def addNode(self, theNode):
-        """
+        """Method that adds a new node.
+
+        Args:
+            theNode (Node): node instance to be added.
         """
         if theNode:
             self.Path.append(theNode)
             self.Argos.update(theNode.argo)
             self.TraverseNode = theNode
 
-    def moveToChildByName(self, theNode, theName):
-        """
-        """
-        childNode = theNode.findChildByName(theName)
-        if childNode:
-            self.addNode(childNode)
-        return childNode
-
     def buildCommandParsingTree(self, theFunc):
         """Build the command parsing tree using the command arguments and the
         command syntax.
+
+        Args:
+            theFunc (function): command function.
+
+        Returns:
+            boolean: True if syntax tree is created, None else.
         """
         root = Start()
         argos = getattr(theFunc, ARGOS_ATTR, None)
@@ -77,14 +97,22 @@ class Journal(object):
             return True
         return _HANDLE_ERROR("Error: Building Command Parsing Tree: arguments not defined")
 
-    def getCmdAndCliArgos(self, theFun, theInst, theLine):
+    def getCmdAndCliArgos(self, theFunc, theInst, theLine):
         """Retrieve the command arguments stored in the command function and
         provided by @argo and @argos decorators; and the arguments passed by
         the user in the command line.
+
+        Args:
+            theFunc (function) : command function.
+            theInst (object) : instance for the command function.
+            theLine (str) : string with the command line input.
+
+            Returns:
+                tuple: pair with command arguments and cli arguments.
         """
-        cmdArgos = getattr(theFun, ARGOS_ATTR, None)
+        cmdArgos = getattr(theFunc, ARGOS_ATTR, None)
         if cmdArgos is None:
-            return theFun(theInst, theLine)
+            return theFunc(theInst, theLine)
         cmdArgos.index()
         cliArgos = shlex.split(theLine)
         return cmdArgos, cliArgos
@@ -93,6 +121,11 @@ class Journal(object):
         """Using the command arguments and argument values passed by the user
         in the CLI, map those using the command parsing tree in order to generate
         all arguments to be passed to the command function.
+
+        Args:
+            theRoot (node): node where mapping should starts.
+            theCmdArgos (list): list with command arguments.
+            theClidArgos (list): list with CLI arguments.
         """
         nodePath = theRoot.findPath(theCliArgos)
         if nodePath:
@@ -117,7 +150,15 @@ class Journal(object):
             return _HANDLE_ERROR("Error: Path for arguments {} not found.".format(theCliArgos))
 
     def buildCommandArgumentsFromSyntax(self, theFunc, theInst, theLine):
-        """
+        """Method that build arguments to be passed to the command function.
+
+        Args:
+            theFunc (function) : command function.
+            theInst (object) : instance for the command function.
+            theLine (str) : string with the command line input.
+
+        Returns:
+            list: list with argument to be passed to the command function.
         """
         cmdArgos, cliArgos = self.getCmdAndCliArgos(theFunc, theInst, theLine)
 

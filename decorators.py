@@ -3,13 +3,15 @@ import shlex
 import cliparser
 from common import _HANDLE_ERROR, Argument, Arguments
 from common import ARGOS_ATTR, RULES_ATTR, SYNTAX_ATTR, CMD_ATTR
-# from common import getPathFromLine, RuleHandler TREE_ATTR
-# from node import Start
 from journal import Journal
 
 
 def params(*args):
     """Decorator that provides a gross mode for default values.
+
+    Args:
+        args (list) : default values for every argument to be passed to the
+        command
     """
 
     def f_params(f):
@@ -32,6 +34,9 @@ def params(*args):
 
 def arguments(*args):
     """Decorator that provides a way for typing every argument.
+
+    Args:
+        args (list) : type for every argument to be passed to the command.
     """
 
     def f_arguments(f):
@@ -56,6 +61,10 @@ def arguments(*args):
 
 def defaults(*args):
     """Decorator that provide type and default value for every argument.
+
+    Args:
+        args (list) : pair with the type an the default value for every
+        argument to be passed to the command.
     """
 
     def f_defaults(f):
@@ -80,6 +89,12 @@ def defaults(*args):
 
 def argo(theName, theType, theDefault):
     """Decorator that provides to add an argument to a command.
+
+    Args:
+        theName (str) : argument name. This will be used when making any
+        reference to this argument
+        theType (object) : argument type, it should be a class name.
+        theDefault (object) : default value for the argument.
     """
 
     def f_argo(f):
@@ -98,6 +113,9 @@ def argo(theName, theType, theDefault):
 
 def argos(theArgos):
     """Decorator that provides to create a group of arguments to a command.
+
+    Args:
+        theArgos (list) : list of arguments configured as @argo.
     """
 
     def f_setargos(f):
@@ -117,6 +135,10 @@ def argos(theArgos):
 
 def setargos(f):
     """Decorator that setup all argument for a command.
+
+    Before the command function is called, it types every type argument to
+    the type provided in the @argo decorator and the default values for those
+    arguments not entered by the user in the command line.
     """
 
     @wraps(f)
@@ -139,6 +161,14 @@ def setargos(f):
 
 def setdictos(f):
     """Decorator that setup all argument as named for a command.
+
+    Before the command function is called, it types every type argument to
+    the type provided in the @argo decorator and the default values for those
+    arguments not entered by the user in the command line. Moreover it allows
+    the use of named attributes at any point when entering the command. Named
+    arguments are in the format <argument-name>=<argument-value>, where
+    <argument-name> is the value provided in the @argo decorator for the
+    "name" attribute.
     """
 
     @wraps(f)
@@ -169,6 +199,27 @@ def setdictos(f):
 
 def syntax(theSyntax):
     """Decorator that setup the command syntax
+
+    Command syntax use these rules:
+
+        - Mandatory positional argumetns only can be entered first, and it is
+        enough with the argument name.
+        - Any optional argument that can be entered or not, should be defined
+        in this way: [ <arg-name> ]?
+        - Any optional argument that can be entered or not, or multiple times
+        should be defined in this way: [ <arg-name> ]*
+        - Any mandatory argument that has to be entered, but it can be entered
+        multiple times and after any optional argument, should be defined in
+        this way: [ <arg-name> ]+
+        - <arg-name> is the argument name that is provided in teh @argo
+        decorator.
+        - Several optional arguments can be defined, usign "|" to separate
+        them. For example: [ arg1 | arg2 ]? defines taht arg1 or arg2 or no
+        argument should be entered at that point. This can be used only for
+        argument defined wit "?", "*" or "+"
+
+    Args:
+        theSyntax (str) : string with the command syntax.
     """
 
     def f_syntax(f):
@@ -189,6 +240,13 @@ def syntax(theSyntax):
 
 def setsyntax(f):
     """Decorator that setup the command syntax
+
+    Before the command function is called is called, it uses the syntax rules
+    created for the information provided by the @syntax decorator, so it will
+    assign properly all commands arguments and it will return any error with
+    any command argument entered improperly. Argument type is provided for
+    values being entered, and default values are provided for any optional
+    argument not being entered.
     """
 
     journal = Journal()
@@ -205,6 +263,9 @@ def setsyntax(f):
 
 def command(theModule):
     """Decorator that setup a function as a command.
+
+    Args:
+        theModule (class) : class name where this command is being added.
     """
 
     def f_command(f):
@@ -221,6 +282,16 @@ def command(theModule):
 
 def mode(theParent, theModule, thePrompt=None):
     """Decorator that setup a function as a mode.
+
+    This will create a new set of commands to be executed. It can have
+    a new prompt and we will need a way to exit and come back to the parent
+    set of commands.
+
+    Args:
+        theParent (class) : class name under where mode will be added.
+        theModule (class) : class name for the mode
+        thePrompt (str) : string to be used as a new prompt.
+
     """
 
     if thePrompt is None:

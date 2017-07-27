@@ -1,9 +1,19 @@
 import pyparsing as pp
 
 
-def procTokens(tokens, withEnd=True):
+def procTokens(theTokens, thWithEnd=True):
+    """Function that process given tokens.
+
+    Args:
+        theTokens (list): list of tokens to parse.
+        theWithEnd (boolean): True if last rule has to be added at the end,
+        False else.
+
+    Returns:
+        list: list of dictionaries with all rules.
+    """
     rules, counter = [], 0
-    for tok in tokens:
+    for tok in theTokens:
         toktype = type(tok)
         if tok == '|':
             counter = 0
@@ -23,36 +33,31 @@ def procTokens(tokens, withEnd=True):
         else:
             print 'Invalid Syntax'
         counter += 1
-    if withEnd:
+    if thWithEnd:
         rules.append({'counter': counter, 'type': '0', 'args': None})
     return rules
 
 
-def procSyntax(tokens):
-    command = tokens[0]
-    rules = procTokens(tokens[1:])
+def procSyntax(theTokens):
+    """Function that process a syntas for the given tokens.
+
+    Args:
+        theTokens (list): list of tokens to parse.
+
+    Returns:
+        tuple: pair with the commadn and a list of dictionaries with all rules.
+    """
+    command = theTokens[0]
+    rules = procTokens(theTokens[1:])
     return command, rules
 
 
-def procRules(cmd, rules, line):
-    index = 0
-    for k, v in rules.iteritems():
-        if v == '1':
-            pass
-        elif v == '?':
-            pass
-        elif v == '*':
-            pass
-        elif v == '+':
-            pass
-        elif v == '0':
-            pass
-        else:
-            pass
-        index += 1
-
-
 def getSyntax():
+    """Function that return the syntax to be used for processing.
+
+    Returns:
+        object: syntax used for parsing.
+    """
     command = pp.Word(pp.alphanums).setName('command')
     posarg = pp.Word(pp.alphanums).setName('pos-arg')
 
@@ -79,6 +84,8 @@ def getSyntax():
 
 
 def processSyntax(syntax):
+    """
+    """
     toks = getSyntax().parseString(syntax)
     cmd, rules = procSyntax(toks)
     return cmd, rules

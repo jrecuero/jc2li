@@ -5,6 +5,8 @@ import readline
 
 
 class Completer(object):
+    """Completer Class provides a completer for a command.
+    """
 
     def __init__(self, old):
         self.old = old
