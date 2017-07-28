@@ -12,14 +12,14 @@ warning, errors and other information from applications.
 
 __docformat__ = 'restructuredtext en'
 
-###############################################################################
-##  _                            _
-## (_)_ __ ___  _ __   ___  _ __| |_ ___
-## | | '_ ` _ \| '_ \ / _ \| '__| __/ __|
-## | | | | | | | |_) | (_) | |  | |_\__ \
-## |_|_| |_| |_| .__/ \___/|_|   \__|___/
-##             |_|
-###############################################################################
+#------------------------------------------------------------------------------
+#  _                            _
+# (_)_ __ ___  _ __   ___  _ __| |_ ___
+# | | '_ ` _ \| '_ \ / _ \| '__| __/ __|
+# | | | | | | | |_) | (_) | |  | |_\__ \
+# |_|_| |_| |_| .__/ \___/|_|   \__|___/
+#             |_|
+#------------------------------------------------------------------------------
 #
 # import std python modules
 #
@@ -30,14 +30,14 @@ import logging
 #
 
 
-###############################################################################
-##
-##   ___ ___  _ __  ___| |_ __ _ _ __ | |_ ___
-##  / __/ _ \| '_ \/ __| __/ _` | '_ \| __/ __|
-## | (_| (_) | | | \__ \ || (_| | | | | |_\__ \
-##  \___\___/|_| |_|___/\__\__,_|_| |_|\__|___/
-##
-###############################################################################
+#------------------------------------------------------------------------------
+#
+#   ___ ___  _ __  ___| |_ __ _ _ __ | |_ ___
+#  / __/ _ \| '_ \/ __| __/ _` | '_ \| __/ __|
+# | (_| (_) | | | \__ \ || (_| | | | | |_\__ \
+#  \___\___/|_| |_|___/\__\__,_|_| |_|\__|___/
+#
+#------------------------------------------------------------------------------
 #
 
 COL_RESET       = "\x1b[0m"
@@ -257,14 +257,14 @@ _loggerDB = {}
 """
 
 
-###############################################################################
-##            _                     _   _
-##  ___ _   _| |__  _ __ ___  _   _| |_(_)_ __   ___  ___
-## / __| | | | '_ \| '__/ _ \| | | | __| | '_ \ / _ \/ __|
-## \__ \ |_| | |_) | | | (_) | |_| | |_| | | | |  __/\__ \
-## |___/\__,_|_.__/|_|  \___/ \__,_|\__|_|_| |_|\___||___/
-##
-###############################################################################
+#------------------------------------------------------------------------------
+#            _                     _   _
+#  ___ _   _| |__  _ __ ___  _   _| |_(_)_ __   ___  ___
+# / __| | | | '_ \| '__/ _ \| | | | __| | '_ \ / _ \/ __|
+# \__ \ |_| | |_) | | | (_) | |_| | |_| | | | |  __/\__ \
+# |___/\__,_|_.__/|_|  \___/ \__,_|\__|_|_| |_|\___||___/
+#
+#------------------------------------------------------------------------------
 #
 
 # ===========================================================================
@@ -284,19 +284,19 @@ def getLoggerator(name, color=(BOLD_ON + FG_BLACK)):
     :return: Create a new loggerator instance if there is not anyone for the
         given component, or return the one previously created.
     """
-    if not name in _loggerDB:
+    if name not in _loggerDB:
         _loggerDB[name] = Loggerator(name, color)
     return _loggerDB[name]
 
 
-###############################################################################
-##       _                     _       __ _       _ _   _
-##   ___| | __ _ ___ ___    __| | ___ / _(_)_ __ (_) |_(_) ___  _ __  ___
-##  / __| |/ _` / __/ __|  / _` |/ _ \ |_| | '_ \| | __| |/ _ \| '_ \/ __|
-## | (__| | (_| \__ \__ \ | (_| |  __/  _| | | | | | |_| | (_) | | | \__ \
-##  \___|_|\__,_|___/___/  \__,_|\___|_| |_|_| |_|_|\__|_|\___/|_| |_|___/
-##
-###############################################################################
+#------------------------------------------------------------------------------
+#       _                     _       __ _       _ _   _
+#   ___| | __ _ ___ ___    __| | ___ / _(_)_ __ (_) |_(_) ___  _ __  ___
+#  / __| |/ _` / __/ __|  / _` |/ _ \ |_| | '_ \| | __| |/ _ \| '_ \/ __|
+# | (__| | (_| \__ \__ \ | (_| |  __/  _| | | | | | |_| | (_) | | | \__ \
+#  \___|_|\__,_|___/___/  \__,_|\___|_| |_|_| |_|_|\__|_|\___/|_| |_|___/
+#
+#------------------------------------------------------------------------------
 #
 
 #
@@ -401,6 +401,33 @@ class Loggerator(object):
         return self.loggerator
 
     # =========================================================================
+    def _extendedLog(self, message, level, **kwargs):
+        """Debug log.
+
+        It logs a debug message.
+
+        :type message: string
+        :param message: Debug message to be logged.
+
+        :type args: list
+        :param args: List of parameters.
+
+        :type kwargs: dict
+        :param kwargs: Dictionary of parameters
+        """
+        color = kwargs.get('color', None)
+        mode = kwargs.pop('mode', 'FG')
+        extended = kwargs.pop('extended', None)
+        if extended:
+            useColor = extended
+        elif color:
+            useColor = ((mode, color), )
+        else:
+            useColor = self.defaultColor[level]
+        kwargs['color'] = useColor
+        self._log(message, level, **kwargs)
+
+    # =========================================================================
     def debug(self, message, color=None, mode='FG', *args, **kwargs):
         """Debug log.
 
@@ -418,7 +445,7 @@ class Loggerator(object):
         :type kwargs: dict
         :param kwargs: Dictionary of parameters
         """
-        self._log(message, 'debug', ((mode, color), ) if color  else self.defaultColor['debug'], *args, **kwargs)
+        self._extendedLog(message, 'debug', color=color, mode=mode, *args, **kwargs)
 
     # =========================================================================
     def info(self, message, color=None, mode='FG', *args, **kwargs):
@@ -438,7 +465,7 @@ class Loggerator(object):
         :type kwargs: dict
         :param kwargs: Dictionary of parameters
         """
-        self._log(message, 'info', ((mode, color), ) if color else self.defaultColor['info'], *args, **kwargs)
+        self._extendedLog(message, 'info', color=color, mode=mode, *args, **kwargs)
 
     # =========================================================================
     def trace(self, message, color=None, mode='FG', *args, **kwargs):
@@ -458,7 +485,7 @@ class Loggerator(object):
         :type kwargs: dict
         :param kwargs: Dictionary of parameters
         """
-        self._log(message, ((mode, color), ) if color else self.defaultColor['trace'], *args, **kwargs)
+        self._extendedLog(message, 'trace', color=color, mode=mode, *args, **kwargs)
 
     # =========================================================================
     def warning(self, message, color=None, mode='FG', *args, **kwargs):
@@ -478,7 +505,7 @@ class Loggerator(object):
         :type kwargs: dict
         :param kwargs: Dictionary of parameters
         """
-        self._log(message, 'warning',  ((mode, color), ) if color else self.defaultColor['warning'], *args, **kwargs)
+        self._extendedLog(message, 'warning', color=color, mode=mode, *args, **kwargs)
 
     # =========================================================================
     def error(self, message, color=None, mode='FG', *args, **kwargs):
@@ -498,17 +525,17 @@ class Loggerator(object):
         :type kwargs: dict
         :param kwargs: Dictionary of parameters
         """
-        self._log(message, 'error', ((mode, color), ) if color else self.defaultColor['error'], *args, **kwargs)
+        self._extendedLog(message, 'error', color=color, mode=mode, *args, **kwargs)
 
 
-###############################################################################
-##                  _
-##  _ __ ___   __ _(_)_ __
-## | '_ ` _ \ / _` | | '_ \
-## | | | | | | (_| | | | | |
-## |_| |_| |_|\__,_|_|_| |_|
-##
-###############################################################################
+#------------------------------------------------------------------------------
+#                  _
+#  _ __ ___   __ _(_)_ __
+# | '_ ` _ \ / _` | | '_ \
+# | | | | | | (_| | | | | |
+# |_| |_| |_|\__,_|_|_| |_|
+#
+#------------------------------------------------------------------------------
 #
 
 if __name__ == "__main__":

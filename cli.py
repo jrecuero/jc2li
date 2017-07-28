@@ -29,7 +29,8 @@ if __name__ == '__main__':
     # readline.set_completer_delims(old_delims.replace('-', '_'))
 
     logger = loggerator.getLoggerator('cli')
-    logger.info("CLI APPLICATION")
+    logger.info("CLI APPLICATION", extended=(('FG', 'BLUE'), ('BG', 'YELLOW'), ))
+    logger.info("---------------", "RED")
 
     directory = 'extended'
     files = [f[:-3] for f in os.listdir(directory) if ('.py' == f[-3:])]
