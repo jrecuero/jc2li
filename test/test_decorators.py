@@ -1,4 +1,5 @@
 import sys
+import pytest
 
 cliPath = '.'
 sys.path.append(cliPath)
@@ -7,6 +8,7 @@ from base import CliBase
 from decorators import params, arguments, defaults, argo, setargos, setdictos, syntax, setsyntax
 from decorators import command, mode
 from argtypes import Int, Str
+from clierror import CliException
 
 
 class CliTestModeClass(CliBase):
@@ -145,7 +147,9 @@ def test_decorator_params():
 def test_decorator_arguments():
     cli = CliTestClass()
     assert cli.do_test_arguments('100 "custom field"') == (100, 'custom field')
-    assert cli.do_test_arguments('cien "custom field"') is None
+    with pytest.raises(CliException) as ex:
+        cli.do_test_arguments('cien "custom field"')
+    assert ex.value.message == "Wrong type of argument for command: test_arguments"
 
 
 def test_decorator_defaults():
@@ -184,7 +188,9 @@ def test_decorator_setsyntax_zero_or_one_logic_or():
     assert cli.do_test_setsyntax_zero_or_one_logic_or('50') == (50, 'field 2', 1)
     assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f2="custom f2"') == (101, 'custom f2', 1)
     assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f3=100') == (101, 'field 2', 100)
-    assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f2="garbage" f3=100') is None
+    with pytest.raises(CliException) as ex:
+        cli.do_test_setsyntax_zero_or_one_logic_or('101 f2="garbage" f3=100')
+    assert ex.value.message == '<f3=100> not found'
 
 
 def test_decorator_setsyntax_zero_or_more():
@@ -215,7 +221,9 @@ def test_decorator_setsyntax_zero_or_more_logic_or():
 
 def test_decorator_setsyntax_one_or_more():
     cli = CliTestClass()
-    assert cli.do_test_syntax_one_or_more('myshelf') is None
+    with pytest.raises(CliException) as ex:
+        cli.do_test_syntax_one_or_more('myshelf')
+    assert ex.value.message == 'Number of Args: Too few arguments'
     assert cli.do_test_syntax_one_or_more('myshelf f2=100') == ('myshelf', 100)
     assert cli.do_test_syntax_one_or_more('myshelf f2=100 f2=101') == ('myshelf', [100, 101])
 
@@ -223,7 +231,9 @@ def test_decorator_setsyntax_one_or_more():
 def test_decorator_setsyntax_one_or_more_logic_or():
     pass
     cli = CliTestClass()
-    assert cli.do_test_syntax_one_or_more_logic_or('myshelf') is None
+    with pytest.raises(CliException) as ex:
+        cli.do_test_syntax_one_or_more_logic_or('myshelf')
+    assert ex.value.message == 'Number of Args: Too few arguments'
     assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100') == ('myshelf', 100, 1)
     assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100 f2=101') == ('myshelf', [100, 101], 1)
     assert cli.do_test_syntax_one_or_more_logic_or('myshelf f3=300') == ('myshelf', 0, 300)
@@ -257,8 +267,12 @@ def test_decorator_setsyntax_multiple_arguments():
             f2="?f2" f3="+f3" f4="*f4" f5="?f5"') == (100, '?f2', '+f3', '*f4', '?f5')
     assert cli.do_test_syntax_multiple_arguments('100 \
             f2="?f2" f3="+f3" f3="++f3" f4="*f4" f4="**f4" f5="?f5"') == (100, '?f2', ['+f3', '++f3'], ['*f4', '**f4'], '?f5')
-    assert cli.do_test_syntax_multiple_arguments('100 f2="?f2" f4="*f4" f5="?f5"')  is None
-    assert cli.do_test_syntax_multiple_arguments('100 f3="+f3" f2="?f2" f4="*f4" f5="?f5"')  is None
+    with pytest.raises(CliException) as ex:
+        cli.do_test_syntax_multiple_arguments('100 f2="?f2" f4="*f4" f5="?f5"')
+    assert ex.value.message == '<f4=*f4> not found'
+    with pytest.raises(CliException) as ex:
+        cli.do_test_syntax_multiple_arguments('100 f3="+f3" f2="?f2" f4="*f4" f5="?f5"')
+    assert ex.value.message == '<f2=?f2> not found'
 
 
 def test_decorator_command():

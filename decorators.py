@@ -1,9 +1,12 @@
 from functools import wraps
 import shlex
 import cliparser
-from common import _HANDLE_ERROR, Argument, Arguments
+from common import Argument, Arguments
 from common import ARGOS_ATTR, RULES_ATTR, SYNTAX_ATTR, CMD_ATTR
 from journal import Journal
+from clierror import CliException
+
+MODULE = 'DECORATOR'
 
 
 def params(*args):
@@ -24,8 +27,10 @@ def params(*args):
                 for i, v in enumerate(cliArgos):
                     useArgs[i] = v
                 return f(self, useArgs[0], useArgs[1])
-            except IndexError:
-                _HANDLE_ERROR('too many arguments for command')
+            except IndexError as ex:
+                raise CliException(MODULE,
+                                   'Too many arguments for command: {}'.format(f.func_name[3:]),
+                                   ex.message)
 
         return _wrapper
 
@@ -45,14 +50,18 @@ def arguments(*args):
         def _wrapper(self, theLine):
             cliArgos = shlex.split(theLine)
             if len(args) != len(cliArgos):
-                _HANDLE_ERROR('Wrong number of arguments')
+                raise CliException(MODULE, 'Wrong number of arguments')
             else:
                 try:
                     return f(self, *[x._(y) for x, y in zip(args, cliArgos)])
-                except ValueError:
-                    _HANDLE_ERROR('Wrong type of argument')
-                except OverflowError:
-                    _HANDLE_ERROR('Overflow value for argument')
+                except ValueError as ex:
+                    raise CliException(MODULE,
+                                       'Wrong type of argument for command: {}'.format(f.func_name[3:]),
+                                       ex.message)
+                except OverflowError as ex:
+                    raise CliException(MODULE,
+                                       'Overflow value for argument for command: {}'.format(f.func_name[3:]),
+                                       ex.message)
 
         return _wrapper
 
@@ -73,14 +82,19 @@ def defaults(*args):
         def _wrapper(self, theLine):
             cliArgos = shlex.split(theLine)
             if len(args) < len(cliArgos):
-                return _HANDLE_ERROR('Wrong number of arguments')
+                raise CliException(MODULE,
+                                   'Wrong number of arguments for command: {}'.format(f.func_name[3:]))
             else:
                 try:
                     return f(self, *[x._(z) if z is not None else y for (x, y), z in map(None, args, cliArgos)])
-                except ValueError:
-                    _HANDLE_ERROR('Wrong type of argument')
-                except OverflowError:
-                    _HANDLE_ERROR('Overflow value for argument')
+                except ValueError as ex:
+                    raise CliException(MODULE,
+                                       'Wrong type of argument for command: {}'.format(f.func_name[3:]),
+                                       ex.message)
+                except OverflowError as ex:
+                    raise CliException(MODULE,
+                                       'Overflow value for argument for command: {}'.format(f.func_name[3:]),
+                                       ex.message)
 
         return _wrapper
 
@@ -154,7 +168,8 @@ def setargos(f):
             if all(map(lambda x: x is not None, useArgs)):
                 return f(self, *useArgs)
             else:
-                return _HANDLE_ERROR('Mandatory argument is not present')
+                raise CliException(MODULE,
+                                   'Mandatory argument is not present  for command: {}'.format(f.func_name[3:]))
 
     return _wrapper
 
@@ -192,7 +207,8 @@ def setdictos(f):
             if all(map(lambda x: x is not None, useArgs)):
                 return f(self, *useArgs)
             else:
-                return _HANDLE_ERROR('Mandatory argument is not present"')
+                raise CliException(MODULE,
+                                   'Mandatory argyments is not present for command: {}'.format(f.func_name[3:]))
 
     return _wrapper
 

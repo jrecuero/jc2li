@@ -1,4 +1,7 @@
-from common import _HANDLE_ERROR, RuleHandler
+from common import RuleHandler
+from clierror import CliException
+
+MODULE = 'NODE'
 
 
 class Node(object):
@@ -47,7 +50,7 @@ class Node(object):
         Returns:
             list: list with all parents for the node.
         """
-        return _HANDLE_ERROR('Error:  Node: parents() operation not allowed.')
+        raise CliException(MODULE, 'parents() operation not allowed.')
 
     @Parent.setter
     def Parent(self, theParent):
@@ -182,7 +185,7 @@ class Node(object):
             None
         """
         if theChild.Parent:
-            return _HANDLE_ERROR('Error:  Node: addChild() not allowed on child with parent.')
+            raise CliException(MODULE, 'addChild() not allowed on child with parent.')
         else:
             self._addChild(theChild, theIsLoop)
 
@@ -349,7 +352,7 @@ class Node(object):
                 name = pattern
             trav = trav.findChildByName(name, theCheckDefault=checkDefault)
             if trav is None:
-                return _HANDLE_ERROR('<{}> not found'.format(pattern))
+                raise CliException(MODULE, '<{}> not found'.format(pattern))
             else:
                 nodePath.append(trav)
         return nodePath
@@ -392,7 +395,8 @@ class Node(object):
             if RuleHandler.isZeroOrMoreRule(theRule):
                 child.addChild(endChild)
         else:
-            return _HANDLE_ERROR('Error:  Node: Unkown type of rule.')
+            raise CliException(MODULE, 'Unkown type of rule.')
+
         self.addChild(child)
         return endChild
 

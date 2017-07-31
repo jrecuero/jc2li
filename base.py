@@ -1,6 +1,10 @@
 import os
 from cmd import Cmd
 import shlex
+import loggerator
+
+
+logger = loggerator.getLoggerator('base')
 
 
 class CliBase(Cmd, object):
@@ -103,6 +107,12 @@ class CliBase(Cmd, object):
         else:
             newline = line
         return super(CliBase, self).precmd(newline)
+
+    def onecmd(self, str):
+        try:
+            return super(CliBase, self).onecmd(str)
+        except Exception as ex:
+            logger.display(ex.message)
 
     def printHelp(self, text, line, help):
         """Displays help.

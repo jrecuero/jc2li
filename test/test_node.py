@@ -1,5 +1,5 @@
 import sys
-# import pytest
+import pytest
 
 cliPath = '.'
 sys.path.append(cliPath)
@@ -7,6 +7,7 @@ sys.path.append(cliPath)
 from node import Node, Hook, Start, End
 from common import Argument, Arguments
 from argtypes import Int, Str
+from clierror import CliException
 
 
 def test_node():
@@ -92,12 +93,14 @@ def test_build_tree_prototype():
     assert [x.Name for x in nodePath] == path
 
     path = ['tid', 'tid']
-    nodePath = root.findPath(path)
-    assert nodePath is None
+    with pytest.raises(CliException) as ex:
+        nodePath = root.findPath(path)
+    assert ex.value.message == '<tid> not found'
 
     path = ['tname', 'talias']
-    nodePath = root.findPath(path)
-    assert nodePath is None
+    with pytest.raises(CliException) as ex:
+        nodePath = root.findPath(path)
+    assert ex.value.message == '<talias> not found'
 
     path = ['tname', ]
     nodePath = root.findPath(path)

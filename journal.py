@@ -1,7 +1,10 @@
 import shlex
-from common import _HANDLE_ERROR, RuleHandler
+from common import RuleHandler
 from common import ARGOS_ATTR, RULES_ATTR, TREE_ATTR
 from node import Start
+from clierror import CliException
+
+MODULE = 'JOURNAL'
 
 
 class Journal(object):
@@ -95,7 +98,7 @@ class Journal(object):
                 trav = newTrav
             setattr(theFunc, TREE_ATTR, root)
             return True
-        return _HANDLE_ERROR("Error: Building Command Parsing Tree: arguments not defined")
+        raise CliException(MODULE, "Building Command Parsing Tree: arguments not defined")
 
     def getCmdAndCliArgos(self, theFunc, theInst, theLine):
         """Retrieve the command arguments stored in the command function and
@@ -147,7 +150,7 @@ class Journal(object):
             useArgs = theCmdArgos.getIndexedValues()
             return useArgs
         else:
-            return _HANDLE_ERROR("Error: Path for arguments {} not found.".format(theCliArgos))
+            raise CliException(MODULE, "Path for arguments {} not found.".format(theCliArgos))
 
     def buildCommandArgumentsFromSyntax(self, theFunc, theInst, theLine):
         """Method that build arguments to be passed to the command function.
@@ -165,13 +168,13 @@ class Journal(object):
         root = getattr(theFunc, TREE_ATTR, None)
         rules = getattr(theFunc, RULES_ATTR, None)
         if len(cliArgos) < RuleHandler.syntaxMinArgs(rules):
-            return _HANDLE_ERROR("Error: Number of Args: Too few arguments")
+            raise CliException(MODULE, "Number of Args: Too few arguments")
 
         useArgs = self.mapPassedArgosToCommandArgos(root, cmdArgos, cliArgos)
         if useArgs is None:
-            return _HANDLE_ERROR('Error: Incorrect arguments"')
+            raise CliException(MODULE, 'Incorrect arguments"')
         if not all(map(lambda x: x is not None, useArgs)):
-            return _HANDLE_ERROR('Error: Mandatory argument is not present"')
+            raise CliException(MODULE, 'Mandatory argument is not present"')
 
         return useArgs
 

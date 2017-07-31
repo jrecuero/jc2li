@@ -23,7 +23,9 @@ __docformat__ = 'restructuredtext en'
 #
 # import std python modules
 #
+import sys
 import logging
+import logging.config
 
 #
 # import dbase python modules
@@ -313,7 +315,7 @@ class Loggerator(object):
     """
 
     # =========================================================================
-    def __init__(self, name, color):
+    def __init__(self, name, color, out=sys.stdout, fname='cmd.log'):
         """Loggerator class constructor.
 
         Create a Loggerator instance for the component with the given name and
@@ -330,15 +332,27 @@ class Loggerator(object):
         :type color: string
         :param color: String containing the color to display the component name
             in all logs.
+
+        :type out: stdout
+        :param out: standard output
+
+        :type fname: string
+        :param fname: filename for the log file
         """
         self.loggerator = logging.getLogger(name[0:15].center(16, '*'))
         self.loggerator.setLevel(logging.DEBUG)
-        defaultHandler = logging.StreamHandler()
+
         formatString = '%(asctime)s ' + color + '%(name)-16s ' +\
                        COL_RESET + '[%(levelname)-8s] %(message)s'
         formatter = logging.Formatter(formatString)
-        defaultHandler.setFormatter(formatter)
-        self.loggerator.addHandler(defaultHandler)
+
+        fileHandler = logging.FileHandler(fname)
+        fileHandler.setFormatter(formatter)
+        self.loggerator.addHandler(fileHandler)
+
+        # consoleHandler = logging.StreamHandler()
+        # consoleHandler.setFormatter(formatter)
+        # self.loggerator.addHandler(consoleHandler)
 
         self.defaultColor = {}
         self.defaultColor['debug']   = (('FG', 'GREEN'), )
@@ -346,6 +360,20 @@ class Loggerator(object):
         self.defaultColor['trace']   = (('FG', 'MAGENTA'), )
         self.defaultColor['warning'] = (('FG', 'RED'), )
         self.defaultColor['error']   = (('FG', 'WHITE'), ('BG', 'RED'))
+        self.out = out
+
+    # =========================================================================
+    def display(self, message):
+        """Display a message in the default standard output provided.
+
+        Args:
+            message (str) : string with the message to be displayed.
+
+        Returns:
+            None
+        """
+        self.out.write(message)
+        self.out.write('\n')
 
     # =========================================================================
     def _setColor(self, color):
