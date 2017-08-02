@@ -137,11 +137,16 @@ def localmode(self, name, id):
     return 'local cmd mode: {}'.format(name), id
 
 
-def test_decorator_params():
+@pytest.mark.parametrize("theInput, theExpected",
+                         (('', ('field 1', 'field 2')),
+                          ('"f1"', ('f1', 'field 2')),
+                          ('"f1" "f2"', ('f1', 'f2'))))
+def test_decorator_params(theInput, theExpected):
     cli = CliTestClass()
-    assert cli.do_test_params('') == ('field 1', 'field 2')
-    assert cli.do_test_params('"custom f1"') == ('custom f1', 'field 2')
-    assert cli.do_test_params('"custom f1" "custom f2"') == ('custom f1', 'custom f2')
+    assert cli.do_test_params(theInput) == theExpected
+    # assert cli.do_test_params('') == ('field 1', 'field 2')
+    # assert cli.do_test_params('"custom f1"') == ('custom f1', 'field 2')
+    # assert cli.do_test_params('"custom f1" "custom f2"') == ('custom f1', 'custom f2')
 
 
 def test_decorator_arguments():
@@ -243,13 +248,19 @@ def test_decorator_setsyntax_one_or_more_logic_or():
             f2=100 f3=300 f2=101 f3=301') == ('myshelf', [100, 101], [300, 301])
 
 
-def test_decorator_setsyntax_zero_or_one_with_inner_rule():
+@pytest.mark.parametrize("theInput, theExpected",
+                         (('50', (50, 'field 2', 'key', 'id', 'name')),
+                          ('50 f2="f2"', (50, 'f2', 'key', 'id', 'name')),
+                          ('50 f3="f3"', (50, 'field 2', 'f3', 'id', 'name')),
+                          ('50 f3="f3" f4="f4"', (50, 'field 2', 'f3', 'f4', 'name'))))
+def test_decorator_setsyntax_zero_or_one_with_inner_rule(theInput, theExpected):
     cli = CliTestClass()
-    assert cli.do_test_syntax_zero_or_one_with_inner_rule('50') == (50, 'field 2', 'key', 'id', 'name')
-    assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 f2="f2"') == (50, 'f2', 'key', 'id', 'name')
-    assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 f3="f3"') == (50, 'field 2', 'f3', 'id', 'name')
-    assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 \
-            f3="f3" f4="f4"') == (50, 'field 2', 'f3', 'f4', 'name')
+    assert cli.do_test_syntax_zero_or_one_with_inner_rule(theInput) == theExpected
+    # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50') == (50, 'field 2', 'key', 'id', 'name')
+    # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 f2="f2"') == (50, 'f2', 'key', 'id', 'name')
+    # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 f3="f3"') == (50, 'field 2', 'f3', 'id', 'name')
+    # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 \
+    #         f3="f3" f4="f4"') == (50, 'field 2', 'f3', 'f4', 'name')
 
 
 def test_decorator_setsyntax_multiple_arguments():
