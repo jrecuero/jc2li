@@ -66,16 +66,27 @@ class Room(object):
 
 class Cli(CliBase):
 
+    def setupCmds(self):
+        """Register all commands to be used by the command line interface.
+
+        Returns:
+            None
+        """
+        super(Cli, self).setupCmds()
+        self.addCmd('cli', self.do_cli)
+        self.addCmd('the-name', self.do_thename)
+        self.addCmd('command', self.do_command)
+        self.addCmd('card', self.do_card)
+        self.addCmd('dict-card', self.do_dictocard)
+        self.addCmd('enter', self.do_enter)
+        self.addCmd('node', self.do_node)
+        self.addCmd('tenant', self.do_tenant)
+
     def do_cli(self, line):
         """This is the basic CLI command.
         \n\t(Cmd) cli arg1 arg2 arg3 ...
         """
         print 'cli arguments: {}'.format(shlex.split(line))
-
-    def complete_cli(self, text, line, begidx, endidx):
-        # print '\ntext: {} line: {}, bidx: {}, eidx: {}'.format(text, line, begidx, endidx)
-        # print '{}'.format(line[begidx:endidx])
-        return ["cmd1", "cmd2"]
 
     @params("CLI command", 0)
     def do_thename(self, name, id):
@@ -83,13 +94,13 @@ class Cli(CliBase):
         """
         print 'You entered name: {} and id: {}'.format(name, id)
 
-    @arguments(int, str, Age)
+    @arguments(Int, Str, Age)
     def do_command(self, id, name, age):
         """Command with typed arguments.
         """
         print 'id: {}, name: {}, age: {}'.format(id, name, age)
 
-    @defaults((int, 0), (str, 'no name'), (Age, 30))
+    @defaults((Int, 0), (Str, 'no name'), (Age, 30))
     def do_card(self, id, name, age):
         """Command with default typed arguments.
         """
@@ -145,34 +156,22 @@ class Cli(CliBase):
         """
         print 'Enter in {} at {}'.format(place, id)
 
-    def complete_enter(self, text, line, begidx, endidx):
-        processArgoNo, argotype = self.getCompleteArgs(text, line, self.do_enter)
-        if processArgoNo == 1:
-            self.printHelp(text, line, argotype.help(text))
-            return argotype.complete(text)
-        elif processArgoNo == 2:
-            self.printHelp(text, line, argotype.help(text))
-            return argotype.complete(text)
-        else:
-            print '\nEnter <CR>'
-            print self.prompt + line,
-
     @setsyntax
     @syntax("node name [nid|nsig]?")
     @argo('name', Str, None)
     @argo('nid', Int, 0)
-    @argo('nsig', Int, 'none')
+    @argo('nsig', Int, 0)
     def do_node(self, name, nid, nsig):
         print name, nid, nsig
 
     @syntax("tenant tname [tid]?")
     @setdictos
     @argo('tname', Str, None)
-    @argo('tid', Int, None)
+    @argo('tid', Int, 0)
     def do_tenant(self, tname, tid):
-        print self.do_tenant._syntax
-        print self.do_tenant._cmd
-        print self.do_tenant._rules
+        print self.do_tenant._Syntax
+        print self.do_tenant._Cmd
+        print self.do_tenant._Rules
         print tname, tid
 
 

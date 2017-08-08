@@ -54,7 +54,7 @@ class Node(object):
 
     @Parent.setter
     def Parent(self, theParent):
-        """Set property taht set a new parent for the node.
+        """Set property that sets a new parent for the node.
 
         Args:
             theParent (Node): node instance to use a a new parent.
@@ -480,7 +480,7 @@ class Hook(Node):
 
     @Parent.setter
     def Parent(self, theParent):
-        """Set property taht set a new parent for the node.
+        """Set property that sets a new parent for the node.
 
         Args:
             theParent (Node): node instance to use a a new parent.

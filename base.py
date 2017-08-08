@@ -1,16 +1,139 @@
+from __future__ import unicode_literals
+import sys
 import os
-from cmd import Cmd
-import shlex
+# import shlex
 import loggerator
+from clierror import CliException
+from prompt_toolkit import prompt
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+# from prompt_toolkit.completion import Completer, Completion
+# from prompt_toolkit.validation import Validator, ValidationError
+from prompt_toolkit.token import Token
+from prompt_toolkit.styles import style_from_dict
+
+MODULE = 'BASE'
 
 
 logger = loggerator.getLoggerator('base')
 
 
-class CliBase(Cmd, object):
+class CliBase(object):
     """CliBase class is the base class for any class that will implement
     commands to be used by the command line interface.
     """
+
+    COMMANDS = {}
+
+    TOOLBAR_STYLE = style_from_dict({Token.Toolbar: '#ffffff italic bg:#007777', })
+
+    def __init__(self):
+        """CliBase class initialization method.
+        """
+        self._cmd = None
+        self._lastCmd = None
+        self.setupCmds()
+
+    @property
+    def Cmd(self):
+        """Get property that returns _cmd attribute.
+
+        Returns:
+            str : String with the command entered.
+        """
+        return self._cmd
+
+    @Cmd.setter
+    def Cmd(self, theCmd):
+        """Set property that sets a new value for _cmd attribute.
+
+        Args:
+            theCmd (str) : String with new command entered.
+        """
+        self._cmd = theCmd
+
+    @property
+    def LastCmd(self):
+        """Get property that returns _lastCmd attribute.
+
+        Returns:
+            str : String with the last command entered.
+        """
+        return self._lastCmd
+
+    @LastCmd.setter
+    def LastCmd(self, theCmd):
+        """Set property that sets a new value for _lastCmd attribute.
+
+        Args:
+            theCmd (str) : String with the new last command.
+        """
+        self._lastCmd = theCmd
+
+    @classmethod
+    def Cmds(cls):
+        """Get property that returns keys for _cmdDict attribute
+
+        Returns:
+            list : List with all command labels.
+        """
+        return cls.COMMANDS.keys()
+
+    @classmethod
+    def getCmdCb(cls, theCmd):
+        """Get the command callback for the given command label.
+
+        Args:
+            theCmd (str) : String with the command label.
+
+        Returns:
+            func : callback function for the given command.
+        """
+        return cls.COMMANDS.get(theCmd, None)
+
+    @classmethod
+    def isCmd(cls, theCmd):
+        """Returns if the given command label is found in the list of available
+        commands.
+
+        Args:
+            theCmd (str) : Command label to check as an availbale command.
+
+        Returns:
+            boolean : True if command label is found, False else.
+        """
+        return theCmd in cls.Cmds()
+
+    @classmethod
+    def addCmd(cls, theCmd, theCmdCb):
+        """Adds a new entry to the command dictionary.
+
+        Args:
+            theCmd (str) : String with the command label.
+            theCmdCb (func) : Function with the command callback.
+
+        Returns:
+            boolean : True if command was added.
+        """
+        if cls.isCmd(theCmd):
+            raise CliException(MODULE, 'Command [{}] already present.'.format(theCmd))
+        cls.COMMANDS[theCmd] = theCmdCb
+        return True
+
+    @classmethod
+    def execCmd(cls, theCmd, theUserInput):
+        """Executes the command callback for the given command label.
+
+        Args:
+            theCmd (str) : Command label for the command to execute.
+            theUserInput (str) : String with the command line input.
+
+        Returns:
+            object : value returned by the command callback.
+        """
+        cmdCb = cls.getCmdCb(theCmd)
+        if cmdCb:
+            return cmdCb(theUserInput)
 
     @classmethod
     def extend(cls, name, func):
@@ -27,6 +150,7 @@ class CliBase(Cmd, object):
         if getattr(cls, funcName, None):
             return False
         setattr(cls, 'do_{}'.format(name), func)
+        cls.addCmd(name, func)
         return True
 
     @classmethod
@@ -62,23 +186,7 @@ class CliBase(Cmd, object):
         Args:
             line (str): string entered in the command line.
         """
-        return True
-
-    def do_EOF(self, line):
-        """Exit the CLI with <CTRL-D>
-
-        Args:
-            line (str): string entered in the command line.
-        """
-        return True
-
-    def do_custom_help(self, line):
-        """Help to be displayed for "custom" command.
-
-        Args:
-            line (str): string entered in the command line.
-        """
-        print "Custom Help for {}".format(line)
+        sys.exit(0)
 
     def do_shell(self, line):
         """Comand that runs a shell command when "shell" is entered.
@@ -93,59 +201,60 @@ class CliBase(Cmd, object):
     def precmd(self, line):
         """Method to be called before any command is being processed.
 
-        In this case, it will allow to replace "-" with "_", so
-        commands can use "-" character.
-
         Args:
             line (str): string entered in the command line.
         """
-        if line:
-            listline = line.split()
-            if '-' in listline[0]:
-                listline[0] = listline[0].replace('-', '_')
-            newline = ' '.join(listline)
-        else:
-            newline = line
-        return super(CliBase, self).precmd(newline)
+        pass
 
     def onecmd(self, str):
-        try:
-            return super(CliBase, self).onecmd(str)
-        except Exception as ex:
-            logger.display(ex.message)
-
-    def printHelp(self, text, line, help):
-        """Displays help.
+        """Method to be called when any command is being processed.
 
         Args:
-            text (str): last token entered
             line (str): string entered in the command line.
-            help (str): help strin to be displayed
         """
-        if help:
-            print help
-            print self.prompt + line,
+        pass
 
-    def getCompleteArgs(self, text, line, command):
-        """Custom completer for the given command.
-
-        This method will provide help and completion when entering arguments
-        for the given command.
+    def post(self, line):
+        """Method to be called after any command is being processed.
 
         Args:
-            text (str): last token entered
             line (str): string entered in the command line.
-            command (function): completer for the given command to be called
-            to complete possible arguemnts.
         """
-        linelist = shlex.split(line)
-        processArgoNo = len(linelist) - 1
-        linelastchat = line[-1]
-        if linelastchat == ' ':
-            processArgoNo += 1
-        dictargs = getattr(command, '_arguments', None)
-        if dictargs:
-            argotype = dictargs[processArgoNo - 1]['type']
-        else:
-            argotype = None
-        return processArgoNo, argotype
+        pass
+
+    def getBottomToolbarTokens(self, cli):
+        # cmd = cli.current_buffer.history.strings[-1]
+        # cmd = '' if cmd == 'exit' else cmd
+        return [(Token.Toolbar, 'Command: {} '.format(self.LastCmd)), ]
+
+    def setupCmds(self):
+        """Register all commands to be used by the command line interface.
+
+        Returns:
+            None
+        """
+        self.addCmd('exit', self.do_exit)
+
+    def cmdloop(self, thePrompt):
+        """Method that is called to wait for any user input.
+
+        Args:
+            thePrompt (str) : string with the prompt for the command line.
+        """
+        while True:
+            userInput = prompt('{}'.format(thePrompt),
+                               history=FileHistory('history.txt'),
+                               auto_suggest=AutoSuggestFromHistory(),
+                               # completer=CliCompleter(),
+                               # lexer=SqlLexer,
+                               get_bottom_toolbar_tokens=self.getBottomToolbarTokens,
+                               style=self.TOOLBAR_STYLE,
+                               # validator=CliValidator(),
+                               refresh_interval=1)
+            print(userInput)
+            if userInput:
+                lineAsList = userInput.split()
+                cmd = lineAsList[0]
+                if self.isCmd(cmd):
+                    self.execCmd(cmd, ' '.join(lineAsList[1:]))
+                self.LastCmd = userInput
