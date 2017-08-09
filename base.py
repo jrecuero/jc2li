@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
+from functools import wraps
 import sys
 import os
 # import shlex
 import loggerator
-from clierror import CliException
 from prompt_toolkit import prompt
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -89,7 +89,7 @@ class CliBase(object):
         Returns:
             func : callback function for the given command.
         """
-        return cls.COMMANDS.get(theCmd, None)
+        return cls.COMMANDS.get(theCmd, (None, None))
 
     @classmethod
     def isCmd(cls, theCmd):
@@ -105,7 +105,7 @@ class CliBase(object):
         return theCmd in cls.Cmds()
 
     @classmethod
-    def addCmd(cls, theCmd, theCmdCb):
+    def addCmd(cls, theCmd, theCmdCb, theCls=None):
         """Adds a new entry to the command dictionary.
 
         Args:
@@ -116,8 +116,8 @@ class CliBase(object):
             boolean : True if command was added.
         """
         if cls.isCmd(theCmd):
-            raise CliException(MODULE, 'Command [{}] already present.'.format(theCmd))
-        cls.COMMANDS[theCmd] = theCmdCb
+            logger.warning('[{}] Command [{}] already present.'.format(MODULE, theCmd))
+        cls.COMMANDS[theCmd] = (theCls, theCmdCb)
         return True
 
     @classmethod
@@ -131,9 +131,9 @@ class CliBase(object):
         Returns:
             object : value returned by the command callback.
         """
-        cmdCb = cls.getCmdCb(theCmd)
+        cls, cmdCb = cls.getCmdCb(theCmd)
         if cmdCb:
-            return cmdCb(theUserInput)
+            return cmdCb(cls, theUserInput) if cls else cmdCb(theUserInput)
 
     @classmethod
     def extend(cls, name, func):
@@ -258,3 +258,22 @@ class CliBase(object):
                 if self.isCmd(cmd):
                     self.execCmd(cmd, ' '.join(lineAsList[1:]))
                 self.LastCmd = userInput
+
+    @classmethod
+    def command(cls, theLabel=None):
+        """Decorator that setup a function as a command.
+
+        Args:
+            theModule (class) : class name where this command is being added.
+        """
+
+        def f_command(f):
+
+            @wraps(f)
+            def _wrapper(self, theLine):
+                return f(self, theLine)
+
+            cls.addCmd(theLabel if theLabel else f.func_name, _wrapper, cls)
+            return _wrapper
+
+        return f_command

@@ -277,7 +277,7 @@ def setsyntax(f):
     return _wrapper
 
 
-def command(theModule):
+def command(theModule, theLabel=None):
     """Decorator that setup a function as a command.
 
     Args:
@@ -290,7 +290,7 @@ def command(theModule):
         def _wrapper(self, theLine):
             return f(self, theLine)
 
-        theModule.extend(f.func_name, _wrapper)
+        theModule.extend(theLabel if theLabel else f.func_name, _wrapper)
         return _wrapper
 
     return f_command

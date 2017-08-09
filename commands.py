@@ -74,13 +74,13 @@ class Cli(CliBase):
         """
         super(Cli, self).setupCmds()
         self.addCmd('cli', self.do_cli)
-        self.addCmd('the-name', self.do_thename)
+        # self.addCmd('the-name', self.do_thename)
         self.addCmd('command', self.do_command)
         self.addCmd('card', self.do_card)
         self.addCmd('dict-card', self.do_dictocard)
         self.addCmd('enter', self.do_enter)
-        self.addCmd('node', self.do_node)
-        self.addCmd('tenant', self.do_tenant)
+        # self.addCmd('node', self.do_node)
+        # self.addCmd('tenant', self.do_tenant)
 
     def do_cli(self, line):
         """This is the basic CLI command.
@@ -88,6 +88,7 @@ class Cli(CliBase):
         """
         print 'cli arguments: {}'.format(shlex.split(line))
 
+    @CliBase.command('the-name')
     @params("CLI command", 0)
     def do_thename(self, name, id):
         """Set a name and id.
@@ -156,22 +157,25 @@ class Cli(CliBase):
         """
         print 'Enter in {} at {}'.format(place, id)
 
+    @CliBase.command('node')
     @setsyntax
     @syntax("node name [nid|nsig]?")
     @argo('name', Str, None)
     @argo('nid', Int, 0)
     @argo('nsig', Int, 0)
     def do_node(self, name, nid, nsig):
+        print 'Running the node'
         print name, nid, nsig
 
+    @CliBase.command('tenant')
     @syntax("tenant tname [tid]?")
     @setdictos
     @argo('tname', Str, None)
     @argo('tid', Int, 0)
     def do_tenant(self, tname, tid):
-        print self.do_tenant._Syntax
-        print self.do_tenant._Cmd
-        print self.do_tenant._Rules
+        # print self.do_tenant._Syntax
+        # print self.do_tenant._Cmd
+        # print self.do_tenant._Rules
         print tname, tid
 
 
