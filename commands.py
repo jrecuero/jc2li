@@ -1,4 +1,4 @@
-from base import CliBase
+from base import Cli
 from argtypes import Int, Str
 import shlex
 from decorators import argo, syntax, setsyntax
@@ -63,7 +63,7 @@ class Room(object):
         return str
 
 
-class Cli(CliBase):
+class CliCommands(Cli):
 
     def setupCmds(self):
         """Register all commands to be used by the command line interface.
@@ -71,26 +71,26 @@ class Cli(CliBase):
         Returns:
             None
         """
-        super(Cli, self).setupCmds()
+        super(CliCommands, self).setupCmds()
         # self.addCmd('cli', self.do_cli)
         # self.addCmd('node', self.do_node)
         # self.addCmd('tenant', self.do_tenant)
 
-    @CliBase.command('the-cli')
+    @Cli.command('the-cli')
     def do_cli(self, line):
         """This is the basic CLI command.
         \n\t(Cmd) cli arg1 arg2 arg3 ...
         """
         print 'cli arguments: {}'.format(shlex.split(line))
 
-    @CliBase.command('the-command')
+    @Cli.command('the-command')
     def do_command(self, line):
         """This is the basic CLI command.
         \n\t(Cmd) cli arg1 arg2 arg3 ...
         """
         print 'command arguments: {}'.format(line)
 
-    @CliBase.command('node')
+    @Cli.command('node')
     @setsyntax
     @syntax("node name [nid|nsig]?")
     @argo('name', Str, None)
@@ -100,7 +100,7 @@ class Cli(CliBase):
         print 'Running the node'
         print name, nid, nsig
 
-    @CliBase.command('tenant')
+    @Cli.command('tenant')
     @setsyntax
     @syntax("tenant tname [tid]?")
     @argo('tname', Str, None)

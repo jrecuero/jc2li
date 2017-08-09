@@ -4,20 +4,20 @@ import pytest
 cliPath = '.'
 sys.path.append(cliPath)
 
-from base import CliBase
+from base import Cli
 from decorators import argo, syntax, setsyntax
 from decorators import command, mode
 from argtypes import Int, Str
 from clierror import CliException
 
 
-class CliTestModeClass(CliBase):
+class CliTestModeClass(Cli):
 
     def cmdloop(self):
         pass
 
 
-class CliTestClass(CliBase):
+class CliTestClass(Cli):
 
     @setsyntax
     @syntax('setsyntax f1 [f2]?')
@@ -85,17 +85,17 @@ class CliTestClass(CliBase):
         return f1, f2, f3, f4, f5
 
 
-@command(CliBase)
+@command(Cli)
 def local_command(self, line):
     return 'local cmd command'
 
 
-@mode(CliBase, CliTestModeClass)
+@mode(Cli, CliTestModeClass)
 def local_mode(self, line):
     return 'local cmd mode'
 
 
-@command(CliBase)
+@command(Cli)
 @setsyntax
 @syntax('local name [id]?')
 @argo('name', Str, None)
@@ -104,7 +104,7 @@ def local(self, name, id):
     return 'local cmd command: {}'.format(name), id
 
 
-@mode(CliBase, CliTestModeClass)
+@mode(Cli, CliTestModeClass)
 @setsyntax
 @syntax('lmode name [id]?')
 @argo('name', Str, None)

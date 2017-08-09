@@ -1,6 +1,6 @@
 from decorators import command, mode, setargos, argo, setdictos
 from argtypes import Int, Str
-from commands import Cli
+from commands import CliCommands
 from mode import Mode
 
 
@@ -24,14 +24,14 @@ def inmode(self, line):
     inmode.cmdloop()
 
 
-@mode(Cli, Mode, 'inner-mode')
+@mode(CliCommands, Mode, 'inner-mode')
 def innermode(self, line):
     """Mode defined with @mode decorator.
     """
     print 'Running inner mode'
 
 
-@mode(Cli, Mode)
+@mode(CliCommands, Mode)
 def defaultmode(self, line):
     """Mode defined with @mode decorator.
     """
@@ -45,14 +45,14 @@ def up(self, line):
     print 'Command defined in parent'
 
 
-@command(Cli)
+@command(CliCommands)
 def sit(self, line):
     """This is a command defined.
     """
     print 'Command defined'
 
 
-@command(Cli)
+@command(CliCommands)
 @setargos
 @argo('name', Str, 'no name')
 @argo('place', Str, 'no place')
@@ -62,7 +62,7 @@ def down(self, name, place):
     print 'Down Command: {} in {}'.format(name, place)
 
 
-@command(Cli)
+@command(CliCommands)
 @setdictos
 @argo('id', Int, None)
 @argo('name', Str, 'no name')
@@ -72,7 +72,7 @@ def left(self, id, name):
     print 'Left Command [{}] : {}'.format(id, name)
 
 
-@command(Cli)
+@command(CliCommands)
 @setargos
 @argo('id', Int, None)
 @argo('name', Str, None)

@@ -18,8 +18,8 @@ MODULE = 'BASE'
 logger = loggerator.getLoggerator('base')
 
 
-class CliBase(object):
-    """CliBase class is the base class for any class that will implement
+class Cli(object):
+    """Cli class is the base class for any class that will implement
     commands to be used by the command line interface.
     """
 
@@ -28,7 +28,7 @@ class CliBase(object):
     TOOLBAR_STYLE = style_from_dict({Token.Toolbar: '#ffffff italic bg:#007777', })
 
     def __init__(self):
-        """CliBase class initialization method.
+        """Cli class initialization method.
         """
         self._cmd = None
         self._lastCmd = None
@@ -270,8 +270,8 @@ class CliBase(object):
         def f_command(f):
 
             @wraps(f)
-            def _wrapper(self, theLine):
-                return f(self, theLine)
+            def _wrapper(self, *args, **kwargs):
+                return f(self, *args, **kwargs)
 
             cls.addCmd(theLabel if theLabel else f.func_name, _wrapper, cls)
             return _wrapper

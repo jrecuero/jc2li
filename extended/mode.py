@@ -1,7 +1,7 @@
-from base import CliBase
+from base import Cli
 
 
-class Mode(CliBase):
+class Mode(Cli):
 
     def do_command(self, line):
         """Command inside a mode.
