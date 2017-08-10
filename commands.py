@@ -1,5 +1,5 @@
 from base import Cli
-from argtypes import Int, Str
+from argtypes import CliType, Int, Str
 import shlex
 from decorators import argo, syntax, setsyntax
 
@@ -8,55 +8,28 @@ from decorators import argo, syntax, setsyntax
 # import rpdb2
 # rpdb2.start_embedded_debugger("yaci")
 
-argsdata = {'nameid': [{'name': 'id', 'type': Int, 'default': 0},
-                       {'name': 'name', 'type': Str, 'default': 'no name'}]}
 
+class Tenant(CliType):
 
-class Age(object):
+    DEFAULT = ["COMMON", "DEFAULT", "SINGLE", "MULTI"]
 
-    @staticmethod
-    def _(val):
-        try:
-            if 0 < int(val) < 100:
-                return int(val)
-            else:
-                print 'Wrong age'
-                raise OverflowError
-        except ValueError:
-                print 'Wrong value type for age'
-                raise
-
-    @staticmethod
-    def help(text):
-        return 'Enter and age'
-
-    @staticmethod
-    def type():
-        return int
-
-
-class Room(object):
-
-    DEFAULT = ["bedroom", "hall", "kitchen", "saloon"]
-
-    def __init__(self, rooms=None):
-        self.rooms = rooms if rooms else Room.DEFAULT
+    def __init__(self, **kwargs):
+        super(Tenant, self).__init__(**kwargs)
+        tenants = kwargs.get('theTenants', None)
+        self._tenants = tenants if tenants else Tenant.DEFAULT
 
     @staticmethod
     def _(val):
         return str(val)
 
     def help(self, text):
-        if not text:
-            return '\nEnter the Room where you want to go.\n{}'.format(self.rooms)
-        else:
-            return None
+        return 'Enter the Tenant where you want to go.'
 
     def complete(self, text):
         if not text:
-            return Room.rooms
+            return self._tenants
         else:
-            return [x for x in self.rooms if x.startswith(text)]
+            return [x for x in self._tenants if x.startswith(text)]
 
     @staticmethod
     def type():
@@ -103,7 +76,7 @@ class CliCommands(Cli):
     @Cli.command('tenant')
     @setsyntax
     @syntax("tenant tname [tid]?")
-    @argo('tname', Str, None)
+    @argo('tname', Tenant, None)
     @argo('tid', Int, 0)
     def do_tenant(self, tname, tid):
         print tname, tid

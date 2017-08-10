@@ -1,8 +1,16 @@
+import loggerator
+
+MODULE = 'ARGTYPES'
+
+
+logger = loggerator.getLoggerator(MODULE)
+
+
 class CliType(object):
     """CliType class is the base class for any command argument.
     """
 
-    def __init__(self, inpos=False, cte=False, seq=False):
+    def __init__(self, **kwargs):
         """CliType class initialization method.
 
         Args:
@@ -10,12 +18,13 @@ class CliType(object):
             cte (boolean) : constant argument.
             seq (boolean): argument is a sequence.
         """
-        self._inpos = inpos
-        self._cte = cte
-        self._seq = seq
+        self._argo = kwargs.get('theArgo', None)
+        self._prefix = '{}='.format(self._argo.Name) if self._argo.Default is not None else None
 
-    @staticmethod
-    def help(text):
+    def _helpStr(self):
+        return ''
+
+    def help(self, text):
         """Method that returns the help for the given argument.
 
         Args:
@@ -24,10 +33,14 @@ class CliType(object):
         Returns:
             str : string with help to send to the display.
         """
-        return '\nEnter a string'
+        if self._prefix:
+            if self._prefix in text:
+                return self._helpStr()
+            else:
+                return 'Enter {}'.format(self._prefix)
+        return None
 
-    @staticmethod
-    def complete(text):
+    def complete(self, text):
         """Method that returns the completion for the given argument.
 
         Args:
@@ -36,6 +49,8 @@ class CliType(object):
         Returns:
             str : string with completion to send to the display.
         """
+        if self._prefix and self._prefix not in text:
+            return [self._prefix, ]
         return None
 
     @staticmethod
@@ -48,7 +63,7 @@ class CliType(object):
         return str
 
 
-class Int(object):
+class Int(CliType):
     """Int class is the class for any integer argument.
     """
 
@@ -61,29 +76,8 @@ class Int(object):
         """
         return int(val)
 
-    @staticmethod
-    def help(text):
-        """Method that returns the help for the given argument.
-
-        Args:
-            text (str): last token in the line being entered.
-
-        Returns:
-            str : string with help to send to the display.
-        """
-        return '\nEnter a number'
-
-    @staticmethod
-    def complete(text):
-        """Method that returns the completion for the given argument.
-
-        Args:
-            text (str): last token in the line being entered.
-
-        Returns:
-            str : string with completion to send to the display.
-        """
-        return None
+    def _helpStr(self):
+        return 'Enter a number'
 
     @staticmethod
     def type():
@@ -95,7 +89,7 @@ class Int(object):
         return int
 
 
-class Str(object):
+class Str(CliType):
     """Str class is the class for any string argument.
     """
 
@@ -108,29 +102,8 @@ class Str(object):
         """
         return str(val)
 
-    @staticmethod
-    def help(text):
-        """Method that returns the help for the given argument.
-
-        Args:
-            text (str): last token in the line being entered.
-
-        Returns:
-            str : string with help to send to the display.
-        """
-        return '\nEnter a string'
-
-    @staticmethod
-    def complete(text):
-        """Method that returns the completion for the given argument.
-
-        Args:
-            text (str): last token in the line being entered.
-
-        Returns:
-            str : string with completion to send to the display.
-        """
-        return None
+    def _helpStr(self):
+        return 'Enter a string'
 
     @staticmethod
     def type():

@@ -7,10 +7,12 @@ import loggerator
 from prompt_toolkit import prompt
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-# from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.completion import Completer, Completion
 # from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.token import Token
 from prompt_toolkit.styles import style_from_dict
+from common import TREE_ATTR
+from journal import Journal
 
 MODULE = 'BASE'
 
@@ -27,11 +29,52 @@ class Cli(object):
 
     TOOLBAR_STYLE = style_from_dict({Token.Toolbar: '#ffffff italic bg:#007777', })
 
+    class CliCompleter(Completer):
+
+        def __init__(self, theCli):
+            self._nodepath = None
+            self._cli = theCli
+
+        def get_completions(self, document, completeEvent):
+            wordBeforeCursor = document.get_word_before_cursor(WORD=True)
+            if ' ' not in document.text:
+                matches = [m for m in Cli.Cmds() if m.startswith(wordBeforeCursor)]
+                for m in matches:
+                    yield Completion(m, start_position=-len(wordBeforeCursor))
+            else:
+                lineList = document.text.split()
+                cmdLabel = lineList[0]
+                cls, cmd = Cli.getCmdCb(cmdLabel)
+                root = getattr(cmd, TREE_ATTR, None)
+                journal = Journal()
+                _, cliArgos = journal.getCmdAndCliArgos(cmd, None, " ".join(lineList[1:]))
+                nodePath = None
+                childrenNodes = None
+                try:
+                    nodePath = root.findPath(cliArgos)
+                    if not nodePath:
+                        self._nodepath = [root, ]
+                    if nodePath and document.text[-1] == ' ':
+                        self._nodepath = nodePath
+                    childrenNodes = self._nodepath[0].getChildrenNodes() if self._nodepath else root.getChildrenNodes()
+                    if childrenNodes:
+                        self._cli.ToolBar = childrenNodes[0].Argo.Completer.help(lineList[-1])
+                        matches = childrenNodes[0].Argo.Completer.complete(lineList[-1])
+                        for m in matches:
+                            yield Completion(m, start_position=-len(wordBeforeCursor))
+                except:
+                    pass
+                logger.debug('last document text is [{}]'.format(lineList[-1]))
+                logger.debug('children nodes are {}'.format(childrenNodes))
+                logger.debug('nodePath is {}'.format(nodePath))
+                logger.debug('self._nodepath is {}'.format(self._nodepath))
+
     def __init__(self):
         """Cli class initialization method.
         """
         self._cmd = None
         self._lastCmd = None
+        self._toolbarStr = None
         self.setupCmds()
 
     @property
@@ -69,6 +112,14 @@ class Cli(object):
             theCmd (str) : String with the new last command.
         """
         self._lastCmd = theCmd
+
+    @property
+    def ToolBar(self):
+        return self._toolbarStr if self._toolbarStr else ''
+
+    @ToolBar.setter
+    def ToolBar(self, theStr):
+        self._toolbarStr = theStr
 
     @classmethod
     def Cmds(cls):
@@ -225,7 +276,7 @@ class Cli(object):
     def getBottomToolbarTokens(self, cli):
         # cmd = cli.current_buffer.history.strings[-1]
         # cmd = '' if cmd == 'exit' else cmd
-        return [(Token.Toolbar, 'Command: {} '.format(self.LastCmd)), ]
+        return [(Token.Toolbar, '{}'.format(self.ToolBar)), ]
 
     def setupCmds(self):
         """Register all commands to be used by the command line interface.
@@ -242,10 +293,12 @@ class Cli(object):
             thePrompt (str) : string with the prompt for the command line.
         """
         while True:
+            # self.ToolBar = 'Command: {} '.format(self.LastCmd)
+            self.ToolBar = 'Enter a valid command'
             userInput = prompt('{}'.format(thePrompt),
                                history=FileHistory('history.txt'),
                                auto_suggest=AutoSuggestFromHistory(),
-                               # completer=CliCompleter(),
+                               completer=Cli.CliCompleter(self),
                                # lexer=SqlLexer,
                                get_bottom_toolbar_tokens=self.getBottomToolbarTokens,
                                style=self.TOOLBAR_STYLE,
@@ -273,6 +326,8 @@ class Cli(object):
             def _wrapper(self, *args, **kwargs):
                 return f(self, *args, **kwargs)
 
+            logger.debug(f, "YELLOW")
+            logger.debug(dir(f), "YELLOW")
             cls.addCmd(theLabel if theLabel else f.func_name, _wrapper, cls)
             return _wrapper
 

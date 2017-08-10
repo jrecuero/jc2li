@@ -1,13 +1,13 @@
 from functools import wraps
 import cliparser
 from common import Argument, Arguments
-from common import ARGOS_ATTR, RULES_ATTR, SYNTAX_ATTR, CMD_ATTR
+from common import ARGOS_ATTR, RULES_ATTR, SYNTAX_ATTR, CMD_ATTR, TREE_ATTR
 from journal import Journal
 
 MODULE = 'DECORATOR'
 
 
-def argo(theName, theType, theDefault):
+def argo(theName, theType, theDefault, **kwargs):
     """Decorator that provides to add an argument to a command.
 
     Args:
@@ -15,6 +15,7 @@ def argo(theName, theType, theDefault):
         reference to this argument
         theType (object) : argument type, it should be a class name.
         theDefault (object) : default value for the argument.
+        theCompleter (object) : argument completer instance
     """
 
     def f_argo(f):
@@ -23,7 +24,8 @@ def argo(theName, theType, theDefault):
         def _wrapper(self, *args):
             return f(self, *args)
         cmdArgos = getattr(_wrapper, ARGOS_ATTR, Arguments())
-        cmdArgos.insertArgument(Argument(theName, theType, theDefault))
+        kwargs.setdefault('theDefault', theDefault)
+        cmdArgos.insertArgument(Argument(theName, theType, **kwargs))
         setattr(_wrapper, ARGOS_ATTR, cmdArgos)
 
         return _wrapper
@@ -113,7 +115,8 @@ def setsyntax(f):
         if useArgs is not None:
             return f(self, *useArgs)
 
-    journal.buildCommandParsingTree(f)
+    root = journal.buildCommandParsingTree(f)
+    setattr(_wrapper, TREE_ATTR, root)
     return _wrapper
 
 

@@ -80,6 +80,17 @@ class Node(object):
         return self._children
 
     @property
+    def ArgoNode(self):
+        return [self, ]
+
+    def getChildrenNodes(self, **kwargs):
+        children = []
+        noLoop = kwargs.pop('theMatched') if kwargs.get('theNoLoop', None) else False
+        for child in self.traverseChildren(theNoLoop=noLoop):
+            children.extend(child.ArgoNode)
+        return children
+
+    @property
     def Siblings(self):
         """Get property that returns a list with all sibling nodes.
 
@@ -532,6 +543,10 @@ class Hook(Node):
         """
         return None
 
+    @property
+    def ArgoNode(self):
+        return self.getChildrenNodes()
+
     def addChild(self, theChild, theIsLoop=False):
         """Method that adds a new child Node to the Node.
 
@@ -658,6 +673,15 @@ class Loop(Hook):
         """
         indent = "--" * level
         return "{}Loop.{}\n".format(indent, self.Label)
+
+    def getChildrenNodes(self, **kwargs):
+        if kwargs.get('theMatched', None):
+            kwargs.pop('theMatched')
+            kwargs.setdefault('theNoLoop', True)
+        else:
+            kwargs.setdefault('theMatched', True)
+            kwargs.setdefault('theNoLoop', False)
+        return super(Loop, self).getChildrenNodes(**kwargs)
 
     def findChildByName(self, theName, **kwargs):
         """Method that returns the children node with the given name.

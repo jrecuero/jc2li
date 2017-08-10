@@ -28,21 +28,24 @@ class Argument(object):
     case it will be passed to the command function as a list.
     """
 
-    def __init__(self, theName, theType, theDefault=None):
+    def __init__(self, theName, theType, **kwargs):
         """Argument class initialization method.
 
         Args:
             theName (str) : String with the argument name.
             theType (type) : Argument type (class name).
             theDefault (object) : Default value for the argument.
+            theCompleter (object) : Argument completer instance.
 
         Returns:
             None
         """
         self._name = theName
         self._type = theType
-        self._default = theDefault
-        self._value = theDefault
+        self._default = kwargs.get('theDefault', None)
+        self._value = kwargs.get('theDefault', None)
+        completerKlass = kwargs.get('theCompleter', None)
+        self._completer = completerKlass(theArgo=self) if completerKlass else theType(theArgo=self)
         self._matched = 0
 
     @property
@@ -113,6 +116,27 @@ class Argument(object):
             None
         """
         self._matched = theValue
+
+    @property
+    def Completer(self):
+        """Get property that returns the _completer attribute.
+
+        Returns:
+            object : argument completer instance.
+        """
+        return self._completer
+
+    @Completer.setter
+    def Completer(self, theValue):
+        """Set property that sets the value for the _completer attribute.
+
+        Args:
+            theValue (object) : new completer instance.
+
+        Returns :
+            None
+        """
+        self._completer = theValue
 
 
 class Arguments(object):
