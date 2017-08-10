@@ -14,26 +14,33 @@ class Tenant(CliType):
     DEFAULT = ["COMMON", "DEFAULT", "SINGLE", "MULTI"]
 
     def __init__(self, **kwargs):
+        """Tenant class initialization method.
+        """
         super(Tenant, self).__init__(**kwargs)
         tenants = kwargs.get('theTenants', None)
         self._tenants = tenants if tenants else Tenant.DEFAULT
 
-    @staticmethod
-    def _(val):
-        return str(val)
+    def _helpStr(self):
+        """Method that should return default string to be displayed as help.
 
-    def help(self, text):
+        Returns:
+            str : string with default help.
+        """
         return 'Enter the Tenant where you want to go.'
 
     def complete(self, text):
+        """Method that returns the completion for the given argument.
+
+        Args:
+            text (str): last token in the line being entered.
+
+        Returns:
+            str : string with completion to send to the display.
+        """
         if not text:
             return self._tenants
         else:
             return [x for x in self._tenants if x.startswith(text)]
-
-    @staticmethod
-    def type():
-        return str
 
 
 class CliCommands(Cli):

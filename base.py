@@ -30,12 +30,31 @@ class Cli(object):
     TOOLBAR_STYLE = style_from_dict({Token.Toolbar: '#ffffff italic bg:#007777', })
 
     class CliCompleter(Completer):
+        """CliCompleter class provide completion to any entry in the command line.
+
+        This class should make use of every completer for command arguments.
+        """
 
         def __init__(self, theCli):
+            """CliCompleter initialization method.
+
+            Args:
+                theCli (Cli) : Cli instance.
+            """
             self._nodepath = None
             self._cli = theCli
 
         def get_completions(self, document, completeEvent):
+            """Method that provides completion for any input in the command line.
+
+            Args:
+                document (Document) : Document instance with command line input data.
+                compleEvent (CompleteEvent) : Event with iinput information
+
+            Returns:
+                Completion : Completion instance with data to be completed.
+            """
+            logger.debug('completeEvent is {}'.format(completeEvent))
             wordBeforeCursor = document.get_word_before_cursor(WORD=True)
             if ' ' not in document.text:
                 matches = [m for m in Cli.Cmds() if m.startswith(wordBeforeCursor)]
@@ -115,10 +134,20 @@ class Cli(object):
 
     @property
     def ToolBar(self):
+        """Get property that returns _toolbar attribute.
+
+        Returns:
+            str : Strin with string to be displayed in the ToolBar.
+        """
         return self._toolbarStr if self._toolbarStr else ''
 
     @ToolBar.setter
     def ToolBar(self, theStr):
+        """Set property that sets a new vale for _toolbar attribute.
+
+        Args:
+            theStr (str) : New string to be displayed in the ToolBar.
+        """
         self._toolbarStr = theStr
 
     @classmethod
@@ -273,7 +302,15 @@ class Cli(object):
         """
         pass
 
-    def getBottomToolbarTokens(self, cli):
+    def getBottomToolbarTokens(self, theCli):
+        """Method that provides data and format to be displayed in the ToolBar.
+
+        Args:
+            theCli (CommandLineInterface) : CommandLineInterface instance.
+
+        Returns:
+            list : list with data to be displayed in the ToolBar.
+        """
         # cmd = cli.current_buffer.history.strings[-1]
         # cmd = '' if cmd == 'exit' else cmd
         return [(Token.Toolbar, '{}'.format(self.ToolBar)), ]

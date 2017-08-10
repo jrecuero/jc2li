@@ -21,7 +21,21 @@ class CliType(object):
         self._argo = kwargs.get('theArgo', None)
         self._prefix = '{}='.format(self._argo.Name) if self._argo.Default is not None else None
 
+    @staticmethod
+    def _(val):
+        """Method that types any value as Tenant.
+
+        Args:
+            val (object): value to be typed as Tenant.
+        """
+        return str(val)
+
     def _helpStr(self):
+        """Method that should return default string to be displayed as help.
+
+        Returns:
+            str : string with default help.
+        """
         return ''
 
     def help(self, text):
@@ -33,12 +47,9 @@ class CliType(object):
         Returns:
             str : string with help to send to the display.
         """
-        if self._prefix:
-            if self._prefix in text:
-                return self._helpStr()
-            else:
-                return 'Enter {}'.format(self._prefix)
-        return None
+        if self._prefix and self._prefix not in text:
+            return 'Enter {}'.format(self._prefix)
+        return self._helpStr()
 
     def complete(self, text):
         """Method that returns the completion for the given argument.
@@ -77,6 +88,11 @@ class Int(CliType):
         return int(val)
 
     def _helpStr(self):
+        """Method that should return default string to be displayed as help.
+
+        Returns:
+            str : string with default help.
+        """
         return 'Enter a number'
 
     @staticmethod
@@ -93,23 +109,10 @@ class Str(CliType):
     """Str class is the class for any string argument.
     """
 
-    @staticmethod
-    def _(val):
-        """Method that types any value as string.
-
-        Args:
-            val (object): value to be typed as string.
-        """
-        return str(val)
-
     def _helpStr(self):
-        return 'Enter a string'
-
-    @staticmethod
-    def type():
-        """Method that returns the type used for the given argument.
+        """Method that should return default string to be displayed as help.
 
         Returns:
-            type : argument type.
+            str : string with default help.
         """
-        return str
+        return 'Enter a string'
