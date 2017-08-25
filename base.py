@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
-from functools import wraps
+from functools import wraps, partial
 import sys
 import os
+import inspect
 # import shlex
 import loggerator
 from prompt_toolkit import prompt
@@ -15,8 +16,6 @@ from common import TREE_ATTR
 from journal import Journal
 
 MODULE = 'BASE'
-
-
 logger = loggerator.getLoggerator('base')
 
 
@@ -25,8 +24,7 @@ class Cli(object):
     commands to be used by the command line interface.
     """
 
-    COMMANDS = {}
-
+    _WALL = {}
     TOOLBAR_STYLE = style_from_dict({Token.Toolbar: '#ffffff italic bg:#007777', })
 
     class CliCompleter(Completer):
@@ -54,16 +52,18 @@ class Cli(object):
             Returns:
                 Completion : Completion instance with data to be completed.
             """
-            logger.debug('completeEvent is {}'.format(completeEvent))
             wordBeforeCursor = document.get_word_before_cursor(WORD=True)
             if ' ' not in document.text:
-                matches = [m for m in Cli.Cmds() if m.startswith(wordBeforeCursor)]
+                matches = [m for m in self._cli.Cmds if m.startswith(wordBeforeCursor)]
                 for m in matches:
                     yield Completion(m, start_position=-len(wordBeforeCursor))
             else:
                 lineList = document.text.split()
                 cmdLabel = lineList[0]
-                cls, cmd = Cli.getCmdCb(cmdLabel)
+                cmd = self._cli.getCmdCb(cmdLabel)
+                # Required for partial methods
+                if hasattr(cmd, 'func'):
+                    cmd = cmd.func
                 root = getattr(cmd, TREE_ATTR, None)
                 journal = Journal()
                 _, cliArgos = journal.getCmdAndCliArgos(cmd, None, " ".join(lineList[1:]))
@@ -83,6 +83,7 @@ class Cli(object):
                             yield Completion(m, start_position=-len(wordBeforeCursor))
                 except:
                     pass
+                logger.debug('completer cmd: {0}'.format(cmd))
                 logger.debug('last document text is [{}]'.format(lineList[-1]))
                 logger.debug('children nodes are {}'.format(childrenNodes))
                 logger.debug('nodePath is {}'.format(nodePath))
@@ -94,6 +95,7 @@ class Cli(object):
         self._cmd = None
         self._lastCmd = None
         self._toolbarStr = None
+        self.__commands = {}
         self.setupCmds()
 
     @property
@@ -150,17 +152,16 @@ class Cli(object):
         """
         self._toolbarStr = theStr
 
-    @classmethod
-    def Cmds(cls):
+    @property
+    def Cmds(self):
         """Get property that returns keys for _cmdDict attribute
 
         Returns:
             list : List with all command labels.
         """
-        return cls.COMMANDS.keys()
+        return self.__commands.keys()
 
-    @classmethod
-    def getCmdCb(cls, theCmd):
+    def getCmdCb(self, theCmd):
         """Get the command callback for the given command label.
 
         Args:
@@ -169,10 +170,22 @@ class Cli(object):
         Returns:
             func : callback function for the given command.
         """
-        return cls.COMMANDS.get(theCmd, (None, None))
+        cmdEntry = self.__commands.get(theCmd, (None, None))
+        return cmdEntry[0]
 
-    @classmethod
-    def isCmd(cls, theCmd):
+    def getCmdDesc(self, theCmd):
+        """Get the command description for the given command label.
+
+        Args:
+            theCmd (str) : String with the command label.
+
+        Returns:
+            str : description for the given command.
+        """
+        cmdEntry = self.__commands.get(theCmd, (None, None))
+        return cmdEntry[1]
+
+    def isCmd(self, theCmd):
         """Returns if the given command label is found in the list of available
         commands.
 
@@ -182,10 +195,9 @@ class Cli(object):
         Returns:
             boolean : True if command label is found, False else.
         """
-        return theCmd in cls.Cmds()
+        return theCmd in self.Cmds
 
-    @classmethod
-    def addCmd(cls, theCmd, theCmdCb, theCls=None):
+    def addCmd(self, theCmd, theCmdCb, theDesc=""):
         """Adds a new entry to the command dictionary.
 
         Args:
@@ -195,13 +207,12 @@ class Cli(object):
         Returns:
             boolean : True if command was added.
         """
-        if cls.isCmd(theCmd):
+        if self.isCmd(theCmd):
             logger.warning('[{}] Command [{}] already present.'.format(MODULE, theCmd))
-        cls.COMMANDS[theCmd] = (theCls, theCmdCb)
+        self.__commands[theCmd] = (theCmdCb, theDesc)
         return True
 
-    @classmethod
-    def execCmd(cls, theCmd, theUserInput):
+    def execCmd(self, theCmd, theUserInput):
         """Executes the command callback for the given command label.
 
         Args:
@@ -211,12 +222,11 @@ class Cli(object):
         Returns:
             object : value returned by the command callback.
         """
-        cls, cmdCb = cls.getCmdCb(theCmd)
+        cmdCb = self.getCmdCb(theCmd)
         if cmdCb:
-            return cmdCb(cls, theUserInput) if cls else cmdCb(theUserInput)
+            return cmdCb(theUserInput)
 
-    @classmethod
-    def extend(cls, name, func):
+    def extend(self, name, func):
         """Class method that allows to extend the class with new commands.
 
         Args:
@@ -227,14 +237,13 @@ class Cli(object):
             boolean : True if command was added, False, else
         """
         funcName = 'do_{}'.format(name)
-        if getattr(cls, funcName, None):
+        if getattr(self, funcName, None):
             return False
-        setattr(cls, 'do_{}'.format(name), func)
-        cls.addCmd(name, func)
+        setattr(self, 'do_{}'.format(name), func)
+        self.addCmd(name, func)
         return True
 
-    @classmethod
-    def extends(cls, cmds):
+    def extends(self, cmds):
         """Class method that allows to extend the class with the list of
         commands given.
 
@@ -248,7 +257,7 @@ class Cli(object):
         """
         rets = {}
         for c in cmds:
-            rets.update({c['name']: cls.extend(c['name'], c['cmd'])})
+            rets.update({c['name']: self.extend(c['name'], c['cmd'])})
         return rets
 
     def emptyline(self):
@@ -262,11 +271,27 @@ class Cli(object):
 
     def do_exit(self, line):
         """Command that exit the CLI when "exit" is entered.
-
-        Args:
-            line (str): string entered in the command line.
         """
         sys.exit(0)
+
+    def do_help(self, line):
+        """Command that displays all possible commands.
+        """
+        for cmd in self.Cmds:
+            print('- {0} : {1}'.format(cmd, self.getCmdDesc(cmd)))
+
+    def do_syntax(self, line):
+        """Command that displays syntax for possible commands.
+        """
+        for cmd in self.Cmds:
+            cmdCb = self.getCmdCb(cmd)
+            # Required for partial methods.
+            if hasattr(cmdCb, '_Syntax'):
+                print('> {0}'.format(cmdCb._Syntax))
+            elif hasattr(cmdCb, 'func') and hasattr(cmdCb.func, '_Syntax'):
+                print('> {0}'.format(cmdCb.func._Syntax))
+            else:
+                print('> {0}'.format(cmd))
 
     def do_shell(self, line):
         """Comand that runs a shell command when "shell" is entered.
@@ -294,7 +319,7 @@ class Cli(object):
         """
         pass
 
-    def post(self, line):
+    def postcmd(self, line):
         """Method to be called after any command is being processed.
 
         Args:
@@ -311,8 +336,6 @@ class Cli(object):
         Returns:
             list : list with data to be displayed in the ToolBar.
         """
-        # cmd = cli.current_buffer.history.strings[-1]
-        # cmd = '' if cmd == 'exit' else cmd
         return [(Token.Toolbar, '{}'.format(self.ToolBar)), ]
 
     def setupCmds(self):
@@ -321,7 +344,16 @@ class Cli(object):
         Returns:
             None
         """
-        self.addCmd('exit', self.do_exit)
+        self.addCmd('exit', self.do_exit, self.do_exit.__doc__)
+        self.addCmd('help', self.do_help, self.do_help.__doc__)
+        self.addCmd('syntax', self.do_syntax, self.do_syntax.__doc__)
+        self.addCmd('shell', self.do_shell, self.do_help.__doc__)
+
+        klassName = self.__class__.__name__
+        _calls = self._WALL[klassName]
+        for name, funcCb, desc in _calls:
+            logger.debug('{0}::setupCmds add command {1}::{2}'.format(klassName, name, funcCb))
+            self.addCmd(name, partial(funcCb, self), desc)
 
     def cmdloop(self, thePrompt):
         """Method that is called to wait for any user input.
@@ -330,7 +362,6 @@ class Cli(object):
             thePrompt (str) : string with the prompt for the command line.
         """
         while True:
-            # self.ToolBar = 'Command: {} '.format(self.LastCmd)
             self.ToolBar = 'Enter a valid command'
             userInput = prompt('{}'.format(thePrompt),
                                history=FileHistory('history.txt'),
@@ -341,7 +372,7 @@ class Cli(object):
                                style=self.TOOLBAR_STYLE,
                                # validator=CliValidator(),
                                refresh_interval=1)
-            print(userInput)
+            # print(userInput)
             if userInput:
                 lineAsList = userInput.split()
                 cmd = lineAsList[0]
@@ -349,8 +380,8 @@ class Cli(object):
                     self.execCmd(cmd, ' '.join(lineAsList[1:]))
                 self.LastCmd = userInput
 
-    @classmethod
-    def command(cls, theLabel=None):
+    @staticmethod
+    def command(theLabel=None, theDesc=None):
         """Decorator that setup a function as a command.
 
         Args:
@@ -364,8 +395,18 @@ class Cli(object):
                 return f(self, *args, **kwargs)
 
             logger.debug(f, "YELLOW")
-            logger.debug(dir(f), "YELLOW")
-            cls.addCmd(theLabel if theLabel else f.func_name, _wrapper, cls)
+            moduleName = sys._getframe(1).f_code.co_name
+            Cli._WALL.setdefault(moduleName, [])
+            if theDesc is not None:
+                desc = theDesc
+            else:
+                # if the wrapper is not a <method> or a <function> it is a
+                # partial function, so the __doc__ is inside 'func' attribute.
+                if inspect.ismethod(_wrapper) or inspect.isfunction(_wrapper):
+                    desc = _wrapper.__doc__
+                else:
+                    desc = _wrapper.func.__doc__
+            Cli._WALL[moduleName].append((theLabel if theLabel else f.func_name, _wrapper, desc))
             return _wrapper
 
         return f_command

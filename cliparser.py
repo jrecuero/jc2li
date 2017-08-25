@@ -58,14 +58,14 @@ def getSyntax():
     Returns:
         object: syntax used for parsing.
     """
-    command = pp.Word(pp.alphanums).setName('command')
-    posarg = pp.Word(pp.alphanums).setName('pos-arg')
+    command = pp.Word(pp.alphanums + "-").setName('command')
+    posarg = pp.Word(pp.alphanums + "-").setName('pos-arg')
 
     lbracket = pp.Suppress("[")
     rbracket = pp.Suppress("]")
-    zooarg = pp.Word(pp.alphanums).setName('zero-or-one-arg')
-    zomarg = pp.Word(pp.alphanums).setName('zero-or-more-arg')
-    oomarg = pp.Word(pp.alphanums).setName('one-or-more-arg')
+    zooarg = pp.Word(pp.alphanums + "-").setName('zero-or-one-arg')
+    zomarg = pp.Word(pp.alphanums + "-").setName('zero-or-more-arg')
+    oomarg = pp.Word(pp.alphanums + "-").setName('one-or-more-arg')
 
     zeroorone = pp.Forward()
     zeroorone.setName('zero-or-one')

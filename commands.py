@@ -2,6 +2,10 @@ from base import Cli
 from argtypes import CliType, Int, Str
 import shlex
 from decorators import argo, syntax, setsyntax
+import loggerator
+
+MODULE = 'COMMANDS'
+logger = loggerator.getLoggerator('base')
 
 # import os
 # sys.path.append(os.path.join('/Users/jorecuer', 'Repository/winpdb'))
@@ -45,30 +49,20 @@ class Tenant(CliType):
 
 class CliCommands(Cli):
 
-    def setupCmds(self):
-        """Register all commands to be used by the command line interface.
-
-        Returns:
-            None
-        """
-        super(CliCommands, self).setupCmds()
-        # self.addCmd('cli', self.do_cli)
-        # self.addCmd('node', self.do_node)
-        # self.addCmd('tenant', self.do_tenant)
-
     @Cli.command('the-cli')
     def do_cli(self, line):
-        """This is the basic CLI command.
-        \n\t(Cmd) cli arg1 arg2 arg3 ...
+        """This is the basic CLI command:\t(Cmd) cli arg1 arg2 arg3 ...
         """
         print('cli arguments: {}'.format(shlex.split(line)))
 
     @Cli.command('the-command')
-    def do_command(self, line):
+    @setsyntax
+    @syntax("the-command info")
+    @argo('info', Str, None)
+    def do_command(self, info):
         """This is the basic CLI command.
-        \n\t(Cmd) cli arg1 arg2 arg3 ...
         """
-        print('command arguments: {}'.format(line))
+        print('command arguments: {}'.format(info))
 
     @Cli.command('node')
     @setsyntax
@@ -77,6 +71,8 @@ class CliCommands(Cli):
     @argo('nid', Int, 0)
     @argo('nsig', Int, 0)
     def do_node(self, name, nid, nsig):
+        """Just display a node.
+        """
         print('Running the node')
         print(name, nid, nsig)
 
@@ -86,6 +82,8 @@ class CliCommands(Cli):
     @argo('tname', Tenant, None)
     @argo('tid', Int, 0)
     def do_tenant(self, tname, tid):
+        """Display tenant information.
+        """
         print(tname, tid)
 
 
