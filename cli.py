@@ -20,5 +20,5 @@ if __name__ == '__main__':
     try:
         cli.cmdloop('CLI> ')
     except KeyboardInterrupt:
-        print ""
+        print("")
         pass

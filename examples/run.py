@@ -15,7 +15,7 @@ class RunCli(Cli):
         self.addCmd('run', self.do_run)
 
     def do_start(self, theLine):
-        print 'start application with {0}'.format(theLine)
+        print('start application with {0}'.format(theLine))
 
     # @Cli.command('run')
     @setsyntax
@@ -23,14 +23,14 @@ class RunCli(Cli):
     @argo('name', Str, None)
     @argo('version', Int, 0)
     def do_run(self, name, version):
-        print "run application {0} version{1}".format(name, version)
+        print("run application {0} version{1}".format(name, version))
 
     @Cli.command('play')
     @setsyntax
     @syntax("play name")
     @argo('name', Str, None)
     def do_play(self, name):
-        print "play {0}".format(name)
+        print("play {0}".format(name))
         playCli = RunCli()
         try:
             playCli.cmdloop('PLAY# ')

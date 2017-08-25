@@ -31,7 +31,7 @@ def procTokens(theTokens, thWithEnd=True):
                 op = '1'
             rules.append({'counter': counter, 'type': op, 'args': procTokens(tok, False)})
         else:
-            print 'Invalid Syntax'
+            print('Invalid Syntax')
         counter += 1
     if thWithEnd:
         rules.append({'counter': counter, 'type': '0', 'args': None})
@@ -101,8 +101,8 @@ if __name__ == '__main__':
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
     toks = getSyntax().parseString("tenant t1 [t2 | t3]?")
 
-    print toks
+    print(toks)
     cmd, rules = procSyntax(toks)
-    print cmd
+    print(cmd)
     for rule in rules:
-        print rule
+        print(rule)

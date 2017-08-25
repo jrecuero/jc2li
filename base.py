@@ -274,9 +274,9 @@ class Cli(object):
         Args:
             line (str): string entered in the command line.
         """
-        print "running shell command:", line
+        print("running shell command:", line)
         output = os.popen(line).read()
-        print output
+        print(output)
 
     def precmd(self, line):
         """Method to be called before any command is being processed.

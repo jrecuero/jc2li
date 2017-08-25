@@ -61,14 +61,14 @@ class CliCommands(Cli):
         """This is the basic CLI command.
         \n\t(Cmd) cli arg1 arg2 arg3 ...
         """
-        print 'cli arguments: {}'.format(shlex.split(line))
+        print('cli arguments: {}'.format(shlex.split(line)))
 
     @Cli.command('the-command')
     def do_command(self, line):
         """This is the basic CLI command.
         \n\t(Cmd) cli arg1 arg2 arg3 ...
         """
-        print 'command arguments: {}'.format(line)
+        print('command arguments: {}'.format(line))
 
     @Cli.command('node')
     @setsyntax
@@ -77,8 +77,8 @@ class CliCommands(Cli):
     @argo('nid', Int, 0)
     @argo('nsig', Int, 0)
     def do_node(self, name, nid, nsig):
-        print 'Running the node'
-        print name, nid, nsig
+        print('Running the node')
+        print(name, nid, nsig)
 
     @Cli.command('tenant')
     @setsyntax
@@ -86,7 +86,7 @@ class CliCommands(Cli):
     @argo('tname', Tenant, None)
     @argo('tid', Int, 0)
     def do_tenant(self, tname, tid):
-        print tname, tid
+        print(tname, tid)
 
 
 if __name__ == "__main__":

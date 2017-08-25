@@ -11,7 +11,7 @@ TREE_ATTR = '_Tree'
 def _HANDLE_ERROR(st):
     """
     """
-    print st
+    print(st)
     return None
 
 
