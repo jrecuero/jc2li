@@ -1,6 +1,7 @@
-from commands import CliCommands
-# from base import Cli
+import sys
 import loggerator
+import argparse
+import importlib
 
 
 if __name__ == '__main__':
@@ -8,7 +9,17 @@ if __name__ == '__main__':
     logger.info("CLI APPLICATION", extended=(('FG', 'BLUE'), ('BG', 'YELLOW'), ))
     logger.info("---------------", "RED")
 
-    cli = CliCommands()
+    parser = argparse.ArgumentParser(description="CLI application launcher.")
+    parser.add_argument('--module', '-M', action='store', help='Module with CLI commands')
+    parser.add_argument('--echo', action='store_true', help='Echo mode')
+    args = parser.parse_args()
+
+    if args.module is None:
+        sys.exit(0)
+    else:
+        mod = importlib.import_module(args.module)
+
+    cli = mod.CliCommands()
     try:
         cli.cmdloop('CLI> ')
     except KeyboardInterrupt:
