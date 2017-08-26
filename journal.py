@@ -122,8 +122,13 @@ class Journal(object):
             return theFunc(theInst, theLine)
         elif cmdArgos is not None:
             cmdArgos.index()
-            cliArgos = shlex.split(theLine)
-            return cmdArgos, cliArgos
+            try:
+                if theLine.count('"') % 2 == 1:
+                    theLine = theLine.replace('"', '*')
+                cliArgos = shlex.split(theLine)
+                return cmdArgos, cliArgos
+            except ValueError:
+                return None, None
         return None, None
 
     def mapPassedArgosToCommandArgos(self, theRoot, theCmdArgos, theCliArgos):
