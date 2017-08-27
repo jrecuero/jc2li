@@ -142,26 +142,23 @@ class Journal(object):
             theClidArgos (list): list with CLI arguments.
         """
         nodePath = theRoot.findPath(theCliArgos)
-        if nodePath:
-            matchedNodes = list()
-            for nod, val in zip(nodePath, theCliArgos):
-                if '=' in val:
-                    _, argValue = val.split('=')
+        matchedNodes = list()
+        for nod, val in zip(nodePath, theCliArgos):
+            if '=' in val:
+                _, argValue = val.split('=')
+            else:
+                argValue = val
+            argValue = nod.Argo.Type._(argValue)
+            if nod not in matchedNodes:
+                nod.Argo.Value = argValue
+            else:
+                if type(nod.Argo.Value) == list:
+                    nod.Argo.Value.append(argValue)
                 else:
-                    argValue = val
-                argValue = nod.Argo.Type._(argValue)
-                if nod not in matchedNodes:
-                    nod.Argo.Value = argValue
-                else:
-                    if type(nod.Argo.Value) == list:
-                        nod.Argo.Value.append(argValue)
-                    else:
-                        nod.Argo.Value = [nod.Argo.Value, argValue]
-                matchedNodes.append(nod)
-            useArgs = theCmdArgos.getIndexedValues()
-            return useArgs
-        else:
-            raise CliException(MODULE, "Path for arguments {} not found.".format(theCliArgos))
+                    nod.Argo.Value = [nod.Argo.Value, argValue]
+            matchedNodes.append(nod)
+        useArgs = theCmdArgos.getIndexedValues()
+        return useArgs
 
     def buildCommandArgumentsFromSyntax(self, theFunc, theInst, theLine):
         """Method that build arguments to be passed to the command function.

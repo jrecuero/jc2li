@@ -57,13 +57,12 @@ class CliCommands(Cli):
 
     @Cli.command('the-command')
     @setsyntax
-    @syntax("the-command [info|tid]?")
-    @argo('info', Str, "solo")
+    @syntax("the-command [tid]?")
     @argo('tid', Int, 0)
-    def do_command(self, info, tid):
+    def do_command(self, info):
         """This is the basic CLI command.
         """
-        print('command arguments: {}'.format((info, tid)))
+        print('command arguments: {}'.format((info)))
 
     @Cli.command('node')
     @setsyntax
