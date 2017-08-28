@@ -6,7 +6,6 @@ sys.path.append(cliPath)
 
 from base import Cli
 from decorators import argo, syntax, setsyntax
-# from decorators import command, mode
 from argtypes import Int, Str
 from clierror import CliException
 
@@ -116,34 +115,6 @@ class CliTestClass(Cli):
     @argo('f5', Str, 'F5')
     def do_test_syntax_multiple_arguments(self, f1, f2, f3, f4, f5):
         return f1, f2, f3, f4, f5
-
-
-# @command(Cli)
-# def local_command(self, line):
-#     return 'local cmd command'
-
-
-# @mode(Cli, CliTestModeClass)
-# def local_mode(self, line):
-#     return 'local cmd mode'
-
-
-# @command(Cli)
-# @setsyntax
-# @syntax('local name [id]?')
-# @argo('name', Str, None)
-# @argo('id', Int, 0)
-# def local(self, name, id):
-#     return 'local cmd command: {}'.format(name), id
-
-
-# @mode(Cli, CliTestModeClass)
-# @setsyntax
-# @syntax('lmode name [id]?')
-# @argo('name', Str, None)
-# @argo('id', Int, 0)
-# def localmode(self, name, id):
-#     return 'local cmd mode: {}'.format(name), id
 
 
 def test_decorator_setsyntax_work():
@@ -284,23 +255,3 @@ def test_decorator_setsyntax_multiple_arguments():
     with pytest.raises(CliException) as ex:
         cli.do_test_syntax_multiple_arguments('100 f3="+f3" f2="?f2" f4="*f4" f5="?f5"')
     assert ex.value.message == '<f2=?f2> not found'
-
-
-# def test_decorator_command():
-#     cli = CliTestClass()
-#     assert cli.do_local_command('') == 'local cmd command'
-
-
-# def test_decorator_command_with_syntax():
-#     cli = CliTestClass()
-#     assert cli.do_local('"shelf"') == ('local cmd command: shelf', 0)
-
-
-# def test_decorator_mode():
-#     cli = CliTestClass()
-#     assert cli.do_local_mode('') == 'local cmd mode'
-
-
-# def test_decorator_mode_with_syntax():
-#     cli = CliTestClass()
-#     assert cli.do_localmode('"shelf"') == ('local cmd mode: shelf', 0)
