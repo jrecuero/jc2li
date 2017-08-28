@@ -350,7 +350,7 @@ class Cli(object):
         self.addCmd('shell', self.do_shell, self.do_help.__doc__)
 
         klassName = self.__class__.__name__
-        _calls = self._WALL[klassName]
+        _calls = self._WALL.get(klassName, [])
         for name, funcCb, desc in _calls:
             logger.debug('{0}::setupCmds add command {1}::{2}'.format(klassName, name, funcCb))
             self.addCmd(name, partial(funcCb, self), desc)
