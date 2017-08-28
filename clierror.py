@@ -19,3 +19,4 @@ class CliException(Exception):
                                          '<{}>'.format(theExcMessage) if theExcMessage else '',
                                          theMessage))
         super(CliException, self).__init__(theMessage, *args, **kwargs)
+        self.message = theMessage

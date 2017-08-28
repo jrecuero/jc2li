@@ -391,11 +391,12 @@ class Node(object):
         elif RuleHandler.isEndRule(theRule):
             child = End(theParent=self)
             endChild = child
-        elif RuleHandler.isZeroOrOneRule(theRule):
+        elif RuleHandler.isZeroOrOneRule(theRule) or RuleHandler.isOnlyOneOptionRule(theRule):
             child = Hook(theParent=self, theLabel="Hook-Start")
             endChild = Hook(theLabel="Hook-End")
             endChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs, endChild)
-            child.addChild(endChild)
+            if RuleHandler.isZeroOrOneRule(theRule):
+                child.addChild(endChild)
         elif RuleHandler.isZeroOrMoreRule(theRule) or RuleHandler.isOneOrMoreRule(theRule):
             child = Hook(theParent=self, theLabel="Hook-Start")
             loopChild = Loop(theParent=self, theLabel="Hook-Loop")

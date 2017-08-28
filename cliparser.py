@@ -1,7 +1,7 @@
 import pyparsing as pp
 
 
-def procTokens(theTokens, thWithEnd=True):
+def procTokens(theTokens, theWithEnd=True):
     """Function that process given tokens.
 
     Args:
@@ -25,7 +25,7 @@ def procTokens(theTokens, thWithEnd=True):
         elif toktype in [pp.ParseResults, list]:
             tok = tok.asList()[0] if toktype == pp.ParseResults else tok
             op = tok[-1]
-            if type(op) == str and op in '?+*':
+            if type(op) == str and op in '?+*!':
                 tok.pop()
             else:
                 op = '1'
@@ -33,7 +33,7 @@ def procTokens(theTokens, thWithEnd=True):
         else:
             print('Invalid Syntax')
         counter += 1
-    if thWithEnd:
+    if theWithEnd:
         rules.append({'counter': counter, 'type': '0', 'args': None})
     return rules
 
@@ -66,6 +66,7 @@ def getSyntax():
     zooarg = pp.Word(pp.alphanums + "-").setName('zero-or-one-arg')
     zomarg = pp.Word(pp.alphanums + "-").setName('zero-or-more-arg')
     oomarg = pp.Word(pp.alphanums + "-").setName('one-or-more-arg')
+    oooarg = pp.Word(pp.alphanums + "-").setName('only-one-arg')
 
     zeroorone = pp.Forward()
     zeroorone.setName('zero-or-one')
@@ -79,7 +80,11 @@ def getSyntax():
     oneormore << pp.Group(lbracket + pp.ZeroOrMore(oomarg) + pp.ZeroOrMore(("|"  + pp.OneOrMore(oomarg | oneormore)) | pp.OneOrMore(oneormore)) + rbracket + "+")
     oneormore.setName('one-or-more')
 
-    syntax = command + pp.ZeroOrMore(posarg) + pp.ZeroOrMore(pp.Group(zeroorone | zeroormore | oneormore))
+    only1opt = pp.Forward()
+    only1opt << pp.Group(lbracket + pp.ZeroOrMore(oooarg) + pp.ZeroOrMore(("|"  + pp.OneOrMore(oooarg | only1opt)) | pp.OneOrMore(only1opt)) + rbracket + "!")
+    only1opt.setName('one-or-more')
+
+    syntax = command + pp.ZeroOrMore(posarg) + pp.ZeroOrMore(pp.Group(zeroorone | zeroormore | oneormore | only1opt))
     return (syntax + pp.stringEnd)
 
 
@@ -99,7 +104,7 @@ if __name__ == '__main__':
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tsignature]? [talias]* [tdesc | thelp]+ [tclose]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tdesc talias | tsignature | tuser [tuname | tuid]? ]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
-    toks = getSyntax().parseString("tenant t1 [t2 | t3]?")
+    toks = getSyntax().parseString("tenant t1 [t2 | t3]!")
 
     print(toks)
     cmd, rules = procSyntax(toks)

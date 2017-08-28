@@ -86,6 +86,17 @@ class CliCommands(Cli):
         """
         print(tname, tid)
 
+    @Cli.command('interface')
+    @setsyntax
+    @syntax("interface name [iid|iname]!")
+    @argo('name', Tenant, None)
+    @argo('iid', Int, 0)
+    @argo('iname', Str, 'if')
+    def do_interface(self, name, iid, iname):
+        """Display tenant information.
+        """
+        print('interface is {0} {1} | {2}'.format(name, iid, iname))
+
 
 if __name__ == "__main__":
     pass

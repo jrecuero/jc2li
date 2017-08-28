@@ -6,7 +6,7 @@ sys.path.append(cliPath)
 
 from base import Cli
 from decorators import argo, syntax, setsyntax
-from decorators import command, mode
+# from decorators import command, mode
 from argtypes import Int, Str
 from clierror import CliException
 
@@ -65,6 +65,14 @@ class CliTestClass(Cli):
         return f1, f2, f3
 
     @setsyntax
+    @syntax('setsyntax f1 [f2 | f3]!')
+    @argo('f1', Str, None)
+    @argo('f2', Int, 0)
+    @argo('f3', Int, 1)
+    def do_test_syntax_one_only_option(self, f1, f2, f3):
+        return f1, f2, f3
+
+    @setsyntax
     @syntax('setsyntax f1 [f2 | f3 [f4 | f5]?]?')
     @argo('f1', Int, None)
     @argo('f2', Str, 'field 2')
@@ -85,32 +93,32 @@ class CliTestClass(Cli):
         return f1, f2, f3, f4, f5
 
 
-@command(Cli)
-def local_command(self, line):
-    return 'local cmd command'
+# @command(Cli)
+# def local_command(self, line):
+#     return 'local cmd command'
 
 
-@mode(Cli, CliTestModeClass)
-def local_mode(self, line):
-    return 'local cmd mode'
+# @mode(Cli, CliTestModeClass)
+# def local_mode(self, line):
+#     return 'local cmd mode'
 
 
-@command(Cli)
-@setsyntax
-@syntax('local name [id]?')
-@argo('name', Str, None)
-@argo('id', Int, 0)
-def local(self, name, id):
-    return 'local cmd command: {}'.format(name), id
+# @command(Cli)
+# @setsyntax
+# @syntax('local name [id]?')
+# @argo('name', Str, None)
+# @argo('id', Int, 0)
+# def local(self, name, id):
+#     return 'local cmd command: {}'.format(name), id
 
 
-@mode(Cli, CliTestModeClass)
-@setsyntax
-@syntax('lmode name [id]?')
-@argo('name', Str, None)
-@argo('id', Int, 0)
-def localmode(self, name, id):
-    return 'local cmd mode: {}'.format(name), id
+# @mode(Cli, CliTestModeClass)
+# @setsyntax
+# @syntax('lmode name [id]?')
+# @argo('name', Str, None)
+# @argo('id', Int, 0)
+# def localmode(self, name, id):
+#     return 'local cmd mode: {}'.format(name), id
 
 
 def test_decorator_setsyntax_zero_or_one():
@@ -179,6 +187,19 @@ def test_decorator_setsyntax_one_or_more_logic_or():
             f2=100 f3=300 f2=101 f3=301') == ('myshelf', [100, 101], [300, 301])
 
 
+def test_decorator_setsyntax_one_only_option():
+    pass
+    cli = CliTestClass()
+    with pytest.raises(CliException) as ex:
+        cli.do_test_syntax_one_only_option('myshelf')
+    assert ex.value.message == 'Number of Args: Too few arguments'
+    assert cli.do_test_syntax_one_only_option('myshelf f2=100') == ('myshelf', 100, 1)
+    assert cli.do_test_syntax_one_only_option('myshelf f3=300') == ('myshelf', 0, 300)
+    with pytest.raises(CliException) as ex:
+        assert cli.do_test_syntax_one_only_option('myshelf f2=100 f3=300') == ('myshelf', 100, 300)
+    assert ex.value.message == '<f3=300> not found'
+
+
 @pytest.mark.parametrize("theInput, theExpected",
                          (('50', (50, 'field 2', 'key', 'id', 'name')),
                           ('50 f2="f2"', (50, 'f2', 'key', 'id', 'name')),
@@ -217,21 +238,21 @@ def test_decorator_setsyntax_multiple_arguments():
     assert ex.value.message == '<f2=?f2> not found'
 
 
-def test_decorator_command():
-    cli = CliTestClass()
-    assert cli.do_local_command('') == 'local cmd command'
+# def test_decorator_command():
+#     cli = CliTestClass()
+#     assert cli.do_local_command('') == 'local cmd command'
 
 
-def test_decorator_command_with_syntax():
-    cli = CliTestClass()
-    assert cli.do_local('"shelf"') == ('local cmd command: shelf', 0)
+# def test_decorator_command_with_syntax():
+#     cli = CliTestClass()
+#     assert cli.do_local('"shelf"') == ('local cmd command: shelf', 0)
 
 
-def test_decorator_mode():
-    cli = CliTestClass()
-    assert cli.do_local_mode('') == 'local cmd mode'
+# def test_decorator_mode():
+#     cli = CliTestClass()
+#     assert cli.do_local_mode('') == 'local cmd mode'
 
 
-def test_decorator_mode_with_syntax():
-    cli = CliTestClass()
-    assert cli.do_localmode('"shelf"') == ('local cmd mode: shelf', 0)
+# def test_decorator_mode_with_syntax():
+#     cli = CliTestClass()
+#     assert cli.do_localmode('"shelf"') == ('local cmd mode: shelf', 0)

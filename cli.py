@@ -17,7 +17,11 @@ if __name__ == '__main__':
     if args.module is None:
         sys.exit(0)
     else:
-        mod = importlib.import_module(args.module)
+        try:
+            mod = importlib.import_module(args.module)
+        except:
+            print ('Module {0} not found'.format(args.module))
+            sys.exit(0)
 
     cli = mod.CliCommands()
     try:
