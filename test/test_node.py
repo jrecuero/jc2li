@@ -18,7 +18,7 @@ def test_node():
 
 
 def test_hook():
-    node = Hook(None)
+    node = Hook()
     assert node.Parent is None
     assert node.Parents == []
     assert node.Argo is None

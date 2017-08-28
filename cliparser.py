@@ -19,7 +19,10 @@ def procTokens(theTokens, theWithEnd=True):
             counter = 0
             continue
         elif toktype == str:
-            rules.append({'counter': counter, 'type': '1', 'args': tok})
+            if tok.startswith('<') and tok.endswith('>'):
+                rules.append({'counter': counter, 'type': '2', 'args': tok[1:-1]})
+            else:
+                rules.append({'counter': counter, 'type': '1', 'args': tok})
         elif toktype == list and len(tok) == 1:
             rules.append({'counter': counter, 'type': '1', 'args': tok[0]})
         elif toktype in [pp.ParseResults, list]:
@@ -59,14 +62,14 @@ def getSyntax():
         object: syntax used for parsing.
     """
     command = pp.Word(pp.alphanums + "-").setName('command')
-    posarg = pp.Word(pp.alphanums + "-").setName('pos-arg')
+    posarg = pp.Word(pp.alphanums + "-<>").setName('pos-arg')
 
     lbracket = pp.Suppress("[")
     rbracket = pp.Suppress("]")
     zooarg = pp.Word(pp.alphanums + "-").setName('zero-or-one-arg')
     zomarg = pp.Word(pp.alphanums + "-").setName('zero-or-more-arg')
     oomarg = pp.Word(pp.alphanums + "-").setName('one-or-more-arg')
-    oooarg = pp.Word(pp.alphanums + "-").setName('only-one-arg')
+    oooarg = pp.Word(pp.alphanums + "-<>").setName('only-one-arg')
 
     zeroorone = pp.Forward()
     zeroorone.setName('zero-or-one')
@@ -104,7 +107,8 @@ if __name__ == '__main__':
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tsignature]? [talias]* [tdesc | thelp]+ [tclose]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tdesc talias | tsignature | tuser [tuname | tuid]? ]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
-    toks = getSyntax().parseString("tenant t1 [t2 | t3]!")
+    # toks = getSyntax().parseString("tenant t1 [<t2> | t3]!")
+    toks = getSyntax().parseString("tenant t1 <t2>")
 
     print(toks)
     cmd, rules = procSyntax(toks)

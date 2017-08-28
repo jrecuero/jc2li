@@ -319,6 +319,18 @@ class RuleHandler(object):
         return theRule['type'] == '1'
 
     @staticmethod
+    def isConstantRule(theRule):
+        """Static method that checks if the rule contains a constant.
+
+        Args:
+            theRule (dict): dictionary with the given rule to check.
+
+        Returns:
+            boolean : True if the argument contains constant, False else
+        """
+        return theRule['type'] == '2'
+
+    @staticmethod
     def isEndRule(theRule):
         """Static method that checks if the rule contains the last rule for the
         command.

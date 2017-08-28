@@ -17,6 +17,16 @@ class CliTestModeClass(Cli):
         pass
 
 
+class CliTestWorkClass(Cli):
+
+    @setsyntax
+    @syntax('setsyntax f1 <F2>')
+    @argo('f1', Str, None)
+    @argo('F2', Str, 'F2')
+    def do_test_syntax_constant(self, f1, f2):
+        return f1, f2
+
+
 class CliTestClass(Cli):
 
     @setsyntax
@@ -73,6 +83,21 @@ class CliTestClass(Cli):
         return f1, f2, f3
 
     @setsyntax
+    @syntax('setsyntax f1 <F2>')
+    @argo('f1', Str, None)
+    @argo('F2', Str, None)
+    def do_test_syntax_constant(self, f1, f2):
+        return f1, f2
+
+    @setsyntax
+    @syntax('setsyntax f1 [<F2> | <F3>]!')
+    @argo('f1', Str, None)
+    @argo('F2', Str, 'F2')
+    @argo('F3', Str, 'F3')
+    def do_test_syntax_constant_option(self, f1, f2, f3):
+        return f1, f2, f3
+
+    @setsyntax
     @syntax('setsyntax f1 [f2 | f3 [f4 | f5]?]?')
     @argo('f1', Int, None)
     @argo('f2', Str, 'field 2')
@@ -119,6 +144,10 @@ class CliTestClass(Cli):
 # @argo('id', Int, 0)
 # def localmode(self, name, id):
 #     return 'local cmd mode: {}'.format(name), id
+
+
+def test_decorator_setsyntax_work():
+    CliTestWorkClass()
 
 
 def test_decorator_setsyntax_zero_or_one():
@@ -198,6 +227,25 @@ def test_decorator_setsyntax_one_only_option():
     with pytest.raises(CliException) as ex:
         assert cli.do_test_syntax_one_only_option('myshelf f2=100 f3=300') == ('myshelf', 100, 300)
     assert ex.value.message == '<f3=300> not found'
+
+
+def test_decorator_setsyntax_constant():
+    pass
+    cli = CliTestClass()
+    with pytest.raises(CliException) as ex:
+        cli.do_test_syntax_constant('myshelf')
+    assert ex.value.message == 'Mandatory argument is not present'
+    assert cli.do_test_syntax_constant('myshelf F2') == ('myshelf', 'F2')
+
+
+def test_decorator_setsyntax_constant_option():
+    pass
+    cli = CliTestClass()
+    with pytest.raises(CliException) as ex:
+        cli.do_test_syntax_constant_option('myshelf')
+    assert ex.value.message == 'Number of Args: Too few arguments'
+    assert cli.do_test_syntax_constant_option('myshelf F2') == ('myshelf', 'F2', 'F3')
+    assert cli.do_test_syntax_constant_option('myshelf F3') == ('myshelf', 'F2', 'F3')
 
 
 @pytest.mark.parametrize("theInput, theExpected",

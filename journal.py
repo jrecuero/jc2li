@@ -182,7 +182,7 @@ class Journal(object):
         if useArgs is None:
             raise CliException(MODULE, 'Incorrect arguments"')
         if not all(map(lambda x: x is not None, useArgs)):
-            raise CliException(MODULE, 'Mandatory argument is not present"')
+            raise CliException(MODULE, 'Mandatory argument is not present')
 
         return useArgs
 
