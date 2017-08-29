@@ -47,9 +47,14 @@ class CliType(object):
         Returns:
             str : string with help to send to the display.
         """
-        if self._prefix and self._prefix not in text:
+        if not self._prefix:
+            return self._helpStr()
+        if self._prefix and self._prefix in text:
+            return self._helpStr()
+        if self._prefix and self._prefix not in text\
+                and (text == ' ' or self._prefix.startswith(text)):
             return 'Enter {}'.format(self._prefix)
-        return self._helpStr()
+        return ""
 
     def complete(self, text):
         """Method that returns the completion for the given argument.
@@ -60,7 +65,8 @@ class CliType(object):
         Returns:
             str : string with completion to send to the display.
         """
-        if self._prefix and self._prefix not in text:
+        if self._prefix and self._prefix not in text\
+                and (text == ' ' or self._prefix.startswith(text)):
             return [self._prefix, ]
         return None
 

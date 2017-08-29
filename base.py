@@ -59,6 +59,7 @@ class Cli(object):
                     yield Completion(m, start_position=-len(wordBeforeCursor))
             else:
                 lineList = document.text.split()
+                lastToken = lineList[-1] if document.text[-1] != ' ' else ' '
                 cmdLabel = lineList[0]
                 cmd = self._cli.getCmdCb(cmdLabel)
                 # Required for partial methods
@@ -77,13 +78,17 @@ class Cli(object):
                         self._nodepath = nodePath
                     childrenNodes = self._nodepath[0].getChildrenNodes() if self._nodepath else root.getChildrenNodes()
                     if childrenNodes:
-                        self._cli.ToolBar = childrenNodes[0].Argo.Completer.help(lineList[-1])
-                        matches = childrenNodes[0].Argo.Completer.complete(lineList[-1])
-                        for m in matches:
-                            yield Completion(m, start_position=-len(wordBeforeCursor))
-                except:
+                        helps = [c.Argo.Completer.help(lastToken) for c in childrenNodes]
+                        self._cli.ToolBar = " | ".join(helps)
+                        for child in childrenNodes:
+                            matches = child.Argo.Completer.complete(lastToken)
+                            for m in matches:
+                                yield Completion(m, start_position=-len(wordBeforeCursor))
+                except Exception as ex:
+                    logger.error('{0}, {1}'.format(ex, ex.__traceback__.tb_lineno))
                     pass
                 logger.debug('completer cmd: {0}'.format(cmd))
+                logger.debug('document text is "{}"'.format(document.text))
                 logger.debug('last document text is [{}]'.format(lineList[-1]))
                 logger.debug('children nodes are {}'.format(childrenNodes))
                 logger.debug('nodePath is {}'.format(nodePath))

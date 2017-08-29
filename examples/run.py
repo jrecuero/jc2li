@@ -11,13 +11,11 @@ class RunCli(Cli):
 
     def setupCmds(self):
         super(RunCli, self).setupCmds()
-        self.addCmd('start', self.do_start)
-        self.addCmd('run', self.do_run)
 
     def do_start(self, theLine):
         print('start application with {0}'.format(theLine))
 
-    # @Cli.command('run')
+    @Cli.command()
     @setsyntax
     @syntax("run name [version]?")
     @argo('name', Str, None)
@@ -25,7 +23,7 @@ class RunCli(Cli):
     def do_run(self, name, version):
         print("run application {0} version{1}".format(name, version))
 
-    @Cli.command('play')
+    @Cli.command()
     @setsyntax
     @syntax("play name")
     @argo('name', Str, None)
@@ -39,7 +37,7 @@ class RunCli(Cli):
 
 
 if __name__ == '__main__':
-    cli = Cli()
+    cli = RunCli()
     try:
         cli.cmdloop('RUN# ')
     except KeyboardInterrupt:
