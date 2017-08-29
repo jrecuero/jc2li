@@ -26,6 +26,7 @@ __docformat__ = 'restructuredtext en'
 import os
 import sys
 import logging
+import logging.handlers
 import logging.config
 
 #
@@ -368,7 +369,9 @@ class Loggerator(object):
                        COL_RESET + '[%(levelname)-8s] [%(titular)-32s] %(message)s'
         formatter = logging.Formatter(formatString)
 
-        fileHandler = logging.FileHandler(fname)
+        self._maxSize = 1024 * 1024 * 1024
+        self._maxCount = 9
+        fileHandler = logging.handlers.RotatingFileHandler(fname, maxBytes=self._maxSize, backupCount=self._maxCount)
         fileHandler.setFormatter(formatter)
         self.loggerator.addHandler(fileHandler)
         self.loggerator.addFilter(ContextFilter())
