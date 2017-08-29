@@ -406,7 +406,9 @@ class Cli(object):
                     desc = _wrapper.__doc__
                 else:
                     desc = _wrapper.func.__doc__
-            Cli._WALL[moduleName].append((theLabel if theLabel else f.func_name, _wrapper, desc))
+            labelFromSyntax = getattr(f, '_Syntax', None)
+            label = f.__name__ if labelFromSyntax is None else labelFromSyntax.split()[0]
+            Cli._WALL[moduleName].append((theLabel if theLabel else label, _wrapper, desc))
             return _wrapper
 
         return f_command

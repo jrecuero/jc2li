@@ -18,6 +18,7 @@ class CliTestModeClass(Cli):
 
 class CliTestWorkClass(Cli):
 
+    @Cli.command('ss')
     @setsyntax
     @syntax('setsyntax f1 <F2>')
     @argo('f1', Str, None)
