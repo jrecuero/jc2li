@@ -47,8 +47,8 @@ def argos(theArgos):
             return f(self, *args)
 
         cmdArgos = getattr(_wrapper, ARGOS_ATTR, Arguments())
-        for arg in theArgos.reversed():
-            cmdArgos.insert(arg)
+        for arg in reversed(theArgos):
+            cmdArgos.insertArgument(Argument(arg['name'], arg['type'], theDefault=arg['default']))
         setattr(_wrapper, ARGOS_ATTR, cmdArgos)
         return _wrapper
 

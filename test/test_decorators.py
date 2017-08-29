@@ -5,9 +5,15 @@ cliPath = '.'
 sys.path.append(cliPath)
 
 from base import Cli
-from decorators import argo, syntax, setsyntax
+from decorators import argo, syntax, setsyntax, argos
 from argtypes import Int, Str
 from clierror import CliException
+
+
+MULTI_ARGOS = [{'name': 'f1', 'type': Str, 'default': None},
+               {'name': 'f2', 'type': Int, 'default': None},
+               {'name': 'f3', 'type': Str, 'default': 'XX'},
+               {'name': 'f4', 'type': Int, 'default': 0}, ]
 
 
 class CliTestModeClass(Cli):
@@ -28,6 +34,12 @@ class CliTestWorkClass(Cli):
 
 
 class CliTestClass(Cli):
+
+    @setsyntax
+    @syntax('multi f1 f2 [f3 | f4]?')
+    @argos(MULTI_ARGOS)
+    def do_test_syntax_argos(self, f1, f2, f3, f4):
+        return f1, f2, f3, f4
 
     @setsyntax
     @syntax('setsyntax f1 [f2]?')
@@ -120,6 +132,13 @@ class CliTestClass(Cli):
 
 def test_decorator_setsyntax_work():
     CliTestWorkClass()
+
+
+def test_decorator_setsyntax_argos():
+    cli = CliTestClass()
+    assert cli.do_test_syntax_argos('F2 100') == ('F2', 100, 'XX', 0)
+    assert cli.do_test_syntax_argos('F2 100 f3="F3"') == ('F2', 100, 'F3', 0)
+    assert cli.do_test_syntax_argos('F2 100 f4=1') == ('F2', 100, 'XX', 1)
 
 
 def test_decorator_setsyntax_zero_or_one():
