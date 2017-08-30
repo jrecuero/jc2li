@@ -53,7 +53,7 @@ class CliType(object):
             return self._helpStr()
         if self._prefix and self._prefix not in text\
                 and (text == ' ' or self._prefix.startswith(text)):
-            return 'Enter {}'.format(self._prefix)
+            return 'Enter "{}"'.format(self._prefix)
         return ""
 
     def complete(self, text):

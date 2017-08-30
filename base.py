@@ -82,8 +82,10 @@ class Cli(object):
                         self._cli.ToolBar = " | ".join(helps)
                         for child in childrenNodes:
                             matches = child.Argo.Completer.complete(lastToken)
-                            for m in matches:
-                                yield Completion(m, start_position=-len(wordBeforeCursor))
+                            for i, m in enumerate(matches):
+                                yield Completion(m,
+                                                 start_position=-len(wordBeforeCursor),
+                                                 display_meta=helps[i])
                 except Exception as ex:
                     logger.error('{0}, {1}'.format(ex, ex.__traceback__.tb_lineno))
                     pass
@@ -360,6 +362,19 @@ class Cli(object):
             logger.debug('{0}::setupCmds add command {1}::{2}'.format(klassName, name, funcCb))
             self.addCmd(name, partial(funcCb, self), desc)
 
+    def run(self, thePrompt):
+        self.ToolBar = 'Enter a valid command'
+        userInput = prompt('{}'.format(thePrompt),
+                           history=FileHistory('history.txt'),
+                           auto_suggest=AutoSuggestFromHistory(),
+                           completer=Cli.CliCompleter(self),
+                           # lexer=SqlLexer,
+                           get_bottom_toolbar_tokens=self.getBottomToolbarTokens,
+                           style=self.TOOLBAR_STYLE,
+                           # validator=CliValidator(),
+                           refresh_interval=1)
+        return userInput
+
     def cmdloop(self, thePrompt):
         """Method that is called to wait for any user input.
 
@@ -367,16 +382,7 @@ class Cli(object):
             thePrompt (str) : string with the prompt for the command line.
         """
         while True:
-            self.ToolBar = 'Enter a valid command'
-            userInput = prompt('{}'.format(thePrompt),
-                               history=FileHistory('history.txt'),
-                               auto_suggest=AutoSuggestFromHistory(),
-                               completer=Cli.CliCompleter(self),
-                               # lexer=SqlLexer,
-                               get_bottom_toolbar_tokens=self.getBottomToolbarTokens,
-                               style=self.TOOLBAR_STYLE,
-                               # validator=CliValidator(),
-                               refresh_interval=1)
+            userInput = self.run(thePrompt)
             # print(userInput)
             if userInput:
                 lineAsList = userInput.split()

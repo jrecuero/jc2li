@@ -12,8 +12,10 @@ class RunCli(Cli):
     def setupCmds(self):
         super(RunCli, self).setupCmds()
 
+    @Cli.command('start')
     def do_start(self, theLine):
         print('start application with {0}'.format(theLine))
+        return 'Start'
 
     @Cli.command()
     @setsyntax
