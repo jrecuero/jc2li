@@ -23,8 +23,10 @@ __docformat__ = 'restructuredtext en'
 #
 # import std python modules
 #
+import os
 import sys
 import logging
+import logging.handlers
 import logging.config
 
 #
@@ -258,6 +260,9 @@ _loggerDB = {}
     request a logger, it returns the already created instance.
 """
 
+TRACE_LEVEL = 25
+DISPLAY_LEVEL = 24
+
 
 #------------------------------------------------------------------------------
 #            _                     _   _
@@ -304,6 +309,24 @@ def getLoggerator(name, color=(BOLD_ON + FG_BLACK)):
 #
 # =============================================================================
 #
+class ContextFilter(logging.Filter):
+
+    def filter(self, record):
+        fr = sys._getframe(8)
+        msg = '{0}::{1}::{2}'.format(os.path.basename(fr.f_code.co_filename),
+                                     fr.f_code.co_name,
+                                     fr.f_lineno)
+        record.titular = msg
+        if record.levelno == TRACE_LEVEL:
+            record.levelname = 'TRACE'
+        elif record.levelno == DISPLAY_LEVEL:
+            record.levelname = 'DISPLAY'
+        return True
+
+
+#
+# =============================================================================
+#
 class Loggerator(object):
     """Loggerator class is used to log information for a given component.
 
@@ -343,12 +366,15 @@ class Loggerator(object):
         self.loggerator.setLevel(logging.DEBUG)
 
         formatString = '%(asctime)s ' + color + '%(name)-16s ' +\
-                       COL_RESET + '[%(levelname)-8s] %(message)s'
+                       COL_RESET + '[%(levelname)-8s] [%(titular)-32s] %(message)s'
         formatter = logging.Formatter(formatString)
 
-        fileHandler = logging.FileHandler(fname)
+        self._maxSize = 1024 * 1024 * 1024
+        self._maxCount = 9
+        fileHandler = logging.handlers.RotatingFileHandler(fname, maxBytes=self._maxSize, backupCount=self._maxCount)
         fileHandler.setFormatter(formatter)
         self.loggerator.addHandler(fileHandler)
+        self.loggerator.addFilter(ContextFilter())
 
         # consoleHandler = logging.StreamHandler()
         # consoleHandler.setFormatter(formatter)
@@ -358,6 +384,7 @@ class Loggerator(object):
         self.defaultColor['debug']   = (('FG', 'GREEN'), )
         self.defaultColor['info']    = (('FG', 'BLUE'), )
         self.defaultColor['trace']   = (('FG', 'MAGENTA'), )
+        self.defaultColor['display']   = (('FG', 'YELLOW'), )
         self.defaultColor['warning'] = (('FG', 'RED'), )
         self.defaultColor['error']   = (('FG', 'WHITE'), ('BG', 'RED'))
         self.out = out
@@ -372,8 +399,20 @@ class Loggerator(object):
         Returns:
             None
         """
-        self.out.write(message)
+        self._extendedLog(message, 'display')
+        self.out.write(str(message))
         self.out.write('\n')
+
+    # =========================================================================
+    def _filterLevel(self, level):
+        if level in ['debug', 'info', 'warning', 'error']:
+            return level
+        elif level == 'trace':
+            return TRACE_LEVEL
+        elif level == 'display':
+            return DISPLAY_LEVEL
+        else:
+            return logging.NOTSET
 
     # =========================================================================
     def _setColor(self, color):
@@ -418,6 +457,9 @@ class Loggerator(object):
         function = getattr(self.loggerator, level, None)
         if function:
             function(formattedMessage, *args, **kwargs)
+        else:
+            level = self._filterLevel(level)
+            self.loggerator.log(level, formattedMessage, *args, **kwargs)
 
     # =========================================================================
     def getLoggerator(self):

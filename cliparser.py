@@ -1,7 +1,7 @@
 import pyparsing as pp
 
 
-def procTokens(theTokens, thWithEnd=True):
+def procTokens(theTokens, theWithEnd=True):
     """Function that process given tokens.
 
     Args:
@@ -19,21 +19,24 @@ def procTokens(theTokens, thWithEnd=True):
             counter = 0
             continue
         elif toktype == str:
-            rules.append({'counter': counter, 'type': '1', 'args': tok})
+            if tok.startswith('<') and tok.endswith('>'):
+                rules.append({'counter': counter, 'type': '2', 'args': tok[1:-1]})
+            else:
+                rules.append({'counter': counter, 'type': '1', 'args': tok})
         elif toktype == list and len(tok) == 1:
             rules.append({'counter': counter, 'type': '1', 'args': tok[0]})
         elif toktype in [pp.ParseResults, list]:
             tok = tok.asList()[0] if toktype == pp.ParseResults else tok
             op = tok[-1]
-            if type(op) == str and op in '?+*':
+            if type(op) == str and op in '?+*!':
                 tok.pop()
             else:
                 op = '1'
             rules.append({'counter': counter, 'type': op, 'args': procTokens(tok, False)})
         else:
-            print 'Invalid Syntax'
+            print('Invalid Syntax')
         counter += 1
-    if thWithEnd:
+    if theWithEnd:
         rules.append({'counter': counter, 'type': '0', 'args': None})
     return rules
 
@@ -58,14 +61,15 @@ def getSyntax():
     Returns:
         object: syntax used for parsing.
     """
-    command = pp.Word(pp.alphanums).setName('command')
-    posarg = pp.Word(pp.alphanums).setName('pos-arg')
+    command = pp.Word(pp.alphanums + "-").setName('command')
+    posarg = pp.Word(pp.alphanums + "-<>").setName('pos-arg')
 
     lbracket = pp.Suppress("[")
     rbracket = pp.Suppress("]")
-    zooarg = pp.Word(pp.alphanums).setName('zero-or-one-arg')
-    zomarg = pp.Word(pp.alphanums).setName('zero-or-more-arg')
-    oomarg = pp.Word(pp.alphanums).setName('one-or-more-arg')
+    zooarg = pp.Word(pp.alphanums + "-").setName('zero-or-one-arg')
+    zomarg = pp.Word(pp.alphanums + "-").setName('zero-or-more-arg')
+    oomarg = pp.Word(pp.alphanums + "-").setName('one-or-more-arg')
+    oooarg = pp.Word(pp.alphanums + "-<>").setName('only-one-arg')
 
     zeroorone = pp.Forward()
     zeroorone.setName('zero-or-one')
@@ -79,7 +83,11 @@ def getSyntax():
     oneormore << pp.Group(lbracket + pp.ZeroOrMore(oomarg) + pp.ZeroOrMore(("|"  + pp.OneOrMore(oomarg | oneormore)) | pp.OneOrMore(oneormore)) + rbracket + "+")
     oneormore.setName('one-or-more')
 
-    syntax = command + pp.ZeroOrMore(posarg) + pp.ZeroOrMore(pp.Group(zeroorone | zeroormore | oneormore))
+    only1opt = pp.Forward()
+    only1opt << pp.Group(lbracket + pp.ZeroOrMore(oooarg) + pp.ZeroOrMore(("|"  + pp.OneOrMore(oooarg | only1opt)) | pp.OneOrMore(only1opt)) + rbracket + "!")
+    only1opt.setName('one-or-more')
+
+    syntax = command + pp.ZeroOrMore(posarg) + pp.ZeroOrMore(pp.Group(zeroorone | zeroormore | oneormore | only1opt))
     return (syntax + pp.stringEnd)
 
 
@@ -99,10 +107,11 @@ if __name__ == '__main__':
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tsignature]? [talias]* [tdesc | thelp]+ [tclose]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tdesc talias | tsignature | tuser [tuname | tuid]? ]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
-    toks = getSyntax().parseString("tenant t1 [t2 | t3]?")
+    # toks = getSyntax().parseString("tenant t1 [<t2> | t3]!")
+    toks = getSyntax().parseString("tenant t1 <t2>")
 
-    print toks
+    print(toks)
     cmd, rules = procSyntax(toks)
-    print cmd
+    print(cmd)
     for rule in rules:
-        print rule
+        print(rule)

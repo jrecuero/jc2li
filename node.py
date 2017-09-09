@@ -8,7 +8,7 @@ class Node(object):
     """Node class provides a container for every node in the syntax tree.
     """
 
-    def __init__(self, theArgo, theParent=None, theLabel=None):
+    def __init__(self, theArgo, **kwargs):
         """Node class initialization method.
 
         Args:
@@ -16,12 +16,13 @@ class Node(object):
             theaParent (Node): parent node instance.
             theLabel (str): string to be used as label attribute.
         """
-        self._parent = theParent
+        self._parent = kwargs.get('theParent', None)
         self._children = list()
         self._argo = theArgo
         self._browsable = True
-        self._label = theLabel if theLabel else self.Name
+        self._label = kwargs.get('theLabel', self.Name)
         self._loops = set()
+        self._isCte = kwargs.get('theIsCte', False)
 
     @property
     def Browsable(self):
@@ -54,7 +55,7 @@ class Node(object):
 
     @Parent.setter
     def Parent(self, theParent):
-        """Set property taht set a new parent for the node.
+        """Set property that sets a new parent for the node.
 
         Args:
             theParent (Node): node instance to use a a new parent.
@@ -78,6 +79,17 @@ class Node(object):
             list: list with all node children.
         """
         return self._children
+
+    @property
+    def ArgoNode(self):
+        return [self, ]
+
+    def getChildrenNodes(self, **kwargs):
+        children = []
+        noLoop = kwargs.pop('theMatched') if kwargs.get('theNoLoop', None) else False
+        for child in self.traverseChildren(theNoLoop=noLoop):
+            children.extend(child.ArgoNode)
+        return children
 
     @property
     def Siblings(self):
@@ -184,7 +196,11 @@ class Node(object):
         Returns:
             None
         """
-        if theChild.Parent:
+        # if theChild.Parent:
+        #     raise CliException(MODULE, 'addChild() not allowed on child with parent.')
+        # else:
+        #     self._addChild(theChild, theIsLoop)
+        if theChild.Parent and theChild.Parent != self:
             raise CliException(MODULE, 'addChild() not allowed on child with parent.')
         else:
             self._addChild(theChild, theIsLoop)
@@ -268,7 +284,7 @@ class Node(object):
         the value, when looking for those in the parsing tree, they will not
         be found, but such as a mandatory and positional arguments, they
         should be a direct match for the direct position, that is the reason
-        whe use the argument theCheckDefault=True when we want to make a path
+        we use the argument theCheckDefault=True when we want to make a path
         search, for any other scenario, where just the argument name will be
         used, set that argument to False.
 
@@ -280,8 +296,19 @@ class Node(object):
         Returns:
             Node: Node with the given name, None is not found.
         """
+        # if the node contains a constant, it has to be checked first and it
+        # only should return a match, if the string passed is equal to the Name
+        # stored in the Node.
+        if self._isCte and self.Name == theName:
+            return self if self.Name == theName else None
+
+        # Mandatory arguments have a Default value equal to None, and they are
+        # tested with theCheckDefault flag is set to True
         if kwargs.get('theCheckDefault', None) and self.Default is None:
             return self
+
+        # for any other parameter, checks the given name is the right one for a
+        # proper match.
         return self if self.Name == theName else None
 
     def findChildByName(self, theName, **kwargs):
@@ -374,17 +401,18 @@ class Node(object):
         Returns:
             Node: child node that matches the syntax rule.
         """
-        if RuleHandler.isOnlyOneRule(theRule):
+        if RuleHandler.isOnlyOneRule(theRule) or RuleHandler.isConstantRule(theRule):
             child = Node(theArgs.getArgoFromName(RuleHandler.getArgsFromRule(theRule)), theParent=self)
             endChild = child
         elif RuleHandler.isEndRule(theRule):
             child = End(theParent=self)
             endChild = child
-        elif RuleHandler.isZeroOrOneRule(theRule):
+        elif RuleHandler.isZeroOrOneRule(theRule) or RuleHandler.isOnlyOneOptionRule(theRule):
             child = Hook(theParent=self, theLabel="Hook-Start")
             endChild = Hook(theLabel="Hook-End")
             endChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs, endChild)
-            child.addChild(endChild)
+            if RuleHandler.isZeroOrOneRule(theRule):
+                child.addChild(endChild)
         elif RuleHandler.isZeroOrMoreRule(theRule) or RuleHandler.isOneOrMoreRule(theRule):
             child = Hook(theParent=self, theLabel="Hook-Start")
             loopChild = Loop(theParent=self, theLabel="Hook-Loop")
@@ -454,20 +482,20 @@ class Hook(Node):
     syntax tree.
     """
 
-    def __init__(self, theParent=None, theLabel=None):
+    def __init__(self, **kwargs):
         """Hook class initialization method.
 
         Args:
             theaParent (Node): parent node instance.
             theLabel (str): string to be used as label attribute.
         """
-        super(Hook, self).__init__(None, theParent)
+        super(Hook, self).__init__(None, **kwargs)
         self._browsable = False
-        if theParent is None:
+        if kwargs.get('theParent', None) is None:
             self._parent = []
         else:
             self._parent = [self._parent, ]
-        self._label = theLabel if theLabel else "Hook"
+        self._label = kwargs.get('theLabel', "Hook")
 
     @property
     def Parent(self):
@@ -480,7 +508,7 @@ class Hook(Node):
 
     @Parent.setter
     def Parent(self, theParent):
-        """Set property taht set a new parent for the node.
+        """Set property that sets a new parent for the node.
 
         Args:
             theParent (Node): node instance to use a a new parent.
@@ -531,6 +559,10 @@ class Hook(Node):
             object: default value for the argument in the node.
         """
         return None
+
+    @property
+    def ArgoNode(self):
+        return self.getChildrenNodes()
 
     def addChild(self, theChild, theIsLoop=False):
         """Method that adds a new child Node to the Node.
@@ -629,15 +661,15 @@ class Loop(Hook):
     syntax tree.
     """
 
-    def __init__(self, theParent=None, theLabel=None):
+    def __init__(self, **kwargs):
         """Loop class initialization method.
 
         Args:
             theaParent (Node): parent node instance.
             theLabel (str): string to be used as label attribute.
         """
-        super(Loop, self).__init__(None, theLabel)
-        self._label = theLabel if theLabel else "Loop"
+        super(Loop, self).__init__(**kwargs)
+        self._label = kwargs.get('theLabel', "Loop")
 
     def isLoop(self):
         """Method that returns if the node is a loop node.
@@ -658,6 +690,15 @@ class Loop(Hook):
         """
         indent = "--" * level
         return "{}Loop.{}\n".format(indent, self.Label)
+
+    def getChildrenNodes(self, **kwargs):
+        if kwargs.get('theMatched', None):
+            kwargs.pop('theMatched')
+            kwargs.setdefault('theNoLoop', True)
+        else:
+            kwargs.setdefault('theMatched', True)
+            kwargs.setdefault('theNoLoop', False)
+        return super(Loop, self).getChildrenNodes(**kwargs)
 
     def findChildByName(self, theName, **kwargs):
         """Method that returns the children node with the given name.
@@ -686,15 +727,15 @@ class Start(Hook):
     tree.
     """
 
-    def __init__(self, theParent=None, theLabel=None):
+    def __init__(self, **kwargs):
         """Start class initialization method.
 
         Args:
             theaParent (Node): parent node instance.
             theLabel (str): string to be used as label attribute.
         """
-        super(Start, self).__init__(None, theLabel)
-        self._label = theLabel if theLabel else "Start"
+        super(Start, self).__init__(**kwargs)
+        self._label = kwargs.get('theLabel', "Start")
 
     def _toString(self, level):
         """Internal ethod that returns a string with Node information.
@@ -715,7 +756,7 @@ class End(Hook):
     tree.
     """
 
-    def __init__(self, theParent=None, theLabel=None):
+    def __init__(self, **kwargs):
         """End class initialization method.
 
         Args:
@@ -724,8 +765,8 @@ class End(Hook):
         """
         """
         """
-        super(End, self).__init__(None, theLabel)
-        self._label = theLabel if theLabel else "End"
+        super(End, self).__init__(**kwargs)
+        self._label = kwargs.get('theLabel', "End")
 
     def buildHookFromRule(self, theRule, theArgs, theEndHook):
         """Method that build a sequence of nodes for the given rule.

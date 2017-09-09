@@ -18,7 +18,7 @@ def test_node():
 
 
 def test_hook():
-    node = Hook(None)
+    node = Hook()
     assert node.Parent is None
     assert node.Parents == []
     assert node.Argo is None
@@ -36,9 +36,9 @@ def test_hook():
 
 def test_build_nodes():
     root = Start()
-    argos = [Argument('tname', str, 'myname'),
-             Argument('tid', str, 'myid'),
-             Argument('tsig', str, 'mysig')]
+    argos = [Argument('tname', Str, theDefault='myname'),
+             Argument('tid', Str, theDefault='myid'),
+             Argument('tsig', Str, theDefault='mysig')]
     travWrite = root
     for arg in argos:
         child = Node(arg)
@@ -69,10 +69,10 @@ def test_build_nodes():
 
 
 def test_build_tree_prototype():
-    node1 = Node(Argument('tname', str, 'myname'))
+    node1 = Node(Argument('tname', Str, theDefault='myname'))
     hookEnter = Hook()
-    node21 = Node(Argument('tid', str, 'myid'))
-    node22 = Node(Argument('tsig', str, 'mysig'))
+    node21 = Node(Argument('tid', Str, theDefault='myid'))
+    node22 = Node(Argument('tsig', Str, theDefault='mysig'))
     end = End()
 
     root = Start()
@@ -116,9 +116,9 @@ def test_build_tree_prototype():
 
 def test_build_tree_from_rules():
     argos = Arguments()
-    argos.addArgument(Argument('t1', Str, None))
-    argos.addArgument(Argument('t2', Int, 0))
-    argos.addArgument(Argument('t3', Str, 'myself'))
+    argos.addArgument(Argument('t1', Str))
+    argos.addArgument(Argument('t2', Int, theDefault=0))
+    argos.addArgument(Argument('t3', Str, theDefault='myself'))
     argos.index()
     rules = [{'counter': 0, 'type': '1', 'args': 't1'},
              {'counter': 1, 'type': '?', 'args': [{'counter': 0, 'type': '1', 'args': 't2'},

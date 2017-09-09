@@ -3,8 +3,12 @@ from common import RuleHandler
 from common import ARGOS_ATTR, RULES_ATTR, TREE_ATTR
 from node import Start
 from clierror import CliException
+import loggerator
 
 MODULE = 'JOURNAL'
+
+
+logger = loggerator.getLoggerator('journal')
 
 
 class Journal(object):
@@ -97,7 +101,7 @@ class Journal(object):
                 newTrav = trav.buildChildrenNodeFromRule(rule, argos)
                 trav = newTrav
             setattr(theFunc, TREE_ATTR, root)
-            return True
+            return root
         raise CliException(MODULE, "Building Command Parsing Tree: arguments not defined")
 
     def getCmdAndCliArgos(self, theFunc, theInst, theLine):
@@ -114,11 +118,18 @@ class Journal(object):
                 tuple: pair with command arguments and cli arguments.
         """
         cmdArgos = getattr(theFunc, ARGOS_ATTR, None)
-        if cmdArgos is None:
+        if theInst and cmdArgos is None:
             return theFunc(theInst, theLine)
-        cmdArgos.index()
-        cliArgos = shlex.split(theLine)
-        return cmdArgos, cliArgos
+        elif cmdArgos is not None:
+            cmdArgos.index()
+            try:
+                if theLine.count('"') % 2 == 1:
+                    theLine = theLine.replace('"', '*')
+                cliArgos = shlex.split(theLine)
+                return cmdArgos, cliArgos
+            except ValueError:
+                return None, None
+        return None, None
 
     def mapPassedArgosToCommandArgos(self, theRoot, theCmdArgos, theCliArgos):
         """Using the command arguments and argument values passed by the user
@@ -131,26 +142,23 @@ class Journal(object):
             theClidArgos (list): list with CLI arguments.
         """
         nodePath = theRoot.findPath(theCliArgos)
-        if nodePath:
-            matchedNodes = list()
-            for nod, val in zip(nodePath, theCliArgos):
-                if '=' in val:
-                    _, argValue = val.split('=')
+        matchedNodes = list()
+        for nod, val in zip(nodePath, theCliArgos):
+            if '=' in val:
+                _, argValue = val.split('=')
+            else:
+                argValue = val
+            argValue = nod.Argo.Type._(argValue)
+            if nod not in matchedNodes:
+                nod.Argo.Value = argValue
+            else:
+                if type(nod.Argo.Value) == list:
+                    nod.Argo.Value.append(argValue)
                 else:
-                    argValue = val
-                argValue = nod.Argo.Type._(argValue)
-                if nod not in matchedNodes:
-                    nod.Argo.Value = argValue
-                else:
-                    if type(nod.Argo.Value) == list:
-                        nod.Argo.Value.append(argValue)
-                    else:
-                        nod.Argo.Value = [nod.Argo.Value, argValue]
-                matchedNodes.append(nod)
-            useArgs = theCmdArgos.getIndexedValues()
-            return useArgs
-        else:
-            raise CliException(MODULE, "Path for arguments {} not found.".format(theCliArgos))
+                    nod.Argo.Value = [nod.Argo.Value, argValue]
+            matchedNodes.append(nod)
+        useArgs = theCmdArgos.getIndexedValues()
+        return useArgs
 
     def buildCommandArgumentsFromSyntax(self, theFunc, theInst, theLine):
         """Method that build arguments to be passed to the command function.
@@ -174,7 +182,7 @@ class Journal(object):
         if useArgs is None:
             raise CliException(MODULE, 'Incorrect arguments"')
         if not all(map(lambda x: x is not None, useArgs)):
-            raise CliException(MODULE, 'Mandatory argument is not present"')
+            raise CliException(MODULE, 'Mandatory argument is not present')
 
         return useArgs
 
