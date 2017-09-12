@@ -1,4 +1,4 @@
-from common import RuleHandler
+from rules import RuleHandler
 from clierror import CliException
 
 MODULE = 'NODE'

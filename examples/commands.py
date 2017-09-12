@@ -40,8 +40,9 @@ class Tenant(CliType):
         Returns:
             str : string with completion to send to the display.
         """
-        if hasattr(self.Journal, 'tenants'):
-            self._tenants = self._argo.Journal.tenants
+        _tenants = self._argo.Journal.getFromCache('tenants')
+        if _tenants is not None:
+            self._tenants = _tenants
         if not text:
             return self._tenants
         else:
@@ -52,7 +53,7 @@ class CliCommands(Cli):
 
     def __init__(self):
         super(CliCommands, self).__init__()
-        self.Journal.tenants = ["COMMON", "COMMONALITY", "COMMONWARE", "COMMUT"]
+        self.Journal.setToCache('tenants', ["COMMON", "COMMONALITY", "COMMONWARE", "COMMUT"])
 
     @Cli.command('the-cli')
     def do_cli(self, line):

@@ -1,5 +1,5 @@
 import shlex
-from common import RuleHandler
+from rules import RuleHandler
 from common import ARGOS_ATTR, RULES_ATTR, TREE_ATTR
 from node import Start
 from clierror import CliException
@@ -24,6 +24,7 @@ class Journal(object):
         self._argos = dict()
         self._traverseNode = None
         self._root = None
+        self._cache = {}
 
     @property
     def Root(self):
@@ -69,6 +70,28 @@ class Journal(object):
             theNode (Node): new Node instance to assign as a traverse node.
         """
         self.TraverseNode = theNode
+
+    def getFromCache(self, theKey):
+        """Retreives some data to the cache.
+
+        Args:
+            theKey (object) : key for the cached data to be retrieved.
+
+        Returns:
+            object : data found in cache, None if key is not found.
+        """
+        return self._cache.get(theKey, None)
+
+    def setToCache(self, theKey, theValue):
+        """Adds cache data for the given key.
+
+        If the key already exits, the data is being overwritten.
+
+        Args:
+            theKey (object) : key for the data to be cached.
+            theValue (object) : data being cached.
+        """
+        self._cache[theKey] = theValue
 
     def addNode(self, theNode):
         """Method that adds a new node.
