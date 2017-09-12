@@ -21,6 +21,24 @@ class CliType(object):
         self._argo = kwargs.get('theArgo', None)
         self._prefix = '{}='.format(self._argo.Name) if self._argo.Default is not None else None
 
+    @property
+    def Argo(self):
+        """Get property that returns attribute _argo
+
+        Returns:
+            Argument : argument instance
+        """
+        return self._argo
+
+    @property
+    def Journal(self):
+        """Get property that returns the argument journal.
+
+        Returns:
+            Journal : journal instance.
+        """
+        return self.Argo.Journal
+
     @staticmethod
     def _(val):
         """Method that types any value as Tenant.

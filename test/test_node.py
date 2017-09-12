@@ -5,7 +5,7 @@ cliPath = '.'
 sys.path.append(cliPath)
 
 from node import Node, Hook, Start, End
-from common import Argument, Arguments
+from arguments import Argument, Arguments
 from argtypes import Int, Str
 from clierror import CliException
 

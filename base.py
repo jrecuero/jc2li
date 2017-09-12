@@ -66,7 +66,7 @@ class Cli(object):
                 if hasattr(cmd, 'func'):
                     cmd = cmd.func
                 root = getattr(cmd, TREE_ATTR, None)
-                journal = Journal()
+                journal = self._cli.Journal
                 _, cliArgos = journal.getCmdAndCliArgos(cmd, None, " ".join(lineList[1:]))
                 nodePath = None
                 childrenNodes = None
@@ -83,9 +83,11 @@ class Cli(object):
                         for child in childrenNodes:
                             matches = child.Argo.Completer.complete(lastToken)
                             for i, m in enumerate(matches):
-                                yield Completion(m,
-                                                 start_position=-len(wordBeforeCursor),
-                                                 display_meta=helps[i])
+                                yield Completion(m, start_position=-len(wordBeforeCursor))
+                                # TODO: Remove help displayed in the completer
+                                # yield Completion(m,
+                                #                  start_position=-len(wordBeforeCursor),
+                                #                  display_meta=helps[i])
                 except Exception as ex:
                     logger.error('{0}, {1}'.format(ex, ex.__traceback__.tb_lineno))
                     pass
@@ -103,6 +105,7 @@ class Cli(object):
         self._lastCmd = None
         self._toolbarStr = None
         self.__commands = {}
+        self._journal = Journal()
         self.setupCmds()
 
     @property
@@ -168,6 +171,15 @@ class Cli(object):
         """
         return self.__commands.keys()
 
+    @property
+    def Journal(self):
+        """Get property that returns the Journal instance.
+
+        Returns:
+            Journal : Journal instance.
+        """
+        return self._journal
+
     def getCmdCb(self, theCmd):
         """Get the command callback for the given command label.
 
@@ -217,6 +229,14 @@ class Cli(object):
         if self.isCmd(theCmd):
             logger.warning('[{}] Command [{}] already present.'.format(MODULE, theCmd))
         self.__commands[theCmd] = (theCmdCb, theDesc)
+
+        # At this point, inject the context in every argument attributes using
+        # theCmdCb.func._Arguments._arguments[#].Completer. That should work
+        # only for those with _Arguments attribute inside theCmdCb.func.
+        if hasattr(theCmdCb, 'func') and hasattr(theCmdCb.func, '_Arguments'):
+            for argument in theCmdCb.func._Arguments.Arguments:
+                argument.Journal = self.Journal
+
         return True
 
     def execCmd(self, theCmd, theUserInput):

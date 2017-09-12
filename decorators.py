@@ -1,6 +1,6 @@
 from functools import wraps
 import cliparser
-from common import Argument, Arguments
+from arguments import Argument, Arguments
 from common import ARGOS_ATTR, RULES_ATTR, SYNTAX_ATTR, CMD_ATTR, TREE_ATTR
 from journal import Journal
 

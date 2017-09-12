@@ -21,8 +21,7 @@ class Tenant(CliType):
         """Tenant class initialization method.
         """
         super(Tenant, self).__init__(**kwargs)
-        tenants = kwargs.get('theTenants', None)
-        self._tenants = tenants if tenants else Tenant.DEFAULT
+        self._tenants = Tenant.DEFAULT
 
     def _helpStr(self):
         """Method that should return default string to be displayed as help.
@@ -41,6 +40,8 @@ class Tenant(CliType):
         Returns:
             str : string with completion to send to the display.
         """
+        if hasattr(self.Journal, 'tenants'):
+            self._tenants = self._argo.Journal.tenants
         if not text:
             return self._tenants
         else:
@@ -48,6 +49,10 @@ class Tenant(CliType):
 
 
 class CliCommands(Cli):
+
+    def __init__(self):
+        super(CliCommands, self).__init__()
+        self.Journal.tenants = ["COMMON", "COMMONALITY", "COMMONWARE", "COMMUT"]
 
     @Cli.command('the-cli')
     def do_cli(self, line):
