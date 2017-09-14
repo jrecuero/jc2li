@@ -25,7 +25,8 @@ class Cli(object):
     """
 
     _WALL = {}
-    TOOLBAR_STYLE = style_from_dict({Token.Toolbar: '#ffffff italic bg:#007777', })
+    CLI_STYLE = style_from_dict({Token.Toolbar: '#ffffff italic bg:#007777',
+                                 Token.RPrompt: 'bg:#ff0066 #ffffff', })
 
     class CliCompleter(Completer):
         """CliCompleter class provide completion to any entry in the command line.
@@ -104,6 +105,8 @@ class Cli(object):
         self._cmd = None
         self._lastCmd = None
         self._toolbarStr = None
+        self._rpromptStr = None
+        self._promptStr = ">"
         self.__commands = {}
         self._journal = Journal()
         self.setupCmds()
@@ -149,7 +152,7 @@ class Cli(object):
         """Get property that returns _toolbar attribute.
 
         Returns:
-            str : Strin with string to be displayed in the ToolBar.
+            str : String with string to be displayed in the ToolBar.
         """
         return self._toolbarStr if self._toolbarStr else ''
 
@@ -161,6 +164,42 @@ class Cli(object):
             theStr (str) : New string to be displayed in the ToolBar.
         """
         self._toolbarStr = theStr
+
+    @property
+    def Prompt(self):
+        """Get property that returns _toolbar attribute.
+
+        Returns:
+            str : String with string to be displayed in the Prompt.
+        """
+        return self._promptStr if self._promptStr else ''
+
+    @Prompt.setter
+    def Prompt(self, theStr):
+        """Set property that sets a new vale for _toolbar attribute.
+
+        Args:
+            theStr (str) : New string to be displayed in the RPrompt.
+        """
+        self._promptStr = theStr
+
+    @property
+    def RPrompt(self):
+        """Get property that returns _toolbar attribute.
+
+        Returns:
+            str : String with string to be displayed in the RPrompt.
+        """
+        return self._rpromptStr if self._rpromptStr else ''
+
+    @RPrompt.setter
+    def RPrompt(self, theStr):
+        """Set property that sets a new vale for _toolbar attribute.
+
+        Args:
+            theStr (str) : New string to be displayed in the RPrompt.
+        """
+        self._rpromptStr = theStr
 
     @property
     def Cmds(self):
@@ -365,6 +404,12 @@ class Cli(object):
         """
         return [(Token.Toolbar, '{}'.format(self.ToolBar)), ]
 
+    def getRPromptTokens(self, theCli):
+        return [(Token.RPrompt, '{}'.format(self.RPrompt)), ]
+
+    def getPromptTokens(self, theCli):
+        return [(Token.Prompt, '{}'.format(self.Prompt)), ]
+
     def setupCmds(self):
         """Register all commands to be used by the command line interface.
 
@@ -382,27 +427,25 @@ class Cli(object):
             logger.debug('{0}::setupCmds add command {1}::{2}'.format(klassName, name, funcCb))
             self.addCmd(name, partial(funcCb, self), desc)
 
-    def run(self, thePrompt):
+    def run(self):
         self.ToolBar = 'Enter a valid command'
-        userInput = prompt('{}'.format(thePrompt),
-                           history=FileHistory('history.txt'),
+        userInput = prompt(history=FileHistory('history.txt'),
                            auto_suggest=AutoSuggestFromHistory(),
                            completer=Cli.CliCompleter(self),
                            # lexer=SqlLexer,
                            get_bottom_toolbar_tokens=self.getBottomToolbarTokens,
-                           style=self.TOOLBAR_STYLE,
+                           get_rprompt_tokens=self.getRPromptTokens,
+                           get_prompt_tokens=self.getPromptTokens,
+                           style=self.CLI_STYLE,
                            # validator=CliValidator(),
                            refresh_interval=1)
         return userInput
 
-    def cmdloop(self, thePrompt):
+    def cmdloop(self):
         """Method that is called to wait for any user input.
-
-        Args:
-            thePrompt (str) : string with the prompt for the command line.
         """
         while True:
-            userInput = self.run(thePrompt)
+            userInput = self.run()
             # print(userInput)
             if userInput:
                 lineAsList = userInput.split()
