@@ -7,10 +7,11 @@ import loggerator
 MODULE = 'COMMANDS'
 logger = loggerator.getLoggerator('base')
 
+# import sys
 # import os
-# sys.path.append(os.path.join('/Users/jorecuer', 'Repository/winpdb'))
+# sys.path.append(os.path.join('/Users/jorecuer', 'Repository/winpdb-1.4.8'))
 # import rpdb2
-# rpdb2.start_embedded_debugger("yaci")
+# rpdb2.start_embedded_debugger("jc2li")
 
 
 class Tenant(CliType):
@@ -31,7 +32,7 @@ class Tenant(CliType):
         """
         return 'Enter the Tenant where you want to go.'
 
-    def complete(self, text):
+    def complete(self, document, text):
         """Method that returns the completion for the given argument.
 
         Args:

@@ -1,7 +1,9 @@
 from rules import RuleHandler
 from clierror import CliException
+import loggerator
 
 MODULE = 'NODE'
+logger = loggerator.getLoggerator(MODULE)
 
 
 class Node(object):
@@ -615,6 +617,8 @@ class Hook(Node):
 
         if type(theRule) in [list, dict]:
             child = None
+            grantchild = None
+            # Every rule can be visited only one time
             for rule in theRule:
                 if RuleHandler.isEndRule(rule):
                     raise TypeError('Error : Hook : endpoint not allowed in rule')
@@ -623,7 +627,9 @@ class Hook(Node):
                     child = self.buildChildrenNodeFromRule(rule, theArgs)
                 else:
                     grantchild = child.buildChildrenNodeFromRule(rule, theArgs)
-                    child.addChild(grantchild)
+                    # This is not required because it is done in
+                    # buildChildrenNodeFromRule call.:update
+                    # child.addChild(grantchild)
                     child = grantchild
             addGrantChild(child, theEndHook)
             return theEndHook

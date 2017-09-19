@@ -16,7 +16,7 @@ from common import TREE_ATTR
 from journal import Journal
 
 MODULE = 'BASE'
-logger = loggerator.getLoggerator('base')
+logger = loggerator.getLoggerator(MODULE)
 
 
 class Cli(object):
@@ -82,7 +82,7 @@ class Cli(object):
                         helps = [c.Argo.Completer.help(lastToken) for c in childrenNodes]
                         self._cli.ToolBar = " | ".join(helps)
                         for child in childrenNodes:
-                            matches = child.Argo.Completer.complete(lastToken)
+                            matches = child.Argo.Completer.complete(document, lastToken)
                             for i, m in enumerate(matches):
                                 yield Completion(m, start_position=-len(wordBeforeCursor))
                                 # TODO: Remove help displayed in the completer
@@ -96,7 +96,11 @@ class Cli(object):
                 logger.debug('document text is "{}"'.format(document.text))
                 logger.debug('last document text is [{}]'.format(lineList[-1]))
                 logger.debug('children nodes are {}'.format(childrenNodes))
+                if childrenNodes:
+                    logger.debug('children nodes are {}'.format([x.Name for x in childrenNodes]))
                 logger.debug('nodePath is {}'.format(nodePath))
+                if nodePath:
+                    logger.debug('nodePath is {}'.format([x.Name for x in nodePath]))
                 logger.debug('self._nodepath is {}'.format(self._nodepath))
 
     def __init__(self):
@@ -106,7 +110,7 @@ class Cli(object):
         self._lastCmd = None
         self._toolbarStr = None
         self._rpromptStr = None
-        self._promptStr = ">"
+        self._promptStr = "> "
         self.__commands = {}
         self._journal = Journal()
         self.setupCmds()
@@ -427,8 +431,10 @@ class Cli(object):
             logger.debug('{0}::setupCmds add command {1}::{2}'.format(klassName, name, funcCb))
             self.addCmd(name, partial(funcCb, self), desc)
 
-    def run(self):
+    def run(self, thePrompt=None):
         self.ToolBar = 'Enter a valid command'
+        if thePrompt is not None:
+            self.Prompt = thePrompt
         userInput = prompt(history=FileHistory('history.txt'),
                            auto_suggest=AutoSuggestFromHistory(),
                            completer=Cli.CliCompleter(self),
@@ -441,11 +447,11 @@ class Cli(object):
                            refresh_interval=1)
         return userInput
 
-    def cmdloop(self):
+    def cmdloop(self, thePrompt=None):
         """Method that is called to wait for any user input.
         """
         while True:
-            userInput = self.run()
+            userInput = self.run(thePrompt)
             # print(userInput)
             if userInput:
                 lineAsList = userInput.split()

@@ -24,16 +24,26 @@ class CliTestModeClass(Cli):
 
 class CliTestWorkClass(Cli):
 
-    @Cli.command('ss')
     @setsyntax
-    @syntax('setsyntax f1 <F2>')
+    @syntax('multi f1 [f2 f3 f4]+')
     @argo('f1', Str, None)
-    @argo('F2', Str, 'F2')
-    def do_test_syntax_constant(self, f1, f2):
-        return f1, f2
+    @argo('f2', Str, 'F2')
+    @argo('f3', Str, 'F3')
+    @argo('f4', Str, 'F4')
+    def do_test_syntax_sequence_multiple(self, f1, f2, f3, f4):
+        return f1, f2, f3, f4
 
 
 class CliTestClass(Cli):
+
+    @setsyntax
+    @syntax('multi f1 [f2 f3 f4]+')
+    @argo('f1', Str, None)
+    @argo('f2', Str, 'F2')
+    @argo('f3', Str, 'F3')
+    @argo('f4', Str, 'F4')
+    def do_test_syntax_sequence_multiple(self, f1, f2, f3, f4):
+        return f1, f2, f3, f4
 
     @setsyntax
     @syntax('multi f1 f2 [f3 | f4]?')
@@ -132,6 +142,12 @@ class CliTestClass(Cli):
 
 def test_decorator_setsyntax_work():
     CliTestWorkClass()
+
+
+def test_decorator_setsyntax_sequence_multiple():
+    cli = CliTestClass()
+    assert cli.do_test_syntax_sequence_multiple('F1 f2="2" f3="3" f4="4"') == ('F1', '2', '3', '4')
+    # assert cli.do_test_syntax_sequence_multiple('F1 x2 x3 x4') == ('F1', 'x2', 'x3', 'x4')
 
 
 def test_decorator_setsyntax_argos():

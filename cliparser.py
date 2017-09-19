@@ -108,7 +108,8 @@ if __name__ == '__main__':
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tdesc talias | tsignature | tuser [tuname | tuid]? ]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
     # toks = getSyntax().parseString("tenant t1 [<t2> | t3]!")
-    toks = getSyntax().parseString("tenant t1 <t2>")
+    # toks = getSyntax().parseString("tenant t1 <t2>")
+    toks = getSyntax().parseString("tenant [t1 t2 t3]+")
 
     print(toks)
     cmd, rules = procSyntax(toks)

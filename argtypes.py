@@ -74,10 +74,13 @@ class CliType(object):
             return 'Enter "{}"'.format(self._prefix)
         return ""
 
-    def complete(self, text):
+    def complete(self, document, text):
         """Method that returns the completion for the given argument.
 
         Args:
+            document (object) : document object with all command line
+            input data.
+
             text (str): last token in the line being entered.
 
         Returns:
