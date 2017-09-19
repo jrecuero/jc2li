@@ -53,6 +53,7 @@ class Cli(object):
             Returns:
                 Completion : Completion instance with data to be completed.
             """
+            self._nodepath = None
             wordBeforeCursor = document.get_word_before_cursor(WORD=True)
             if ' ' not in document.text:
                 matches = [m for m in self._cli.Cmds if m.startswith(wordBeforeCursor)]
@@ -77,7 +78,7 @@ class Cli(object):
                         self._nodepath = [root, ]
                     if nodePath and document.text[-1] == ' ':
                         self._nodepath = nodePath
-                    childrenNodes = self._nodepath[0].getChildrenNodes() if self._nodepath else root.getChildrenNodes()
+                    childrenNodes = self._nodepath[-1].getChildrenNodes() if self._nodepath else root.getChildrenNodes()
                     if childrenNodes:
                         helps = [c.Argo.Completer.help(lastToken) for c in childrenNodes]
                         self._cli.ToolBar = " | ".join(helps)
@@ -101,7 +102,9 @@ class Cli(object):
                 logger.debug('nodePath is {}'.format(nodePath))
                 if nodePath:
                     logger.debug('nodePath is {}'.format([x.Name for x in nodePath]))
-                logger.debug('self._nodepath is {}'.format(self._nodepath))
+                if self._nodepath:
+                    logger.debug('self._nodepath is {}'.format(self._nodepath))
+                    logger.debug('self._nodepath is {}'.format([x.Name for x in self._nodepath]))
 
     def __init__(self):
         """Cli class initialization method.

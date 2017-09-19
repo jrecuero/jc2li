@@ -104,6 +104,28 @@ class CliCommands(Cli):
         """
         print('interface is {0} {1} | {2}'.format(name, iid, iname))
 
+    @Cli.command('leaf')
+    @setsyntax
+    @syntax('leaf name [lid laddr]+')
+    @argo('name', Str, None)
+    @argo('lid', Int, "1")
+    @argo('laddr', Int, "0")
+    def do_leaf(self, name, lid, laddr):
+        """Display leaf information.
+        """
+        print('leaf {0} has id {1} with address {2}'.format(name, lid, laddr))
+
+    @Cli.command()
+    @setsyntax
+    @syntax('spine name [sid saddr]?')
+    @argo('name', Str, None)
+    @argo('sid', Int, "0")
+    @argo('saddr', Str, "1.1.1.1")
+    def do_spine(self, name, sid, saddr):
+        """Display spine information.
+        """
+        print('spine {0} has id {1} with address {2}'.format(name, sid, saddr))
+
 
 if __name__ == "__main__":
     pass
