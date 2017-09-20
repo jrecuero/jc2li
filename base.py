@@ -391,27 +391,29 @@ class Cli(object):
         output = os.popen(line).read()
         print(output)
 
-    def precmd(self, line):
+    def precmd(self, theCmd, theLine):
         """Method to be called before any command is being processed.
 
         Args:
-            line (str): string entered in the command line.
+            theCmd (str) : String with new command entered.
+            theLine (str): string entered in the command line.
         """
         pass
 
-    def onecmd(self, str):
+    def onecmd(self, theLine):
         """Method to be called when any command is being processed.
 
         Args:
-            line (str): string entered in the command line.
+            theLine (str): string entered in the command line.
         """
         pass
 
-    def postcmd(self, line):
+    def postcmd(self, theCmd, theLine):
         """Method to be called after any command is being processed.
 
         Args:
-            line (str): string entered in the command line.
+            theCmd (str) : String with new command entered.
+            theLine (str): string entered in the command line.
         """
         pass
 
@@ -427,9 +429,25 @@ class Cli(object):
         return [(Token.Toolbar, '{}'.format(self.ToolBar)), ]
 
     def getRPromptTokens(self, theCli):
+        """Returns tokens for command line right prompt.
+
+        Args:
+            theCli (CommandLineInterface) : CommandLineInterface instance.
+
+        Returns:
+            list : list with data to be displayed in the right prompt..
+        """
         return [(Token.RPrompt, '{}'.format(self.RPrompt)), ]
 
     def getPromptTokens(self, theCli):
+        """Returns tokens for command line prompt.
+
+        Args:
+            theCli (CommandLineInterface) : CommandLineInterface instance.
+
+        Returns:
+            list : list with data to be displayed in the prompt.
+        """
         return [(Token.Prompt, '{}'.format(self.Prompt)), ]
 
     def setupCmds(self):
@@ -449,10 +467,12 @@ class Cli(object):
             logger.debug('{0}::setupCmds add command {1}::{2}'.format(klassName, name, funcCb))
             self.addCmd(name, partial(funcCb, self), desc)
 
-    def run(self, thePrompt=None):
+    def run(self, **kwargs):
+        """
+        """
         self.ToolBar = 'Enter a valid command'
-        if thePrompt is not None:
-            self.Prompt = thePrompt
+        if kwargs.get('thePrompt', None) is not None:
+            self.Prompt = kwargs.get('thePrompt')
         userInput = prompt(history=FileHistory('history.txt'),
                            auto_suggest=AutoSuggestFromHistory(),
                            completer=Cli.CliCompleter(self),
@@ -465,18 +485,31 @@ class Cli(object):
                            refresh_interval=1)
         return userInput
 
-    def cmdloop(self, thePrompt=None):
+    def cmdloop(self, **kwargs):
         """Method that is called to wait for any user input.
+
+        Args:
+            thePrompt (str) : string with the command line prompt.
+            theEcho (boolean) : True is command should be echoed.
+            thePreCmd (boolean) : True if precmd shoud be called.
+            thePostCmd (boolean) : True if postcmd should be called.
         """
         while True:
-            userInput = self.run(thePrompt)
-            # print(userInput)
+            userInput = self.run(**kwargs)
+            if kwargs.get('theEcho', False):
+                print(userInput)
             if userInput:
                 lineAsList = userInput.split()
                 cmd = lineAsList[0]
                 if self.isCmd(cmd):
+                    if kwargs.get('thePreCmd', False):
+                        self.precmd(cmd, userInput)
                     self.execCmd(cmd, ' '.join(lineAsList[1:]))
+                    if kwargs.get('thePostCmd', False):
+                        self.postcmd(cmd, userInput)
                 self.LastCmd = userInput
+            else:
+                self.onecmd(userInput)
 
     @staticmethod
     def command(theLabel=None, theDesc=None):

@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     cli = mod.CliCommands()
     try:
-        cli.cmdloop('CLI> ')
+        cli.cmdloop(thePrompt='CLI> ')
     except KeyboardInterrupt:
         print("")
         pass
