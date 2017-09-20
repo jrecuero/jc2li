@@ -53,7 +53,7 @@ class Cli(object):
             Returns:
                 Completion : Completion instance with data to be completed.
             """
-            self._nodepath = None
+            # self._nodepath = None
             wordBeforeCursor = document.get_word_before_cursor(WORD=True)
             if ' ' not in document.text:
                 matches = [m for m in self._cli.Cmds if m.startswith(wordBeforeCursor)]
@@ -74,25 +74,36 @@ class Cli(object):
                 childrenNodes = None
                 try:
                     nodePath = root.findPath(cliArgos)
-                    if not nodePath:
-                        self._nodepath = [root, ]
-                    if nodePath and document.text[-1] == ' ':
-                        self._nodepath = nodePath
-                    childrenNodes = self._nodepath[-1].getChildrenNodes() if self._nodepath else root.getChildrenNodes()
-                    if childrenNodes:
-                        helps = [c.Argo.Completer.help(lastToken) for c in childrenNodes]
-                        self._cli.ToolBar = " | ".join(helps)
-                        for child in childrenNodes:
-                            matches = child.Argo.Completer.complete(document, lastToken)
-                            for i, m in enumerate(matches):
-                                yield Completion(m, start_position=-len(wordBeforeCursor))
-                                # TODO: Remove help displayed in the completer
-                                # yield Completion(m,
-                                #                  start_position=-len(wordBeforeCursor),
-                                #                  display_meta=helps[i])
                 except Exception as ex:
                     logger.error('{0}, {1}'.format(ex, ex.__traceback__.tb_lineno))
                     pass
+
+                if not nodePath:
+                    self._nodepath = [root, ]
+                elif nodePath and document.text[-1] == ' ':
+                    self._nodepath = nodePath
+                # childrenNodes = self._nodepath[-1].getChildrenNodes() if self._nodepath else root.getChildrenNodes()
+                if self._nodepath:
+                    childrenNodes = self._nodepath[-1].getChildrenNodes()
+                    logger.debug('children nodes from self._nodepath[-1]: {0}'.format(childrenNodes))
+                else:
+                    childrenNodes = root.getChildrenNodes()
+                    logger.debug('children nodes from root.getChildrenNodes(): {0}'.format(childrenNodes))
+
+                if childrenNodes:
+                    helps = [c.Argo.Completer.help(lastToken) for c in childrenNodes]
+                    self._cli.ToolBar = " | ".join(helps)
+                    for child in childrenNodes:
+                        matches = child.Argo.Completer.complete(document, lastToken)
+                        if matches is None:
+                            continue
+                        for i, m in enumerate(matches):
+                            yield Completion(m, start_position=-len(wordBeforeCursor))
+                            # TODO: Remove help displayed in the completer
+                            # yield Completion(m,
+                            #                  start_position=-len(wordBeforeCursor),
+                            #                  display_meta=helps[i])
+
                 logger.debug('completer cmd: {0}'.format(cmd))
                 logger.debug('document text is "{}"'.format(document.text))
                 logger.debug('last document text is [{}]'.format(lineList[-1]))
