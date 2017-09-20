@@ -41,13 +41,18 @@ class Tenant(CliType):
         Returns:
             str : string with completion to send to the display.
         """
-        _tenants = self._argo.Journal.getFromCache('tenants')
-        if _tenants is not None:
-            self._tenants = _tenants
-        if not text:
-            return self._tenants
-        else:
-            return [x for x in self._tenants if x.startswith(text)]
+        ret = super(Tenant, self).complete(document, text)
+        if ret is None:
+            _tenants = self._argo.Journal.getFromCache('tenants')
+            if _tenants is not None:
+                self._tenants = _tenants
+            textToProcess = text.replace(self._prefix, '') if self._prefix else text
+            prefix = self._prefix if self._prefix else ''
+            if not textToProcess:
+                return [prefix + x for x in self._tenants]
+            else:
+                return [prefix + x for x in self._tenants if x.startswith(textToProcess)]
+        return ret
 
 
 class CliCommands(Cli):
@@ -125,6 +130,17 @@ class CliCommands(Cli):
         """Display spine information.
         """
         print('spine {0} has id {1} with address {2}'.format(name, sid, saddr))
+
+    @Cli.command()
+    @setsyntax
+    @syntax('config name [tname | system]?')
+    @argo('name', Str, None)
+    @argo('tname', Tenant, 'COMMON')
+    @argo('system', Str, 'localhost')
+    def do_configure(self, name, tname, system):
+        """Display tenant or system configuration.
+        """
+        print('configure {0} tenant {1} or system {2}'.format(name, tname, system))
 
 
 if __name__ == "__main__":

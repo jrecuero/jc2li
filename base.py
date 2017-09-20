@@ -64,58 +64,62 @@ class Cli(object):
                 lastToken = lineList[-1] if document.text[-1] != ' ' else ' '
                 cmdLabel = lineList[0]
                 cmd = self._cli.getCmdCb(cmdLabel)
-                # Required for partial methods
-                if hasattr(cmd, 'func'):
-                    cmd = cmd.func
-                root = getattr(cmd, TREE_ATTR, None)
-                journal = self._cli.Journal
-                _, cliArgos = journal.getCmdAndCliArgos(cmd, None, " ".join(lineList[1:]))
-                nodePath = None
-                childrenNodes = None
-                try:
-                    nodePath = root.findPath(cliArgos)
-                except Exception as ex:
-                    logger.error('{0}, {1}'.format(ex, ex.__traceback__.tb_lineno))
-                    pass
+                if cmd is not None:
+                    # Required for partial methods
+                    if hasattr(cmd, 'func'):
+                        cmd = cmd.func
+                    root = getattr(cmd, TREE_ATTR, None)
+                    journal = self._cli.Journal
+                    _, cliArgos = journal.getCmdAndCliArgos(cmd, None, " ".join(lineList[1:]))
+                    nodePath = None
+                    childrenNodes = None
+                    try:
+                        nodePath = root.findPath(cliArgos)
+                    except Exception as ex:
+                        logger.error('{0}, {1} | {2}'.format(ex, ex.__traceback__.tb_lineno, self._nodepath))
 
-                if not nodePath:
-                    self._nodepath = [root, ]
-                elif nodePath and document.text[-1] == ' ':
-                    self._nodepath = nodePath
-                # childrenNodes = self._nodepath[-1].getChildrenNodes() if self._nodepath else root.getChildrenNodes()
-                if self._nodepath:
-                    childrenNodes = self._nodepath[-1].getChildrenNodes()
-                    logger.debug('children nodes from self._nodepath[-1]: {0}'.format(childrenNodes))
-                else:
-                    childrenNodes = root.getChildrenNodes()
-                    logger.debug('children nodes from root.getChildrenNodes(): {0}'.format(childrenNodes))
+                    if not nodePath and self._nodepath is None:
+                        # if there is not path being found and there is not any
+                        # previous path, just get the completion under the root.
+                        self._nodepath = [root, ]
+                    elif nodePath and document.text[-1] == ' ':
+                        # if there is a path found and the last character
+                        # entered is a space, use that path.
+                        self._nodepath = nodePath
 
-                if childrenNodes:
-                    helps = [c.Argo.Completer.help(lastToken) for c in childrenNodes]
-                    self._cli.ToolBar = " | ".join(helps)
-                    for child in childrenNodes:
-                        matches = child.Argo.Completer.complete(document, lastToken)
-                        if matches is None:
-                            continue
-                        for i, m in enumerate(matches):
-                            yield Completion(m, start_position=-len(wordBeforeCursor))
-                            # TODO: Remove help displayed in the completer
-                            # yield Completion(m,
-                            #                  start_position=-len(wordBeforeCursor),
-                            #                  display_meta=helps[i])
+                    if self._nodepath:
+                        # Get children from the path found or the the last path
+                        childrenNodes = self._nodepath[-1].getChildrenNodes()
+                    else:
+                        # if there was not path or any last path, get children
+                        # from the root.
+                        childrenNodes = root.getChildrenNodes()
 
-                logger.debug('completer cmd: {0}'.format(cmd))
-                logger.debug('document text is "{}"'.format(document.text))
-                logger.debug('last document text is [{}]'.format(lineList[-1]))
-                logger.debug('children nodes are {}'.format(childrenNodes))
-                if childrenNodes:
-                    logger.debug('children nodes are {}'.format([x.Name for x in childrenNodes]))
-                logger.debug('nodePath is {}'.format(nodePath))
-                if nodePath:
-                    logger.debug('nodePath is {}'.format([x.Name for x in nodePath]))
-                if self._nodepath:
-                    logger.debug('self._nodepath is {}'.format(self._nodepath))
-                    logger.debug('self._nodepath is {}'.format([x.Name for x in self._nodepath]))
+                    if childrenNodes:
+                        helps = [c.Argo.Completer.help(lastToken) for c in childrenNodes]
+                        self._cli.ToolBar = " | ".join(helps)
+                        for child in childrenNodes:
+                            matches = child.Argo.Completer.complete(document, lastToken)
+                            if matches is None:
+                                continue
+                            for i, m in enumerate(matches):
+                                yield Completion(m, start_position=-len(wordBeforeCursor))
+                                # TODO: Remove help displayed in the completer
+                                # yield Completion(m, start_position=-len(wordBeforeCursor), display_meta=helps[i])
+
+                    # TODO: Trace and debug information to be removed or optimized.
+                    logger.debug('completer cmd: {0}'.format(cmd))
+                    logger.debug('document text is "{}"'.format(document.text))
+                    logger.debug('last document text is [{}]'.format(lineList[-1]))
+                    logger.debug('children nodes are {}'.format(childrenNodes))
+                    if childrenNodes:
+                        logger.debug('children nodes are {}'.format([x.Name for x in childrenNodes]))
+                    logger.debug('nodePath is {}'.format(nodePath))
+                    if nodePath:
+                        logger.debug('nodePath is {}'.format([x.Name for x in nodePath]))
+                    if self._nodepath and self._nodepath[-1] is not None:
+                        logger.debug('self._nodepath is {}'.format(self._nodepath))
+                        logger.debug('self._nodepath is {}'.format([x.Name for x in self._nodepath]))
 
     def __init__(self):
         """Cli class initialization method.

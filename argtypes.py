@@ -69,9 +69,9 @@ class CliType(object):
             return self._helpStr()
         if self._prefix and self._prefix in text:
             return self._helpStr()
-        if self._prefix and self._prefix not in text\
-                and (text == ' ' or self._prefix.startswith(text)):
-            return 'Enter "{}"'.format(self._prefix)
+        if self._prefix:
+            if text == ' ' or self._prefix.startswith(text):
+                return 'Enter "{}"'.format(self._prefix)
         return ""
 
     def complete(self, document, text):
@@ -86,9 +86,12 @@ class CliType(object):
         Returns:
             str : string with completion to send to the display.
         """
-        if self._prefix and self._prefix not in text\
-                and (text == ' ' or self._prefix.startswith(text)):
-            return [self._prefix, ]
+        logger.debug('complete for {0} with prefix {1} and text {2}'.format(self.Argo.Name, self._prefix, text))
+        if self._prefix:
+            if self._prefix == text:
+                return None
+            if text == ' ' or self._prefix.startswith(text):
+                return [self._prefix, ]
         return None
 
     @staticmethod
