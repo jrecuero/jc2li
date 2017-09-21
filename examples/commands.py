@@ -19,40 +19,16 @@ class Tenant(CliType):
     DEFAULT = ["COMMON", "DEFAULT", "SINGLE", "MULTI"]
 
     def __init__(self, **kwargs):
-        """Tenant class initialization method.
-        """
         super(Tenant, self).__init__(**kwargs)
         self._tenants = Tenant.DEFAULT
 
     def _helpStr(self):
-        """Method that should return default string to be displayed as help.
-
-        Returns:
-            str : string with default help.
-        """
         return 'Enter the Tenant where you want to go.'
 
-    def complete(self, document, text):
-        """Method that returns the completion for the given argument.
-
-        Args:
-            text (str): last token in the line being entered.
-
-        Returns:
-            str : string with completion to send to the display.
-        """
-        ret = super(Tenant, self).complete(document, text)
-        if ret is None:
-            _tenants = self._argo.Journal.getFromCache('tenants')
-            if _tenants is not None:
-                self._tenants = _tenants
-            textToProcess = text.replace(self._prefix, '') if self._prefix else text
-            prefix = self._prefix if self._prefix else ''
-            if not textToProcess:
-                return [prefix + x for x in self._tenants]
-            else:
-                return [prefix + x for x in self._tenants if x.startswith(textToProcess)]
-        return ret
+    def completeGetList(self, document, text):
+        _tenants = self.Argo.Journal.getFromCache('tenants')
+        if _tenants is not None:
+            self._tenants = _tenants
 
 
 class CliCommands(Cli):

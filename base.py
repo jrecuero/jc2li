@@ -89,7 +89,7 @@ class Cli(object):
 
                     if self._nodepath:
                         # Get children from the path found or the the last path
-                        childrenNodes = self._nodepath[-1].getChildrenNodes()
+                        childrenNodes = self._nodepath[-1].getChildrenNodes() if self._nodepath[-1] else None
                     else:
                         # if there was not path or any last path, get children
                         # from the root.

@@ -74,6 +74,20 @@ class CliType(object):
                 return 'Enter "{}"'.format(self._prefix)
         return ""
 
+    def completeGetList(self, document, text):
+        """Gets a list with all possible options to be included in complete.
+
+        Args:
+            document (object) : document object with all command line
+            input data.
+
+            text (str): last token in the line being entered.
+
+        Returns:
+            list : list with possible complete options
+        """
+        return None
+
     def complete(self, document, text):
         """Method that returns the completion for the given argument.
 
@@ -86,12 +100,14 @@ class CliType(object):
         Returns:
             str : string with completion to send to the display.
         """
-        logger.debug('complete for {0} with prefix {1} and text {2}'.format(self.Argo.Name, self._prefix, text))
-        if self._prefix:
-            if self._prefix == text:
-                return None
-            if text == ' ' or self._prefix.startswith(text):
-                return [self._prefix, ]
+        textToProcess = text.replace(self._prefix, '') if self._prefix else text
+        prefix = self._prefix if self._prefix else ''
+        options = self.completeGetList(document, text)
+        if options:
+            if textToProcess in [' ', '']:
+                return [prefix + x for x in options]
+            else:
+                return [prefix + x for x in options if x.startswith(textToProcess)]
         return None
 
     @staticmethod
