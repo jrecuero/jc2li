@@ -60,18 +60,22 @@ def syntax(theSyntax):
 
     Command syntax use these rules:
 
-        - Mandatory positional argumetns only can be entered first, and it is
+    - Mandatory positional argumetns only can be entered first, and it is
         enough with the argument name.
-        - Any optional argument that can be entered or not, should be defined
+
+    - Any optional argument that can be entered or not, should be defined
         in this way: [ <arg-name> ]?
-        - Any optional argument that can be entered or not, or multiple times
+
+    - Any optional argument that can be entered or not, or multiple times
         should be defined in this way: [ <arg-name> ]*
-        - Any mandatory argument that has to be entered, but it can be entered
+
+    - Any mandatory argument that has to be entered, but it can be entered
         multiple times and after any optional argument, should be defined in
         this way: [ <arg-name> ]+
-        - <arg-name> is the argument name that is provided in teh @argo
-        decorator.
-        - Several optional arguments can be defined, usign "|" to separate
+
+    - <arg-name> is the argument name that is provided in teh @argo decorator.
+
+    - Several optional arguments can be defined, usign "|" to separate
         them. For example: [ arg1 | arg2 ]? defines taht arg1 or arg2 or no
         argument should be entered at that point. This can be used only for
         argument defined wit "?", "*" or "+"
