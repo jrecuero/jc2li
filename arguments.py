@@ -31,7 +31,8 @@ class Argument(object):
         self._default = kwargs.get('theDefault', None)
         self._value = kwargs.get('theDefault', None)
         completerKlass = kwargs.get('theCompleter', None)
-        self._completer = completerKlass(theArgo=self) if completerKlass else theType(theArgo=self)
+        completerKwargs = kwargs.get('theCompleterKwargs', {})
+        self._completer = completerKlass(theArgo=self, **completerKwargs) if completerKlass else theType(theArgo=self, **completerKwargs)
         self._matched = 0
         self._journal = None
 

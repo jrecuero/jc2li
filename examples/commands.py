@@ -14,13 +14,13 @@ logger = loggerator.getLoggerator('base')
 # rpdb2.start_embedded_debugger("jc2li")
 
 
-class Tenant(CliType):
+class T_Tenant(CliType):
 
     DEFAULT = ["COMMON", "DEFAULT", "SINGLE", "MULTI"]
 
     def __init__(self, **kwargs):
-        super(Tenant, self).__init__(**kwargs)
-        self._tenants = Tenant.DEFAULT
+        super(T_Tenant, self).__init__(**kwargs)
+        self._tenants = T_Tenant.DEFAULT
 
     def _helpStr(self):
         return 'Enter the Tenant where you want to go.'
@@ -29,6 +29,20 @@ class Tenant(CliType):
         _tenants = self.Argo.Journal.getFromCache('tenants')
         if _tenants is not None:
             self._tenants = _tenants
+        return self._tenants
+
+
+class T_System(CliType):
+
+    def __init__(self, **kwargs):
+        super(T_System, self).__init__(**kwargs)
+        self._systems = kwargs.get('systems', [])
+
+    def _helpStr(self):
+        return 'Enter the system name'
+
+    def completeGetList(self, document, text):
+        return self._systems
 
 
 class CliCommands(Cli):
@@ -67,7 +81,7 @@ class CliCommands(Cli):
     @Cli.command('tenant')
     @setsyntax
     @syntax("tenant tname [tid]?")
-    @argo('tname', Tenant, None)
+    @argo('tname', T_Tenant, None)
     @argo('tid', Int, 0)
     def do_tenant(self, tname, tid):
         """Display tenant information.
@@ -77,7 +91,7 @@ class CliCommands(Cli):
     @Cli.command('interface')
     @setsyntax
     @syntax("interface name [iid|iname]!")
-    @argo('name', Tenant, None)
+    @argo('name', T_Tenant, None)
     @argo('iid', Int, 0)
     @argo('iname', Str, 'if')
     def do_interface(self, name, iid, iname):
@@ -111,8 +125,8 @@ class CliCommands(Cli):
     @setsyntax
     @syntax('config name [tname | system]?')
     @argo('name', Str, None)
-    @argo('tname', Tenant, 'COMMON')
-    @argo('system', Str, 'localhost')
+    @argo('tname', T_Tenant, 'COMMON')
+    @argo('system', T_System, 'localhost', theCompleterKwargs={'systems': ['localhost', 'remote']})
     def do_configure(self, name, tname, system):
         """Display tenant or system configuration.
         """
