@@ -397,16 +397,22 @@ class Cli(object):
         Args:
             theCmd (str) : String with new command entered.
             theLine (str): string entered in the command line.
+
+        Returns:
+            bool : False will skip command execution.
         """
-        pass
+        return True
 
     def onecmd(self, theLine):
         """Method to be called when any command is being processed.
 
         Args:
             theLine (str): string entered in the command line.
+
+        Returns:
+            bool : False will exit command loop.
         """
-        pass
+        return True
 
     def postcmd(self, theCmd, theLine):
         """Method to be called after any command is being processed.
@@ -414,8 +420,11 @@ class Cli(object):
         Args:
             theCmd (str) : String with new command entered.
             theLine (str): string entered in the command line.
+
+        Returns:
+            bool : False will exit command loop.
         """
-        pass
+        return True
 
     def getBottomToolbarTokens(self, theCli):
         """Method that provides data and format to be displayed in the ToolBar.
@@ -495,6 +504,8 @@ class Cli(object):
             thePostCmd (boolean) : True if postcmd should be called.
         """
         while True:
+            preReturn = True
+            postReturn = True
             userInput = self.run(**kwargs)
             if kwargs.get('theEcho', False):
                 print(userInput)
@@ -503,13 +514,20 @@ class Cli(object):
                 cmd = lineAsList[0]
                 if self.isCmd(cmd):
                     if kwargs.get('thePreCmd', False):
-                        self.precmd(cmd, userInput)
-                    self.execCmd(cmd, ' '.join(lineAsList[1:]))
+                        preReturn = self.precmd(cmd, userInput)
+                    # precmd callback return value can be used to skip command
+                    # of it returns False.
+                    if preReturn:
+                        self.execCmd(cmd, ' '.join(lineAsList[1:]))
                     if kwargs.get('thePostCmd', False):
-                        self.postcmd(cmd, userInput)
+                        postReturn = self.postcmd(cmd, userInput)
                 self.LastCmd = userInput
             else:
-                self.onecmd(userInput)
+                postReturn = self.onecmd(userInput)
+            # postcmd callback return value can be used to exit the
+            # command loop if it returns False..
+            if postReturn is False:
+                return
 
     @staticmethod
     def command(theLabel=None, theDesc=None):
