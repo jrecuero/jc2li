@@ -22,6 +22,13 @@ logger = loggerator.getLoggerator(MODULE)
 class Cli(object):
     """Cli class is the base class for any class that will implement
     commands to be used by the command line interface.
+
+    Attributes:
+        _WALL (:any:`dict`) : Internal dictionary used to update commands defined\
+                in derived classes.
+
+        CLI_STYLE (:any:`dict`) : Dictionary with default styles to be used in the\
+                command line.
     """
 
     _WALL = {}
@@ -47,11 +54,11 @@ class Cli(object):
             """Method that provides completion for any input in the command line.
 
             Args:
-                document (Document) : Document instance with command line input data.
-                compleEvent (CompleteEvent) : Event with iinput information
+                document (:class:`Document`) : Document instance with command line input data.
+                compleEvent (:class:`CompleteEvent`) : Event with iinput information
 
             Returns:
-                Completion : Completion instance with data to be completed.
+                :class:`Completion` : Completion instance with data to be completed.
             """
             # self._nodepath = None
             wordBeforeCursor = document.get_word_before_cursor(WORD=True)
@@ -228,7 +235,7 @@ class Cli(object):
         """Get property that returns keys for _cmdDict attribute
 
         Returns:
-            list : List with all command labels.
+            :any:`list` : List with all command labels.
         """
         return self.__commands.keys()
 
@@ -237,7 +244,7 @@ class Cli(object):
         """Get property that returns the Journal instance.
 
         Returns:
-            Journal : Journal instance.
+            :class:`journal.Journal` : Journal instance.
         """
         return self._journal
 
@@ -248,7 +255,7 @@ class Cli(object):
             theCmd (str) : String with the command label.
 
         Returns:
-            func : callback function for the given command.
+            :any:`function` : callback function for the given command.
         """
         cmdEntry = self.__commands.get(theCmd, (None, None))
         return cmdEntry[0]
@@ -273,7 +280,7 @@ class Cli(object):
             theCmd (str) : Command label to check as an availbale command.
 
         Returns:
-            boolean : True if command label is found, False else.
+            bool : True if command label is found, False else.
         """
         return theCmd in self.Cmds
 
@@ -282,10 +289,10 @@ class Cli(object):
 
         Args:
             theCmd (str) : String with the command label.
-            theCmdCb (func) : Function with the command callback.
+            theCmdCb (:any:`function`) : Function with the command callback.
 
         Returns:
-            boolean : True if command was added.
+            bool : True if command was added.
         """
         if self.isCmd(theCmd):
             logger.warning('[{}] Command [{}] already present.'.format(MODULE, theCmd))
@@ -319,10 +326,10 @@ class Cli(object):
 
         Args:
             name (str) : name for the new command.
-            func (function) : function for the new command.
+            func (:any:`function`) : function for the new command.
 
         Returns:
-            boolean : True if command was added, False, else
+            bool : True if command was added, False, else
         """
         funcName = 'do_{}'.format(name)
         if getattr(self, funcName, None):
@@ -336,12 +343,12 @@ class Cli(object):
         commands given.
 
         Args:
-            cmds (list) : list of dictionaries with name and function for
-            every command.
+            cmds (:any:`list`) : list of dictionaries with name and function\
+                    for every command.
 
         Returns:
-            list : list of booleans, with True for every command being
-            added and False for those which failed.
+            :any:`list` : list of booleans, with True for every command being\
+                    added and False for those which failed.
         """
         rets = {}
         for c in cmds:
@@ -354,22 +361,43 @@ class Cli(object):
 
         By default, the same command is executed when just <CR> is entered,
         but we don't want that behavior.
+
+        Returns:
+            :any:`None`
         """
         pass
 
-    def do_exit(self, line):
+    def do_exit(self, theLine):
         """Command that exit the CLI when "exit" is entered.
+
+        Exit the application to the operating system.
+
+        Args:
+            theLine (str): string entered in the command line.
+
         """
         sys.exit(0)
 
-    def do_help(self, line):
+    def do_help(self, theLine):
         """Command that displays all possible commands.
+
+        Args:
+            theLine (str): string entered in the command line.
+
+        Returns:
+            :any:`None`
         """
         for cmd in self.Cmds:
             print('- {0} : {1}'.format(cmd, self.getCmdDesc(cmd)))
 
-    def do_syntax(self, line):
+    def do_syntax(self, theLine):
         """Command that displays syntax for possible commands.
+
+        Args:
+            theLine (str): string entered in the command line.
+
+        Returns:
+            :any:`None`
         """
         for cmd in self.Cmds:
             cmdCb = self.getCmdCb(cmd)
@@ -381,14 +409,17 @@ class Cli(object):
             else:
                 print('> {0}'.format(cmd))
 
-    def do_shell(self, line):
+    def do_shell(self, theLine):
         """Comand that runs a shell command when "shell" is entered.
 
         Args:
-            line (str): string entered in the command line.
+            theLine (str): string entered in the command line.
+
+        Returns:
+            :any:`None`
         """
-        print("running shell command:", line)
-        output = os.popen(line).read()
+        print("running shell command:", theLine)
+        output = os.popen(theLine).read()
         print(output)
 
     def precmd(self, theCmd, theLine):
@@ -396,6 +427,7 @@ class Cli(object):
 
         Args:
             theCmd (str) : String with new command entered.
+
             theLine (str): string entered in the command line.
 
         Returns:
@@ -419,6 +451,7 @@ class Cli(object):
 
         Args:
             theCmd (str) : String with new command entered.
+
             theLine (str): string entered in the command line.
 
         Returns:
@@ -430,10 +463,10 @@ class Cli(object):
         """Method that provides data and format to be displayed in the ToolBar.
 
         Args:
-            theCli (CommandLineInterface) : CommandLineInterface instance.
+            theCli (:class:`CommandLineInterface`) : CommandLineInterface instance.
 
         Returns:
-            list : list with data to be displayed in the ToolBar.
+            :any:`list` : list with data to be displayed in the ToolBar.
         """
         return [(Token.Toolbar, '{}'.format(self.ToolBar)), ]
 
@@ -441,10 +474,10 @@ class Cli(object):
         """Returns tokens for command line right prompt.
 
         Args:
-            theCli (CommandLineInterface) : CommandLineInterface instance.
+            theCli (:class:`CommandLineInterface`) : CommandLineInterface instance.
 
         Returns:
-            list : list with data to be displayed in the right prompt..
+            :any:`list` : list with data to be displayed in the right prompt..
         """
         return [(Token.RPrompt, '{}'.format(self.RPrompt)), ]
 
@@ -452,10 +485,10 @@ class Cli(object):
         """Returns tokens for command line prompt.
 
         Args:
-            theCli (CommandLineInterface) : CommandLineInterface instance.
+            theCli (:class:`CommandLineInterface`) : CommandLineInterface instance.
 
         Returns:
-            list : list with data to be displayed in the prompt.
+            :any:`list` : list with data to be displayed in the prompt.
         """
         return [(Token.Prompt, '{}'.format(self.Prompt)), ]
 
@@ -477,11 +510,25 @@ class Cli(object):
             self.addCmd(name, partial(funcCb, self), desc)
 
     def run(self, **kwargs):
+        """Execute the command line.
+
+        Args:
+            thePrompt (:any:`str` or :any:`function`) : string or callback with prompt value
+
+            theToolBar (:any:`str` or :any:`function`) : string or callback with toolbar value.
+
+            theRPrompt (:any:`str` or :any:`function`) : string or callback with right prompt value.
         """
-        """
-        self.ToolBar = 'Enter a valid command'
-        if kwargs.get('thePrompt', None) is not None:
-            self.Prompt = kwargs.get('thePrompt')
+        _toolbar = kwargs.get('theToolBar', 'Enter a valid command')
+        self.ToolBar = _toolbar if isinstance(_toolbar, str) else _toolbar()
+
+        _prompt = kwargs.get('thePrompt', self.Prompt)
+        self.Prompt = _prompt if isinstance(_prompt, str) else _prompt()
+
+        _rprompt = kwargs.get('theRPrompt', None)
+        if _rprompt is not None:
+            self.RPrompt = _rprompt if isinstance(_rprompt, str) else _rprompt()
+
         userInput = prompt(history=FileHistory('history.txt'),
                            auto_suggest=AutoSuggestFromHistory(),
                            completer=Cli.CliCompleter(self),
@@ -498,10 +545,17 @@ class Cli(object):
         """Method that is called to wait for any user input.
 
         Args:
-            thePrompt (str) : string with the command line prompt.
-            theEcho (boolean) : True is command should be echoed.
-            thePreCmd (boolean) : True if precmd shoud be called.
-            thePostCmd (boolean) : True if postcmd should be called.
+            thePrompt (:any:`str` or :any:`function`) : string or callback with prompt value
+
+            theToolBar (:class:`str` or :any:`function`) : string or callback with toolbar value.
+
+            theRPrompt (:any:`str` or :any:`function`) : string or callback with right prompt value.
+
+            theEcho (bool) : True is command should be echoed.
+
+            thePreCmd (bool) : True if precmd shoud be called.
+
+            thePostCmd (bool) : True if postcmd should be called.
         """
         while True:
             preReturn = True
@@ -534,7 +588,11 @@ class Cli(object):
         """Decorator that setup a function as a command.
 
         Args:
-            theModule (class) : class name where this command is being added.
+            theLabel (str) : command label that identifies the command in the\
+                command line (optional). If no value is entered, label is\
+                taken from the @syntax decorator.
+
+            theDesc (str) : command description (optional).
         """
 
         def f_command(f):
