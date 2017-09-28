@@ -188,6 +188,11 @@ class Arguments(object):
         """
         self._indexed = theValue
 
+    def traverse(self):
+        """Return the list with all arguments.
+        """
+        return self.Arguments
+
     def addArgument(self, theArgument):
         """Method that add a new argument.
 

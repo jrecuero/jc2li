@@ -209,6 +209,33 @@ class Journal(object):
 
         return useArgs
 
+    def buildCommandArgumentsFromArgos(self, theFunc, theLine):
+        """Method that build arguments to be passed to the command function.
+
+        Args:
+            theFunc (function) : command function.
+            theLine (str) : string with the command line input.
+
+        Returns:
+            list: pair with the list with argument to be passed to the\
+                    command function and remaining entries in the command\
+                    line.
+        """
+        cmdArgos = getattr(theFunc, ARGOS_ATTR, None)
+        if cmdArgos:
+            cmdArgos.index()
+            cliArgs = shlex.split(theLine)
+            cliArgs.reverse()
+            for arg in cmdArgos.traverse():
+                arg.Value = arg.Type._(cliArgs.pop())
+            useArgs = cmdArgos.getIndexedValues()
+            if all(map(lambda x: x is not None, useArgs)):
+                return useArgs, cliArgs
+            else:
+                raise NotImplementedError('Mandatory argument is not present')
+        else:
+            raise NotImplementedError('Command with SYNTAX without ARGOS')
+
 
 if __name__ == '__main__':
     pass

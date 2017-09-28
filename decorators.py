@@ -3,6 +3,7 @@ import cliparser
 from arguments import Argument, Arguments
 from common import ARGOS_ATTR, RULES_ATTR, SYNTAX_ATTR, CMD_ATTR, TREE_ATTR
 from journal import Journal
+import shlex
 
 MODULE = 'DECORATOR'
 
@@ -115,10 +116,39 @@ def setsyntax(f):
 
     @wraps(f)
     def _wrapper(self, theLine):
-        useArgs = journal.buildCommandArgumentsFromSyntax(f, self, theLine)
+        if getattr(f, RULES_ATTR, None) is None:
+            useArgs, cliArgs = journal.buildCommandArgumentsFromArgos(f, theLine)
+        else:
+            cliArgs = None
+            useArgs = journal.buildCommandArgumentsFromSyntax(f, self, theLine)
         if useArgs is not None:
-            return f(self, *useArgs)
+            if cliArgs:
+                return f(self, *useArgs, cliArgs)
+            else:
+                return f(self, *useArgs)
 
-    root = journal.buildCommandParsingTree(f)
-    setattr(_wrapper, TREE_ATTR, root)
+    if getattr(_wrapper, RULES_ATTR, None) is not None:
+        root = journal.buildCommandParsingTree(f)
+        setattr(_wrapper, TREE_ATTR, root)
     return _wrapper
+
+
+# def setargos(f):
+#     """Decorator that setup all argument for a command.
+#     """
+
+#     @wraps(f)
+#     def _wrapper(self, line):
+#         fargs = getattr(f, '_arguments', None)
+#         if fargs is None:
+#             return f(self, line)
+#         else:
+#             passargs = shlex.split(line)
+#             defargs = [(x['type'], x['default']) for x in fargs]
+#             useargs = [x._(z) if z is not None else y for (x, y), z in map(None, defargs, passargs)]
+#             if all(map(lambda x: x is not None, useargs)):
+#                 return f(self, *useargs)
+#             else:
+#                 print 'Mandatory argument is not present'
+
+#     return _wrapper
