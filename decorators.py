@@ -8,14 +8,14 @@ import shlex
 MODULE = 'DECORATOR'
 
 
-def argo(theName, theType, theDefault, **kwargs):
+def argo(name, type, default, **kwargs):
     """Decorator that provides to add an argument to a command.
 
     Args:
-        theName (str) : argument name. This will be used when making any
+        name (str) : argument name. This will be used when making any
         reference to this argument
-        theType (object) : argument type, it should be a class name.
-        theDefault (object) : default value for the argument.
+        type (object) : argument type, it should be a class name.
+        default (object) : default value for the argument.
         theCompleter (object) : argument completer instance
     """
 
@@ -24,21 +24,21 @@ def argo(theName, theType, theDefault, **kwargs):
         @wraps(f)
         def _wrapper(self, *args):
             return f(self, *args)
-        cmdArgos = getattr(_wrapper, ARGOS_ATTR, Arguments())
-        kwargs.setdefault('theDefault', theDefault)
-        cmdArgos.insertArgument(Argument(theName, theType, **kwargs))
-        setattr(_wrapper, ARGOS_ATTR, cmdArgos)
+        cmd_argos = getattr(_wrapper, ARGOS_ATTR, Arguments())
+        kwargs.setdefault('default', default)
+        cmd_argos.insert_argument(Argument(name, type, **kwargs))
+        setattr(_wrapper, ARGOS_ATTR, cmd_argos)
 
         return _wrapper
 
     return f_argo
 
 
-def argos(theArgos):
+def argos(arg_list):
     """Decorator that provides to create a group of arguments to a command.
 
     Args:
-        theArgos (list) : list of arguments configured as @argo.
+        arg_list (list) : list of arguments configured as @argo.
     """
 
     def f_setargos(f):
@@ -47,16 +47,16 @@ def argos(theArgos):
         def _wrapper(self, *args):
             return f(self, *args)
 
-        cmdArgos = getattr(_wrapper, ARGOS_ATTR, Arguments())
-        for arg in reversed(theArgos):
-            cmdArgos.insertArgument(Argument(arg['name'], arg['type'], theDefault=arg['default']))
-        setattr(_wrapper, ARGOS_ATTR, cmdArgos)
+        cmd_argos = getattr(_wrapper, ARGOS_ATTR, Arguments())
+        for arg in reversed(arg_list):
+            cmd_argos.insert_argument(Argument(arg['name'], arg['type'], default=arg['default']))
+        setattr(_wrapper, ARGOS_ATTR, cmd_argos)
         return _wrapper
 
     return f_setargos
 
 
-def syntax(theSyntax):
+def syntax(syntax_str):
     """Decorator that setup the command syntax
 
     Command syntax use these rules:
@@ -82,7 +82,7 @@ def syntax(theSyntax):
         argument defined wit "?", "*" or "+"
 
     Args:
-        theSyntax (str) : string with the command syntax.
+        syntax_str (str) : string with the command syntax.
     """
 
     def f_syntax(f):
@@ -91,8 +91,8 @@ def syntax(theSyntax):
         def _wrapper(self, *args):
             return f(self, *args)
 
-        cmd, rules = cliparser.processSyntax(theSyntax)
-        setattr(_wrapper, SYNTAX_ATTR, theSyntax)
+        cmd, rules = cliparser.process_syntax(syntax_str)
+        setattr(_wrapper, SYNTAX_ATTR, syntax_str)
         setattr(_wrapper, CMD_ATTR, cmd)
         setattr(_wrapper, RULES_ATTR, rules)
 
@@ -115,40 +115,19 @@ def setsyntax(f):
     journal = Journal()
 
     @wraps(f)
-    def _wrapper(self, theLine):
+    def _wrapper(self, line):
         if getattr(f, RULES_ATTR, None) is None:
-            useArgs, cliArgs = journal.buildCommandArgumentsFromArgos(f, theLine)
+            use_args, cli_args = journal.build_command_arguments_from_args(f, line)
         else:
-            cliArgs = None
-            useArgs = journal.buildCommandArgumentsFromSyntax(f, self, theLine)
-        if useArgs is not None:
-            if cliArgs:
-                return f(self, *useArgs, cliArgs)
+            cli_args = None
+            use_args = journal.build_command_arguments_from_syntax(f, self, line)
+        if use_args is not None:
+            if cli_args:
+                return f(self, *use_args, cli_args)
             else:
-                return f(self, *useArgs)
+                return f(self, *use_args)
 
     if getattr(_wrapper, RULES_ATTR, None) is not None:
-        root = journal.buildCommandParsingTree(f)
+        root = journal.build_command_parsing_tree(f)
         setattr(_wrapper, TREE_ATTR, root)
     return _wrapper
-
-
-# def setargos(f):
-#     """Decorator that setup all argument for a command.
-#     """
-
-#     @wraps(f)
-#     def _wrapper(self, line):
-#         fargs = getattr(f, '_arguments', None)
-#         if fargs is None:
-#             return f(self, line)
-#         else:
-#             passargs = shlex.split(line)
-#             defargs = [(x['type'], x['default']) for x in fargs]
-#             useargs = [x._(z) if z is not None else y for (x, y), z in map(None, defargs, passargs)]
-#             if all(map(lambda x: x is not None, useargs)):
-#                 return f(self, *useargs)
-#             else:
-#                 print 'Mandatory argument is not present'
-
-#     return _wrapper

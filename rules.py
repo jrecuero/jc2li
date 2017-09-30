@@ -5,159 +5,159 @@ class RuleHandler(object):
     """
 
     @staticmethod
-    def isOnlyOneRule(theRule):
+    def is_only_one_rule(rule):
         """Static method that checks if the rule contains an argument name.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument contains an argument name, False else
         """
-        return theRule['type'] == '1'
+        return rule['type'] == '1'
 
     @staticmethod
-    def isConstantRule(theRule):
+    def is_constant_rule(rule):
         """Static method that checks if the rule contains a constant.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument contains constant, False else
         """
-        return theRule['type'] == '2'
+        return rule['type'] == '2'
 
     @staticmethod
-    def isEndRule(theRule):
+    def is_end_rule(rule):
         """Static method that checks if the rule contains the last rule for the
         command.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument contains the last rule, False else
         """
-        return theRule['type'] == '0'
+        return rule['type'] == '0'
 
     @staticmethod
-    def isZeroOrOneRule(theRule):
+    def is_zero_or_one_rule(rule):
         """Static method that checks if the rule contains an argument that can
         be entered zero or one time.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument can be entered zero or one, False else
         """
-        return theRule['type'] == '?'
+        return rule['type'] == '?'
 
     @staticmethod
-    def isZeroOrMoreRule(theRule):
+    def is_zero_or_more_rule(rule):
         """Static method that checks if the rule contains an argument that can
         be entered zero or more times.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument can be entered zero or more, False else
         """
-        return theRule['type'] == '*'
+        return rule['type'] == '*'
 
     @staticmethod
-    def isOneOrMoreRule(theRule):
+    def is_one_or_more_rule(rule):
         """Static method that checks if the rule contains an argument that can
         be entered one or more times.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument can be entered one or more, False else
         """
-        return theRule['type'] == '+'
+        return rule['type'] == '+'
 
     @staticmethod
-    def isOnlyOneOptionRule(theRule):
+    def is_only_one_option_rule(rule):
         """Static method that checks if the rule contains an argument name
         option.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument contains an argument name option,
             False else
         """
-        return theRule['type'] == '!'
+        return rule['type'] == '!'
 
     @staticmethod
-    def isRequiredRule(theRule):
+    def is_required_rule(rule):
         """Static method that checks if the rule contains an argument that
         is required
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument contains an argument that is
             required, False else
         """
-        return (RuleHandler.isOnlyOneRule(theRule) or
-                RuleHandler.isOneOrMoreRule(theRule) or
-                RuleHandler.isOnlyOneOptionRule(theRule))
+        return (RuleHandler.is_only_one_rule(rule) or
+                RuleHandler.is_one_or_more_rule(rule) or
+                RuleHandler.is_only_one_option_rule(rule))
 
     @staticmethod
-    def isInnerRule(theRule):
+    def is_inner_rule(rule):
         """Static method that checks if the rule contains an argument that
         is an inner rule.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the argument contains an argument that is
             an inner rule, False else
         """
-        return (RuleHandler.isZeroOrOneRule(theRule) or
-                RuleHandler.isZeroOrMoreRule(theRule) or
-                RuleHandler.isOneOrMoreRule(theRule))
+        return (RuleHandler.is_zero_or_one_rule(rule) or
+                RuleHandler.is_zero_or_more_rule(rule) or
+                RuleHandler.is_one_or_more_rule(rule))
 
     @staticmethod
-    def checkForInnerRule(theRule):
+    def check_for_inner_rule(rule):
         """Static method that check if a rule has other rules inside.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             boolean : True if the has same inner rules, False else.
         """
-        return RuleHandler.isInnerRule(theRule) or type(theRule['args']) == list
+        return RuleHandler.is_inner_rule(rule) or type(rule['args']) == list
 
     @staticmethod
-    def checkArgNameInRule(theRule, theArgName):
+    def check_argname_in_rule(rule, theArgName):
         """Static method that checks if an argument has a given name.
 
         It only checks when the rule type is "1" (argument names are only
         set for this type).
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
             theArgName (str) L String with the argument name to check.
 
         Returns:
             boolean : True if the arguments matches the given name, False else.
         """
-        if RuleHandler.isOnlyOneRule(theRule) and theRule['args'] == theArgName:
+        if RuleHandler.is_only_one_rule(rule) and rule['args'] == theArgName:
             return True
         return False
 
     @staticmethod
-    def syntaxMinArgs(theRules):
+    def syntax_min_args(rules):
         """Static method that returns the minimum number of arguemnt to be
         entered by the user for a given command.
 
@@ -166,66 +166,66 @@ class RuleHandler(object):
         have to appear at leas one time.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             int : number of minimum arguments to be entered at the CLI.
         """
-        counter = sum([1 if RuleHandler.isRequiredRule(rule) else 0 for rule in theRules])
+        counter = sum([1 if RuleHandler.is_required_rule(rule) else 0 for rule in rules])
         return counter
 
     @staticmethod
-    def getArgsFromRuleAsList(theRule):
+    def get_args_from_rule_as_list(rule):
         """Static method that return a list with all rules contained in the
         'args' entry for the rules dictionary
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             list : list with all rules contained in 'args' entry.
         """
-        return theRule['args'] if type(theRule['args']) == list else [theRule, ]
+        return rule['args'] if type(rule['args']) == list else [rule, ]
 
     @staticmethod
-    def getArgsFromRule(theRule):
+    def get_args_from_rule(rule):
         """Static method that returns the value for the 'args' entry in the
         rules dictionary.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             list/str : content of 'args' entry, it could be a list with more
             rules or a string with the argument name.
         """
-        return theRule['args']
+        return rule['args']
 
     @staticmethod
-    def getCounterFromRule(theRule):
+    def get_counter_from_rule(rule):
         """Static method that returns the value for the 'counter' entry in the
         rules dictionary.
 
         Counter stores the rule order in relation with all other rules.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             int : rule counter number.
         """
-        return theRule['counter']
+        return rule['counter']
 
     @staticmethod
-    def traverseArgsInRule(theRule):
+    def traverse_args_in_rule(rule):
         """Static method that traverses all entries in 'args' entry for the
         rules dictionary.
 
         Args:
-            theRule (dict): dictionary with the given rule to check.
+            rule (dict): dictionary with the given rule to check.
 
         Returns:
             dict : yield with a rule.
         """
-        for rule in theRule['args']:
+        for rule in rule['args']:
             yield rule

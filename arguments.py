@@ -14,135 +14,32 @@ class Argument(object):
     case it will be passed to the command function as a list.
     """
 
-    def __init__(self, theName, theType, **kwargs):
+    def __init__(self, name, argtype, **kwargs):
         """Argument class initialization method.
 
         Args:
-            theName (str) : String with the argument name.
-            theType (type) : Argument type (class name).
-            theDefault (object) : Default value for the argument.
-            theCompleter (object) : Argument completer instance.
+            name (str) : String with the argument name.
+            argtype (type) : Argument type (class name).
+            default (object) : Default value for the argument.
+            completer (object) : Argument completer instance.
+            completer_kwargs (:class:`dict`) : Dictionary with\
+                    completer arguments
 
         Returns:
             None
         """
-        self._name = theName
-        self._type = theType
-        self._default = kwargs.get('theDefault', None)
-        self._value = kwargs.get('theDefault', None)
-        completerKlass = kwargs.get('theCompleter', None)
-        completerKwargs = kwargs.get('theCompleterKwargs', {})
-        self._completer = completerKlass(theArgo=self, **completerKwargs) if completerKlass else theType(theArgo=self, **completerKwargs)
-        self._matched = 0
-        self._journal = None
-
-    @property
-    def Name(self):
-        """Get property that returns the _name attribute.
-
-        Returns:
-            str : string with the argument name.
-        """
-        return self._name
-
-    @property
-    def Type(self):
-        """Get property that returns the _type attribute.
-
-        Returns:
-            type : class for the argument name.
-        """
-        return self._type
-
-    @property
-    def Default(self):
-        """Get property that returns the _default attribute.
-
-        Returns:
-            object : default value for the argument.
-        """
-        return self._default
-
-    @property
-    def Value(self):
-        """Get property that returns the _value attribute.
-
-        Returns:
-            object : Default value for the argument.
-        """
-        return self._value
-
-    @Value.setter
-    def Value(self, theValue):
-        """Set property that sets the value for the _value attribute.
-
-        Args:
-            theValue (object) : Value to set the _value attribute.
-
-        Returns:
-            None
-        """
-        self._value = theValue
-
-    @property
-    def Matched(self):
-        """Get property that returns the _matched attribute.
-
-        Returns:
-            int : number of times the arguments was matched in the command line.
-        """
-        return self._matched
-
-    @property
-    def Journal(self):
-        """Get property that returns the _journal attribute.
-
-        Returns:
-            Journal : journal instance.
-        """
-        return self._journal
-
-    @Journal.setter
-    def Journal(self, theValue):
-        """Set property that set the value for the _journal attribute.
-
-        Args:
-            theValue (Journal) : journal instance.
-        """
-        self._journal = theValue
-
-    @Matched.setter
-    def Matched(self, theValue):
-        """Set property that sets the value for the _matched attribute.
-
-        Args:
-            theValue (int) : number of times the arguments was matched.
-
-        Returns :
-            None
-        """
-        self._matched = theValue
-
-    @property
-    def Completer(self):
-        """Get property that returns the _completer attribute.
-
-        Returns:
-            object : argument completer instance.
-        """
-        return self._completer
-
-    @Completer.setter
-    def Completer(self, theValue):
-        """Set property that sets the value for the _completer attribute.
-
-        Args:
-            theValue (object) : new completer instance.
-
-        Returns :
-            None
-        """
-        self._completer = theValue
+        self.name = name
+        self.type = argtype
+        self.default = kwargs.get('default', None)
+        self.value = kwargs.get('default', None)
+        completer_class = kwargs.get('completer', None)
+        completer_kwargs = kwargs.get('completer_kwargs', {})
+        if completer_class:
+            self.completer = completer_class(argo=self, **completer_kwargs)
+        else:
+            self.completer = argtype(argo=self, **completer_kwargs)
+        self.matched = 0
+        self.journal = None
 
 
 class Arguments(object):
@@ -151,7 +48,7 @@ class Arguments(object):
     so arguments can be handle in a better and more generic way.
 
     It basically contains two lists, _arguments with an ordered list for the
-    every argument being entered, and _indexed a list indexed by the attribute
+    every argument being entered, and indexed a list indexed by the attribute
     name for fast searching.
     """
 
@@ -161,53 +58,29 @@ class Arguments(object):
         Returns:
             None:
         """
-        self._arguments = []
-        self._indexed = None
-
-    @property
-    def Arguments(self):
-        """Get property that returns _argument attribute.
-
-        Returns:
-            list : list with all command arguments.
-        """
-        return self._arguments
-
-    @property
-    def Indexed(self):
-        """Get property that returns _indexed attribute.
-
-        Returns:
-            list: list will all arguments indexed by argument name.
-        """
-        return self._indexed
-
-    @Indexed.setter
-    def Indexed(self, theValue):
-        """Set property that sets the value for the _indexed attribute.
-        """
-        self._indexed = theValue
+        self.arguments = []
+        self.indexed = None
 
     def traverse(self):
         """Return the list with all arguments.
         """
-        return self.Arguments
+        return self.arguments
 
-    def addArgument(self, theArgument):
+    def add_argument(self, argument):
         """Method that add a new argument.
 
         Args:
-            theArgument (Argument) : New argument to the added.
+            argument (Argument) : New argument to the added.
         """
-        self.Arguments.append(theArgument)
+        self.arguments.append(argument)
 
-    def insertArgument(self, theArgument):
+    def insert_argument(self, argument):
         """Method that insert a new argument the first in the list.
 
         Args:
-            theArgument (Argument) : New argument to be inserted first.
+            argument (Argument) : New argument to be inserted first.
         """
-        self.Arguments.insert(0, theArgument)
+        self.arguments.insert(0, argument)
 
     def reversed(self):
         """Method that returns the list of arguments in reverse order.
@@ -215,35 +88,35 @@ class Arguments(object):
         Returns:
             list : List of argument reversed.
         """
-        return reversed(self.Arguments)
+        return reversed(self.arguments)
 
-    def getArgoFromIndex(self, theIndex):
+    def get_argo_from_index(self, index):
         """Method that returns an argument at a given index.
 
         Index is the place where the argument is defined at the command
         level. They are stored in _arguments attribute.
 
         Args:
-            theIndex (int) : Index for the argument to be returned
+            index (int) : Index for the argument to be returned
 
         Returns:
             Argument : Argument at the given index.
     """
-        return self.Arguments[theIndex]
+        return self.arguments[index]
 
-    def getArgoFromName(self, theName):
+    def get_argo_from_name(self, name):
         """Method that returns an argument for the given name.
 
-        Arguments indexed by name are store in _indexed attribute.
+        Arguments indexed by name are store in indexed attribute.
 
         Args:
-            theName (str) : Name of the attribute to be retrieved.
+            name (str) : Name of the attribute to be retrieved.
 
         Returns:
             Argument/None : Argument instance if the name is found, None
             if the name is not found.
         """
-        return self.Indexed.get(theName, None)
+        return self.indexed.get(name, None)
 
     def index(self):
         """Method that index Arguments instance. This method is required to be
@@ -255,13 +128,13 @@ class Arguments(object):
         Returns:
             None
         """
-        self.Indexed = OrderedDict()
-        for arg in self.Arguments:
-            arg.Value = arg.Default
-            arg.Matched = 0
-            self.Indexed.update({arg.Name: arg})
+        self.indexed = OrderedDict()
+        for arg in self.arguments:
+            arg.value = arg.default
+            arg.matched = 0
+            self.indexed.update({arg.name: arg})
 
-    def setIndexedValueFromIndex(self, theIndex, theValue):
+    def set_indexed_value_from_index(self, index, value):
         """Method that sets a new value for an argument at the
         given index.
 
@@ -269,43 +142,43 @@ class Arguments(object):
         level. They are stored in _arguments attribute.
 
         Args:
-            theIndex (int) : Index for the argument to be updated
-            theValue (object) : New value for the argument.
+            index (int) : Index for the argument to be updated
+            value (object) : New value for the argument.
 
         Returns:
             None
         """
-        arg = self.getArgoFromIndex(theIndex)
-        arg.Value = theValue
+        arg = self.get_argo_from_index(index)
+        arg.value = value
 
-    def setIndexedValueFromName(self, theName, theValue):
+    def set_indexed_value_from_name(self, name, value):
         """Method that sets a new value for an argument for the
         given argument name.
 
-        Arguments indexed by name are store in _indexed attribute.
+        Arguments indexed by name are store in indexed attribute.
 
         Args:
-            theName (str) : Name of the attribute to be retrieved.
-            theValue (object) : New value for the argument.
+            name (str) : Name of the attribute to be retrieved.
+            value (object) : New value for the argument.
 
         Returns:
             None
         """
-        arg = self.getArgoFromName(theName)
-        arg.Value = theValue
+        arg = self.get_argo_from_name(name)
+        arg.value = value
 
-    def getIndexedValues(self):
+    def get_indexed_values(self):
         """Method that returns all values indexed by the argument name.
 
         Returns:
             list : List with all value indexed by the argument name.
         """
-        return [arg.Value for name, arg in self.Indexed.items()]
+        return [arg.value for name, arg in self.indexed.items()]
 
-    def getNames(self):
+    def get_names(self):
         """Method that returns the list with all indexed argumetns.
 
         Returns:
             list : List with all arguments indexed by argument name.
         """
-        return list(self.Indexed)
+        return list(self.indexed)

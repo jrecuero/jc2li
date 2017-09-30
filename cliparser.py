@@ -1,11 +1,11 @@
 import pyparsing as pp
 
 
-def procTokens(theTokens, theWithEnd=True):
+def process_tokens(tokens, theWithEnd=True):
     """Function that process given tokens.
 
     Args:
-        theTokens (list): list of tokens to parse.
+        tokens (list): list of tokens to parse.
         theWithEnd (boolean): True if last rule has to be added at the end,
         False else.
 
@@ -13,7 +13,7 @@ def procTokens(theTokens, theWithEnd=True):
         list: list of dictionaries with all rules.
     """
     rules, counter = [], 0
-    for tok in theTokens:
+    for tok in tokens:
         toktype = type(tok)
         if tok == '|':
             counter = 0
@@ -32,7 +32,7 @@ def procTokens(theTokens, theWithEnd=True):
                 tok.pop()
             else:
                 op = '1'
-            rules.append({'counter': counter, 'type': op, 'args': procTokens(tok, False)})
+            rules.append({'counter': counter, 'type': op, 'args': process_tokens(tok, False)})
         else:
             print('Invalid Syntax')
         counter += 1
@@ -41,21 +41,21 @@ def procTokens(theTokens, theWithEnd=True):
     return rules
 
 
-def procSyntax(theTokens):
+def _process_syntax(tokens):
     """Function that process a syntas for the given tokens.
 
     Args:
-        theTokens (list): list of tokens to parse.
+        tokens (list): list of tokens to parse.
 
     Returns:
         tuple: pair with the commadn and a list of dictionaries with all rules.
     """
-    command = theTokens[0]
-    rules = procTokens(theTokens[1:])
+    command = tokens[0]
+    rules = process_tokens(tokens[1:])
     return command, rules
 
 
-def getSyntax():
+def get_syntax():
     """Function that return the syntax to be used for processing.
 
     Returns:
@@ -91,11 +91,11 @@ def getSyntax():
     return (syntax + pp.stringEnd)
 
 
-def processSyntax(syntax):
+def process_syntax(syntax):
     """
     """
-    toks = getSyntax().parseString(syntax)
-    cmd, rules = procSyntax(toks)
+    toks = get_syntax().parseString(syntax)
+    cmd, rules = _process_syntax(toks)
     return cmd, rules
 
 
@@ -107,12 +107,12 @@ if __name__ == '__main__':
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tsignature]? [talias]* [tdesc | thelp]+ [tclose]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tdesc talias | tsignature | tuser [tuname | tuid]? ]?")
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [tid | tuid [tlastname | tpassport]? ]? [thelp | tdesc]* [tsignature]+")
-    # toks = getSyntax().parseString("tenant t1 [<t2> | t3]!")
-    # toks = getSyntax().parseString("tenant t1 <t2>")
-    toks = getSyntax().parseString("tenant [t1 t2 t3]+")
+    # toks = get_syntax().parseString("tenant t1 [<t2> | t3]!")
+    # toks = get_syntax().parseString("tenant t1 <t2>")
+    toks = get_syntax().parseString("tenant [t1 t2 t3]+")
 
     print(toks)
-    cmd, rules = procSyntax(toks)
+    cmd, rules = _process_syntax(toks)
     print(cmd)
     for rule in rules:
         print(rule)
