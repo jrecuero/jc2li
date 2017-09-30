@@ -10,35 +10,24 @@ class Node(object):
     """Node class provides a container for every node in the syntax tree.
     """
 
-    def __init__(self, theArgo, **kwargs):
+    def __init__(self, argo, **kwargs):
         """Node class initialization method.
 
         Args:
-            theArgo (Argument): argument instance.
-            theaParent (Node): parent node instance.
-            theLabel (str): string to be used as label attribute.
+            argo (Argument): argument instance.
+            parent (Node): parent node instance.
+            label (str): string to be used as label attribute.
         """
-        self._parent = kwargs.get('theParent', None)
-        self._children = list()
-        self._argo = theArgo
-        self._browsable = True
-        self._label = kwargs.get('theLabel', self.Name)
-        self._loops = set()
-        self._isCte = kwargs.get('theIsCte', False)
+        self._parent = kwargs.get('parent', None)
+        self.children = list()
+        self.argo = argo
+        self.browsable = True
+        self.label = kwargs.get('label', self.name)
+        self.__loops = set()
+        self.__iscte = kwargs.get('iscte', False)
 
     @property
-    def Browsable(self):
-        """Get property that return _browsable attribute.
-
-        Only nodes that contains Argument information are browsable.
-
-        Returns:
-            boolean: True if Node is browsable, False else.
-        """
-        return self._browsable
-
-    @property
-    def Parent(self):
+    def parent(self):
         """Get property that returns _parent attribute.
 
         Returns:
@@ -46,8 +35,17 @@ class Node(object):
         """
         return self._parent
 
+    @parent.setter
+    def parent(self, parent):
+        """Set property that sets a new parent for the node.
+
+        Args:
+            parent (Node): node instance to use a a new parent.
+        """
+        self._parent = parent
+
     @property
-    def Parents(self):
+    def parents(self):
         """Get property that returns _parents attribute.
 
         Returns:
@@ -55,103 +53,58 @@ class Node(object):
         """
         raise CliException(MODULE, 'parents() operation not allowed.')
 
-    @Parent.setter
-    def Parent(self, theParent):
-        """Set property that sets a new parent for the node.
-
-        Args:
-            theParent (Node): node instance to use a a new parent.
-        """
-        self._parent = theParent
-
     @property
-    def Argo(self):
-        """Get property that returns _argo attribute.
-
-        Returns:
-            Argument: instance with the Argument attribute for the Node.
-        """
-        return self._argo
-
-    @property
-    def Children(self):
-        """Get property that returns _children attribute.
-
-        Returns:
-            list: list with all node children.
-        """
-        return self._children
-
-    @property
-    def ArgoNode(self):
+    def argnode(self):
         return [self, ]
 
-    def getChildrenNodes(self, **kwargs):
+    def get_children_nodes(self, **kwargs):
         children = []
-        noLoop = kwargs.pop('theMatched') if kwargs.get('theNoLoop', None) else False
-        for child in self.traverseChildren(theNoLoop=noLoop):
-            children.extend(child.ArgoNode)
+        noloop = kwargs.pop('matched') if kwargs.get('noloop', None) else False
+        for child in self.traverse_children(noloop=noloop):
+            children.extend(child.argnode)
         return children
 
     @property
-    def Siblings(self):
+    def siblings(self):
         """Get property that returns a list with all sibling nodes.
 
         Returns:
             list: list with all Nodes that are sibling in the syntax tree.
         """
-        if self.parent and self.parent.hasChildren():
-            return self.parent.Children
+        if self.parent and self.parent.has_children():
+            return self.parent.children
         else:
             return list()
 
     @property
-    def Label(self):
-        """Get property that returns _label attribute.
-
-        Returns:
-            str: string with the node label.
-        """
-        return self._label
-
-    @Label.setter
-    def Label(self, theValue):
-        """Set property that assign a new value for _label atttibute.
-
-        Args:
-            theValue (str): new value to be assigned to the _label attribute.
-        """
-        self.Label = theValue
-
-    @property
-    def Name(self):
+    def name(self):
         """Get property that returns node name.
 
         Returns:
             str: string with the argument name.
         """
-        return self.Argo.Name if self.Argo else None
+        return self.argo.name if self.argo else None
 
     @property
-    def Type(self):
+    def argtype(self):
         """Get property that returns node type.
 
         Returns:
             type: type for the argument contained in the node.
         """
-        return self.Argo.Type if self.Argo else None
+        return self.argo.type if self.argo else None
 
     @property
-    def Default(self):
+    def default(self):
         """Get property that returns node default value.
 
         Returns:
             object: default value for the argument in the node.
         """
-        return self.Argo.Default if self.Argo else None
+        return self.argo.default if self.argo else None
 
     @property
-    def Ancestor(self):
+    def ancestor(self):
         """Get property that returns the node ancestor (parent).
 
         Returns:
@@ -160,52 +113,48 @@ class Node(object):
         return self.parent
 
     @property
-    def Ancestors(self):
+    def ancestors(self):
         """Get property that returns a list with all ancestors.
 
         Returns:
             list: list with all ancestors, parent of parent of ...
         """
-        allAncestors = list()
+        all_ancestors = list()
         traverse = self.parent
         while traverse:
-            allAncestors.append(traverse)
-            traverse = traverse.Ancestor
-        return allAncestors
+            all_ancestors.append(traverse)
+            traverse = traverse.ancestor
+        return all_ancestors
 
-    def _addChild(self, theChild, theIsLoop=False):
+    def _add_child(self, child, isloop=False):
         """Internal method that adds a new child Node to the Node.
 
         Args:
-            theChild (Node): node to be added as a child.
-            theIsLoop (boolean): True if child in a loop path.
+            child (Node): node to be added as a child.
+            isloop (bool): True if child in a loop path.
 
         Returns:
             None
         """
-        self.Children.append(theChild)
-        theChild.parent = self
-        if theIsLoop:
-            self._loops.add(theChild)
+        self.children.append(child)
+        child.parent = self
+        if isloop:
+            self.__loops.add(child)
 
-    def addChild(self, theChild, theIsLoop=False):
+    def add_child(self, child, isloop=False):
         """Method that adds a new child Node to the Node.
 
         Args:
-            theChild (Node): node to be added as a child.
-            theIsLoop (boolean): True if child in a loop path.
+            child (Node): node to be added as a child.
+            isloop (bool): True if child in a loop path.
 
         Returns:
             None
         """
-        # if theChild.Parent:
-        #     raise CliException(MODULE, 'addChild() not allowed on child with parent.')
-        # else:
-        #     self._addChild(theChild, theIsLoop)
-        if theChild.Parent and theChild.Parent != self:
-            raise CliException(MODULE, 'addChild() not allowed on child with parent.')
+        if child.parent and child.parent != self:
+            raise CliException(MODULE, 'add_child() not allowed on child with parent.')
         else:
-            self._addChild(theChild, theIsLoop)
+            self._add_child(child, isloop)
 
     def childrenNames(self):
         """Method that returns a list with the name for all children.
@@ -213,72 +162,72 @@ class Node(object):
         Returns:
             list: list with all children names.
         """
-        return [child.Name for child in self.traverseChildren()]
+        return [child.name for child in self.traverse_children()]
 
-    def childrenTypes(self):
+    def children_types(self):
         """Method that returns a list with the type for all children.
 
         Returns:
             list: list with all children types.
         """
-        return [child.Type for child in self.traverseChildren()]
+        return [child.argtype for child in self.traverse_children()]
 
-    def isRoot(self):
+    def is_root(self):
         """Method that returns if the Node is the root node.
 
         Returns:
-            boolean: True if the node is the root node, False else.
+            bool: True if the node is the root node, False else.
         """
-        return self.Parent is None
+        return self.parent is None
 
-    def hasChildren(self):
+    def has_children(self):
         """Method that returns if the node has children.
 
         Returns:
             int: numnber of children for node.
         """
-        return len(self.Children) > 0
+        return len(self.children) > 0
 
-    def hasSiblings(self):
+    def has_siblings(self):
         """Method that returns in the node has siblings in the syntax tree.
 
         Returns:
             int: number of siblings for the node.
         """
-        return self.Parent and self.Parent.hasChildren()
+        return self.parent and self.parent.has_children()
 
-    def traverseChildren(self, theNoLoop=False):
+    def traverse_children(self, noloop=False):
         """Method that traverse all node children.
 
         Args:
-            theNoLoop (bool): True will avoid any child that is a loop path.
+            noloop (bool): True will avoid any child that is a loop path.
 
         Returns:
             generator: it returns a generator to be used in an iterator.
         """
-        children = self.Children if not theNoLoop else [x for x in self.Children if not self.isLoopChild(x)]
+        children = self.children if not noloop else [x for x in self.children if not self.isloop_child(x)]
         for child in children:
             yield child
 
-    def traverseSiblings(self):
+    def traverse_siblings(self):
         """Method that traverse all siblings
 
         Returns:
             generator: it returns a generator to be used in an iterator.
         """
-        for sibling in self.Siblings:
+        for sibling in self.siblings:
             yield sibling
 
-    def traverseAncestors(self):
+    def traverse_ancestors(self):
         """Method that traverse all ancestors.
 
         Returns:
             generator: it returns a generator to be used in an iterator.
         """
-        for ancestor in self.Ancestors:
+        for ancestor in self.ancestors:
             yield ancestor
 
-    def findByName(self, theName, **kwargs):
+    def find_by_name(self, name, **kwargs):
         """Method that checks if the node has the given name
 
         When looking for nodes in a path from the arguments passed in the
@@ -286,74 +235,74 @@ class Node(object):
         the value, when looking for those in the parsing tree, they will not
         be found, but such as a mandatory and positional arguments, they
         should be a direct match for the direct position, that is the reason
-        we use the argument theCheckDefault=True when we want to make a path
+        we use the argument check_default=True when we want to make a path
         search, for any other scenario, where just the argument name will be
         used, set that argument to False.
 
         Args:
-            theName (str): string with the node name.
-            theCheckDefault (boolean): if True validates the node if it has a
-            valid Default attribute (not None).
+            name (str): string with the node name.
+            check_default (bool): if True validates the node if it has a\
+                    valid default attribute (not None).
 
         Returns:
             Node: Node with the given name, None is not found.
         """
         # if the node contains a constant, it has to be checked first and it
-        # only should return a match, if the string passed is equal to the Name
+        # only should return a match, if the string passed is equal to the name
         # stored in the Node.
-        if self._isCte and self.Name == theName:
-            return self if self.Name == theName else None
+        if self.__iscte and self.name == name:
+            return self if self.name == name else None
 
-        # Mandatory arguments have a Default value equal to None, and they are
-        # tested with theCheckDefault flag is set to True
-        if kwargs.get('theCheckDefault', None) and self.Default is None:
+        # Mandatory arguments have a default value equal to None, and they are
+        # tested with check_default flag is set to True
+        if kwargs.get('check_default', None) and self.default is None:
             return self
 
         # for any other parameter, checks the given name is the right one for a
         # proper match.
-        return self if self.Name == theName else None
+        return self if self.name == name else None
 
-    def findChildByName(self, theName, **kwargs):
+    def find_child_by_name(self, name, **kwargs):
         """Method that returns the children node with the given name.
 
         Args:
-            theName (str): string with the node name.
+            name (str): string with the node name.
         """
-        for child in self.traverseChildren():
-            foundNode = child.findByName(theName, **kwargs)
-            if foundNode is not None:
-                return foundNode
+        for child in self.traverse_children():
+            found_node = child.find_by_name(name, **kwargs)
+            if found_node is not None:
+                return found_node
         return None
 
-    def isAnyChildBrowsable(self):
+    def is_any_child_browsable(self):
         """Method that returns if the node has any children that is
         browsable.
 
         Returns:
-            boolean: True if there is any browsable child, False else.
+            bool: True if there is any browsable child, False else.
         """
-        for child in self.traverseChildren():
+        for child in self.traverse_children():
             if child.browsable:
                 return True
         return False
 
-    def isLoop(self):
+    def isloop(self):
         """Method that returns if the node is a loop node.
 
         Returns:
-            boolean: True if it is a loop node, False else.
+            bool: True if it is a loop node, False else.
         """
         return False
 
-    def isLoopChild(self, theChild):
+    def isloop_child(self, child):
         """Method that returns if the node has any child that is a loop.
 
         Returns:
-            boolean: True if the node has loop child, False else.
+            bool: True if the node has loop child, False else.
         """
-        return theChild in self._loops
+        return child in self.__loops
 
-    def findPath(self, thePathPatterns):
+    def find_path(self, path_patterns):
         """Method that given a list of strings, finds a path in the syntax
         tree.
 
@@ -365,72 +314,72 @@ class Node(object):
         returning the Node that contains every argument, if it is found.
 
         Args:
-            thePathPatterns (list): list with the command line input.
+            path_patterns (list): list with the command line input.
 
         Returns:
             list: list with Node for every argument found in the input pattern.
         """
-        nodePath = []
+        node_path = []
         trav = self
-        for pattern in thePathPatterns:
+        for pattern in path_patterns:
             if '=' in pattern:
                 name, _ = pattern.split("=")
-                checkDefault = False
+                check_default = False
             else:
-                checkDefault = True
+                check_default = True
                 name = pattern
-            trav = trav.findChildByName(name, theCheckDefault=checkDefault)
+            trav = trav.find_child_by_name(name, check_default=check_default)
             if trav is None:
                 raise CliException(MODULE, '<{}> not found'.format(pattern))
             else:
-                nodePath.append(trav)
-        return nodePath
+                node_path.append(trav)
+        return node_path
 
-    def buildChildrenNodeFromRule(self, theRule, theArgs):
+    def build_children_node_from_rule(self, rule, argos):
         """Method that returns a child node under the given node for the
         given rule.
 
         child is the Node that has to be added inmidiatly.
-        endChild is the Node that has to be returned as the next node in the
+        end_child is the Node that has to be returned as the next node in the
         sequence. For OnlyOneRule or endDrule it does not matter, because it
         the same node, but for any other rule that includes Hook, child will
         be the first/start hook, and next child will be last/end hook.
 
         Args:
-            theRule (dict): dictionay with a syntax rule.
-            theArgs (Arguments): command Arguments instance.
+            rule (dict): dictionay with a syntax rule.
+            argos (Arguments): command Arguments instance.
 
         Returns:
             Node: child node that matches the syntax rule.
         """
-        if RuleHandler.isOnlyOneRule(theRule) or RuleHandler.isConstantRule(theRule):
-            child = Node(theArgs.getArgoFromName(RuleHandler.getArgsFromRule(theRule)), theParent=self)
-            endChild = child
-        elif RuleHandler.isEndRule(theRule):
-            child = End(theParent=self)
-            endChild = child
-        elif RuleHandler.isZeroOrOneRule(theRule) or RuleHandler.isOnlyOneOptionRule(theRule):
-            child = Hook(theParent=self, theLabel="Hook-Start")
-            endChild = Hook(theLabel="Hook-End")
-            endChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs, endChild)
-            if RuleHandler.isZeroOrOneRule(theRule):
-                child.addChild(endChild)
-        elif RuleHandler.isZeroOrMoreRule(theRule) or RuleHandler.isOneOrMoreRule(theRule):
-            child = Hook(theParent=self, theLabel="Hook-Start")
-            loopChild = Loop(theParent=self, theLabel="Hook-Loop")
-            endChild = Hook(theParent=self, theLabel="Hook-End")
-            loopChild = child.buildHookFromRule(RuleHandler.getArgsFromRule(theRule), theArgs, loopChild)
-            loopChild.addChild(endChild)
-            loopChild.addChild(child, theIsLoop=True)
-            if RuleHandler.isZeroOrMoreRule(theRule):
-                child.addChild(endChild)
+        if RuleHandler.is_only_one_rule(rule) or RuleHandler.is_constant_rule(rule):
+            child = Node(argos.get_argo_from_name(RuleHandler.get_args_from_rule(rule)), parent=self)
+            end_child = child
+        elif RuleHandler.is_end_rule(rule):
+            child = End(parent=self)
+            end_child = child
+        elif RuleHandler.is_zero_or_one_rule(rule) or RuleHandler.is_only_one_option_rule(rule):
+            child = Hook(parent=self, label="Hook-Start")
+            end_child = Hook(label="Hook-End")
+            end_child = child.build_hook_from_rule(RuleHandler.get_args_from_rule(rule), argos, end_child)
+            if RuleHandler.is_zero_or_one_rule(rule):
+                child.add_child(end_child)
+        elif RuleHandler.is_zero_or_more_rule(rule) or RuleHandler.is_one_or_more_rule(rule):
+            child = Hook(parent=self, label="Hook-Start")
+            loop_child = Loop(parent=self, label="Hook-Loop")
+            end_child = Hook(parent=self, label="Hook-End")
+            loop_child = child.build_hook_from_rule(RuleHandler.get_args_from_rule(rule), argos, loop_child)
+            loop_child.add_child(end_child)
+            loop_child.add_child(child, isloop=True)
+            if RuleHandler.is_zero_or_more_rule(rule):
+                child.add_child(end_child)
         else:
             raise CliException(MODULE, 'Unkown type of rule.')
 
-        self.addChild(child)
-        return endChild
+        self.add_child(child)
+        return end_child
 
-    def findNodes(self):
+    def find_nodes(self):
         """Method that returns all nodes to be traversed.
 
         Returns:
@@ -438,11 +387,11 @@ class Node(object):
             node.
         """
         nodes = [self, ]
-        for child in self.traverseChildren():
-            nodes += child.findNodes()
+        for child in self.traverse_children():
+            nodes += child.find_nodes()
         return nodes
 
-    def _toString(self, level):
+    def _to_string(self, level):
         """Internal ethod that returns a string with Node information.
 
         Args:
@@ -452,9 +401,9 @@ class Node(object):
             str: string with node information.
         """
         indent = "--" * level
-        return "{}Node.{}\n".format(indent, self.Label)
+        return "{}Node.{}\n".format(indent, self.label)
 
-    def toStr(self, level):
+    def to_str(self, level):
         """Method that returns a string with Node information.
 
         Args:
@@ -463,9 +412,9 @@ class Node(object):
         Returns:
             str: string with node information.
         """
-        st = self._toString(level)
-        for child in self.traverseChildren(theNoLoop=True):
-            st += child.toStr(level + 1)
+        st = self._to_string(level)
+        for child in self.traverse_children(noloop=True):
+            st += child.to_str(level + 1)
         return st
 
     def __str__(self):
@@ -475,7 +424,7 @@ class Node(object):
         Returns:
             str: string with node information.
         """
-        return self.toStr(0)
+        return self.to_str(0)
 
 
 class Hook(Node):
@@ -488,19 +437,19 @@ class Hook(Node):
         """Hook class initialization method.
 
         Args:
-            theaParent (Node): parent node instance.
-            theLabel (str): string to be used as label attribute.
+            parent (Node): parent node instance.
+            label (str): string to be used as label attribute.
         """
         super(Hook, self).__init__(None, **kwargs)
-        self._browsable = False
-        if kwargs.get('theParent', None) is None:
+        self.browsable = False
+        if kwargs.get('parent', None) is None:
             self._parent = []
         else:
             self._parent = [self._parent, ]
-        self._label = kwargs.get('theLabel', "Hook")
+        self.label = kwargs.get('label', "Hook")
 
     @property
-    def Parent(self):
+    def parent(self):
         """Get property that returns _parent attribute.
 
         Returns:
@@ -508,17 +457,17 @@ class Hook(Node):
         """
         return None
 
-    @Parent.setter
-    def Parent(self, theParent):
+    @parent.setter
+    def parent(self, parent):
         """Set property that sets a new parent for the node.
 
         Args:
-            theParent (Node): node instance to use a a new parent.
+            parent (Node): node instance to use a a new parent.
         """
-        self._parent.append(theParent)
+        self._parent.append(parent)
 
     @property
-    def Ancestor(self):
+    def ancestor(self):
         """Get property that returns the node ancestor (parent).
 
         Returns:
@@ -527,7 +476,7 @@ class Hook(Node):
         return None
 
     @property
-    def Parents(self):
+    def parents(self):
         """Get property that returns _parents attribute.
 
         Returns:
@@ -536,7 +485,7 @@ class Hook(Node):
         return self._parent
 
     @property
-    def Name(self):
+    def name(self):
         """Get property that returns node name.
 
         Returns:
@@ -545,7 +494,7 @@ class Hook(Node):
         return None
 
     @property
-    def Type(self):
+    def argtype(self):
         """Get property that returns node type.
 
         Returns:
@@ -554,7 +503,7 @@ class Hook(Node):
         return None
 
     @property
-    def Default(self):
+    def default(self):
         """Get property that returns node default value.
 
         Returns:
@@ -563,22 +512,22 @@ class Hook(Node):
         return None
 
     @property
-    def ArgoNode(self):
-        return self.getChildrenNodes()
+    def argnode(self):
+        return self.get_children_nodes()
 
-    def addChild(self, theChild, theIsLoop=False):
+    def add_child(self, child, isloop=False):
         """Method that adds a new child Node to the Node.
 
         Args:
-            theChild (Node): node to be added as a child.
-            theIsLoop (boolean): True if child in a loop path.
+            child (Node): node to be added as a child.
+            isloop (bool): True if child in a loop path.
 
         Returns:
             None
         """
-        self._addChild(theChild, theIsLoop)
+        self._add_child(child, isloop)
 
-    def findByName(self, theName, **kwargs):
+    def find_by_name(self, name, **kwargs):
         """Method that checks if the node has the given name
 
         When looking for nodes in a path from the arguments passed in the
@@ -586,57 +535,57 @@ class Hook(Node):
         the value, when looking for those in the parsing tree, they will not
         be found, but such as a mandatory and positional arguments, they
         should be a direct match for the direct position, that is the reason
-        whe use the argument theCheckDefault=True when we want to make a path
+        whe use the argument check_default=True when we want to make a path
         search, for any other scenario, where just the argument name will be
         used, set that argument to False.
 
         Args:
-            theName (str): string with the node name.
-            theCheckDefault (boolean): if True validates the node if it has a
-            valid Default attribute (not None).
+            name (str): string with the node name.
+            check_default (bool): if True validates the node if it has a\
+                    valid default attribute (not None).
 
         Returns:
             Node: Node with the given name, None is not found.
         """
-        return self.findChildByName(theName, **kwargs)
+        return self.find_child_by_name(name, **kwargs)
 
-    def buildHookFromRule(self, theRule, theArgs, theEndHook):
+    def build_hook_from_rule(self, rule, argos, end_hook):
         """Method that build a sequence of nodes for the given rule.
 
         Args:
-            theRule (dict): dictionary with the rule to use.
-            theArgs (Arguments): command Argumets instance.
-            theEndHook (Node): node that will be the last node.
+            rule (dict): dictionary with the rule to use.
+            argos (Arguments): command Argumets instance.
+            end_hook (Node): node that will be the last node.
 
         Returns:
             Node: Last node for the sequence being created.
         """
-        def addGrantChild(child, grantchild):
+        def _add_grant_child(child, grant_child):
             if child:
-                child.addChild(grantchild)
+                child.add_child(grant_child)
 
-        if type(theRule) in [list, dict]:
+        if type(rule) in [list, dict]:
             child = None
-            grantchild = None
+            grant_child = None
             # Every rule can be visited only one time
-            for rule in theRule:
-                if RuleHandler.isEndRule(rule):
+            for rule in rule:
+                if RuleHandler.is_end_rule(rule):
                     raise TypeError('Error : Hook : endpoint not allowed in rule')
-                if RuleHandler.getCounterFromRule(rule) == 0:
-                    addGrantChild(child, theEndHook)
-                    child = self.buildChildrenNodeFromRule(rule, theArgs)
+                if RuleHandler.get_counter_from_rule(rule) == 0:
+                    _add_grant_child(child, end_hook)
+                    child = self.build_children_node_from_rule(rule, argos)
                 else:
-                    grantchild = child.buildChildrenNodeFromRule(rule, theArgs)
+                    grant_child = child.build_children_node_from_rule(rule, argos)
                     # This is not required because it is done in
-                    # buildChildrenNodeFromRule call.:update
-                    # child.addChild(grantchild)
-                    child = grantchild
-            addGrantChild(child, theEndHook)
-            return theEndHook
+                    # build_children_node_from_rule call.:update
+                    # child.add_child(grant_child)
+                    child = grant_child
+            _add_grant_child(child, end_hook)
+            return end_hook
         else:
             raise TypeError('Error: Hook : node requires a list of rules')
 
-    def findNodes(self):
+    def find_nodes(self):
         """Method that returns all nodes to be traversed.
 
         Returns:
@@ -644,11 +593,11 @@ class Hook(Node):
             node.
         """
         nodes = list()
-        for child in self.traverseChildren():
-            nodes += child.findNodes()
+        for child in self.traverse_children():
+            nodes += child.find_nodes()
         return nodes
 
-    def _toString(self, level):
+    def _to_string(self, level):
         """Internal ethod that returns a string with Node information.
 
         Args:
@@ -658,7 +607,7 @@ class Hook(Node):
             str: string with node information.
         """
         indent = "--" * level
-        return "{}Hook.{}\n".format(indent, self.Label)
+        return "{}Hook.{}\n".format(indent, self.label)
 
 
 class Loop(Hook):
@@ -671,21 +620,21 @@ class Loop(Hook):
         """Loop class initialization method.
 
         Args:
-            theaParent (Node): parent node instance.
-            theLabel (str): string to be used as label attribute.
+            parent (Node): parent node instance.
+            label (str): string to be used as label attribute.
         """
         super(Loop, self).__init__(**kwargs)
-        self._label = kwargs.get('theLabel', "Loop")
+        self.label = kwargs.get('label', "Loop")
 
-    def isLoop(self):
+    def isloop(self):
         """Method that returns if the node is a loop node.
 
         Returns:
-            boolean: True if it is a loop node, False else.
+            bool: True if it is a loop node, False else.
         """
         return True
 
-    def _toString(self, level):
+    def _to_string(self, level):
         """Internal ethod that returns a string with Node information.
 
         Args:
@@ -695,33 +644,33 @@ class Loop(Hook):
             str: string with node information.
         """
         indent = "--" * level
-        return "{}Loop.{}\n".format(indent, self.Label)
+        return "{}Loop.{}\n".format(indent, self.label)
 
-    def getChildrenNodes(self, **kwargs):
-        if kwargs.get('theMatched', None):
-            kwargs.pop('theMatched')
-            kwargs.setdefault('theNoLoop', True)
+    def get_children_nodes(self, **kwargs):
+        if kwargs.get('matched', None):
+            kwargs.pop('matched')
+            kwargs.setdefault('noloop', True)
         else:
-            kwargs.setdefault('theMatched', True)
-            kwargs.setdefault('theNoLoop', False)
-        return super(Loop, self).getChildrenNodes(**kwargs)
+            kwargs.setdefault('matched', True)
+            kwargs.setdefault('noloop', False)
+        return super(Loop, self).get_children_nodes(**kwargs)
 
-    def findChildByName(self, theName, **kwargs):
+    def find_child_by_name(self, name, **kwargs):
         """Method that returns the children node with the given name.
 
         Args:
-            theName (str): string with the node name.
-            theMatched (boolean): True if the node was already traverse,
-            False else.
+            name (str): string with the node name.
+            matched (bool): True if the node was already traverse,\
+                    False else.
         """
-        if kwargs.get('theMatched', None):
-            kwargs.pop('theMatched')
+        if kwargs.get('matched', None):
+            kwargs.pop('matched')
             noLoop = True
         else:
-            kwargs.setdefault('theMatched', True)
+            kwargs.setdefault('matched', True)
             noLoop = False
-        for child in self.traverseChildren(theNoLoop=noLoop):
-            foundNode = child.findByName(theName, **kwargs)
+        for child in self.traverse_children(noloop=noLoop):
+            foundNode = child.find_by_name(name, **kwargs)
             if foundNode is not None:
                 return foundNode
         return None
@@ -737,13 +686,13 @@ class Start(Hook):
         """Start class initialization method.
 
         Args:
-            theaParent (Node): parent node instance.
-            theLabel (str): string to be used as label attribute.
+            parent (Node): parent node instance.
+            label (str): string to be used as label attribute.
         """
         super(Start, self).__init__(**kwargs)
-        self._label = kwargs.get('theLabel', "Start")
+        self.label = kwargs.get('label', "Start")
 
-    def _toString(self, level):
+    def _to_string(self, level):
         """Internal ethod that returns a string with Node information.
 
         Args:
@@ -753,7 +702,7 @@ class Start(Hook):
             str: string with node information.
         """
         indent = "--" * level
-        return "{}Start.{}\n".format(indent, self.Label)
+        return "{}Start.{}\n".format(indent, self.label)
 
 
 class End(Hook):
@@ -766,28 +715,28 @@ class End(Hook):
         """End class initialization method.
 
         Args:
-            theaParent (Node): parent node instance.
-            theLabel (str): string to be used as label attribute.
+            parent (Node): parent node instance.
+            label (str): string to be used as label attribute.
         """
         """
         """
         super(End, self).__init__(**kwargs)
-        self._label = kwargs.get('theLabel', "End")
+        self.label = kwargs.get('label', "End")
 
-    def buildHookFromRule(self, theRule, theArgs, theEndHook):
+    def build_hook_from_rule(self, rule, argos, end_hook):
         """Method that build a sequence of nodes for the given rule.
 
         Args:
-            theRule (dict): dictionary with the rule to use.
-            theArgs (Arguments): command Argumets instance.
-            theEndHook (Node): node that will be the last node.
+            rule (dict): dictionary with the rule to use.
+            argos (Arguments): command Argumets instance.
+            end_hook (Node): node that will be the last node.
 
         Returns:
             Node: Last node for the sequence being created.
         """
         raise TypeError('Error: End : can not build nodes after end')
 
-    def _toString(self, level):
+    def _to_string(self, level):
         """Internal ethod that returns a string with Node information.
 
         Args:
@@ -797,8 +746,4 @@ class End(Hook):
             str: string with node information.
         """
         indent = "--" * level
-        return "{}End.{}\n".format(indent, self.Label)
-
-
-if __name__ == '__main__':
-    pass
+        return "{}End.{}\n".format(indent, self.label)

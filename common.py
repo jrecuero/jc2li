@@ -1,8 +1,8 @@
-ARGOS_ATTR = '_Arguments'
-RULES_ATTR = '_Rules'
-SYNTAX_ATTR = '_Syntax'
-CMD_ATTR = '_Cmd'
-TREE_ATTR = '_Tree'
+ARGOS_ATTR = '_arguments'
+RULES_ATTR = '__rules'
+SYNTAX_ATTR = '_syntax'
+CMD_ATTR = '_command'
+TREE_ATTR = '_tree'
 
 
 def _HANDLE_ERROR(st):

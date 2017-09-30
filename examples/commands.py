@@ -22,11 +22,11 @@ class T_Tenant(CliType):
         super(T_Tenant, self).__init__(**kwargs)
         self._tenants = T_Tenant.DEFAULT
 
-    def _helpStr(self):
+    def _help_str(self):
         return 'Enter the Tenant where you want to go.'
 
-    def completeGetList(self, document, text):
-        _tenants = self.Argo.Journal.getFromCache('tenants')
+    def get_complete_list(self, document, text):
+        _tenants = self.argo.journal.get_from_cache('tenants')
         if _tenants is not None:
             self._tenants = _tenants
         return self._tenants
@@ -38,10 +38,10 @@ class T_System(CliType):
         super(T_System, self).__init__(**kwargs)
         self._systems = kwargs.get('systems', [])
 
-    def _helpStr(self):
+    def _help_str(self):
         return 'Enter the system name'
 
-    def completeGetList(self, document, text):
+    def get_complete_list(self, document, text):
         return self._systems
 
 
@@ -49,7 +49,7 @@ class CliCommands(Cli):
 
     def __init__(self):
         super(CliCommands, self).__init__()
-        self.Journal.setToCache('tenants', ["COMMON", "COMMONALITY", "COMMONWARE", "COMMUT"])
+        self.journal.set_to_cache('tenants', ["COMMON", "COMMONALITY", "COMMONWARE", "COMMUT"])
 
     @Cli.command('the-cli')
     def do_cli(self, line):
@@ -131,7 +131,3 @@ class CliCommands(Cli):
         """Display tenant or system configuration.
         """
         print('configure {0} tenant {1} or system {2}'.format(name, tname, system))
-
-
-if __name__ == "__main__":
-    pass

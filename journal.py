@@ -20,222 +20,173 @@ class Journal(object):
     def __init__(self):
         """Journal class initialization method.
         """
-        self._path = list()
-        self._argos = dict()
-        self._traverseNode = None
-        self._root = None
-        self._cache = {}
+        self.path = list()
+        self.argos = dict()
+        self.traverse_node = None
+        self.root = None
+        self.__cache = {}
 
-    @property
-    def Root(self):
-        """Get property that returns _root attribute.
-
-        Returns:
-            Node: root node instance.
-        """
-        return self._root
-
-    @property
-    def Path(self):
-        """Get property that returns _path attribute.
-
-        Returns:
-            list: list with all nodes in a path.
-        """
-        return self._path
-
-    @property
-    def Argos(self):
-        """Get property that returns _argos attribute.
-
-        Return:
-            Arguments: Arguments instance with all command arguments.
-        """
-        return self._argos
-
-    @property
-    def TraverseNode(self):
-        """Get property that returns _traverseNode attribute.
-
-        Returns:
-            Node: Node being traversed at any point.
-        """
-        return self._traverseNode
-
-    @TraverseNode.setter
-    def TraverseNode(self, theNode):
-        """Set property that assigns a value to the _traverseNode attibute.
-
-        Args:
-            theNode (Node): new Node instance to assign as a traverse node.
-        """
-        self.TraverseNode = theNode
-
-    def getFromCache(self, theKey):
+    def get_from_cache(self, key):
         """Retreives some data to the cache.
 
         Args:
-            theKey (object) : key for the cached data to be retrieved.
+            key (object) : key for the cached data to be retrieved.
 
         Returns:
             object : data found in cache, None if key is not found.
         """
-        return self._cache.get(theKey, None)
+        return self.__cache.get(key, None)
 
-    def setToCache(self, theKey, theValue):
+    def set_to_cache(self, key, value):
         """Adds cache data for the given key.
 
         If the key already exits, the data is being overwritten.
 
         Args:
-            theKey (object) : key for the data to be cached.
-            theValue (object) : data being cached.
+            key (object) : key for the data to be cached.
+            value (object) : data being cached.
         """
-        self._cache[theKey] = theValue
+        self.__cache[key] = value
 
-    def addNode(self, theNode):
+    def add_node(self, node):
         """Method that adds a new node.
 
         Args:
-            theNode (Node): node instance to be added.
+            node (Node): node instance to be added.
         """
-        if theNode:
-            self.Path.append(theNode)
-            self.Argos.update(theNode.argo)
-            self.TraverseNode = theNode
+        if node:
+            self.path.append(node)
+            self.argos.update(node.argo)
+            self.traverse_node = node
 
-    def buildCommandParsingTree(self, theFunc):
+    def build_command_parsing_tree(self, f):
         """Build the command parsing tree using the command arguments and the
         command syntax.
 
         Args:
-            theFunc (function): command function.
+            f (function): command function.
 
         Returns:
             boolean: True if syntax tree is created, None else.
         """
         root = Start()
-        argos = getattr(theFunc, ARGOS_ATTR, None)
+        argos = getattr(f, ARGOS_ATTR, None)
         if argos:
             argos.index()
-            rules = getattr(theFunc, RULES_ATTR, list())
+            rules = getattr(f, RULES_ATTR, list())
             trav = root
             for rule in rules:
-                newTrav = trav.buildChildrenNodeFromRule(rule, argos)
-                trav = newTrav
-            setattr(theFunc, TREE_ATTR, root)
+                new_trav = trav.build_children_node_from_rule(rule, argos)
+                trav = new_trav
+            setattr(f, TREE_ATTR, root)
             return root
         raise CliException(MODULE, "Building Command Parsing Tree: arguments not defined")
 
-    def getCmdAndCliArgos(self, theFunc, theInst, theLine):
+    def get_cmd_and_cli_args(self, f, instance, line):
         """Retrieve the command arguments stored in the command function and
         provided by @argo and @argos decorators; and the arguments passed by
         the user in the command line.
 
         Args:
-            theFunc (function) : command function.
-            theInst (object) : instance for the command function.
-            theLine (str) : string with the command line input.
+            f (function) : command function.
+            instance (object) : instance for the command function.
+            line (str) : string with the command line input.
 
             Returns:
                 tuple: pair with command arguments and cli arguments.
         """
-        cmdArgos = getattr(theFunc, ARGOS_ATTR, None)
-        if theInst and cmdArgos is None:
-            return theFunc(theInst, theLine)
-        elif cmdArgos is not None:
-            cmdArgos.index()
+        cmd_argos = getattr(f, ARGOS_ATTR, None)
+        if instance and cmd_argos is None:
+            return f(instance, line)
+        elif cmd_argos is not None:
+            cmd_argos.index()
             try:
-                if theLine.count('"') % 2 == 1:
-                    theLine = theLine.replace('"', '*')
-                cliArgos = shlex.split(theLine)
-                return cmdArgos, cliArgos
+                if line.count('"') % 2 == 1:
+                    line = line.replace('"', '*')
+                cli_args = shlex.split(line)
+                return cmd_argos, cli_args
             except ValueError:
                 return None, None
         return None, None
 
-    def mapPassedArgosToCommandArgos(self, theRoot, theCmdArgos, theCliArgos):
+    def map_passed_args_to_command_argos(self, root, cmd_argos, cli_args):
         """Using the command arguments and argument values passed by the user
         in the CLI, map those using the command parsing tree in order to generate
         all arguments to be passed to the command function.
 
         Args:
-            theRoot (node): node where mapping should starts.
-            theCmdArgos (list): list with command arguments.
-            theClidArgos (list): list with CLI arguments.
+            root (node): node where mapping should starts.
+            cmd_argos (list): list with command arguments.
+            cli_args (list): list with CLI arguments.
         """
-        nodePath = theRoot.findPath(theCliArgos)
-        matchedNodes = list()
-        for nod, val in zip(nodePath, theCliArgos):
+        node_path = root.find_path(cli_args)
+        matched_nodes = list()
+        for node, val in zip(node_path, cli_args):
             if '=' in val:
-                _, argValue = val.split('=')
+                _, arg_value = val.split('=')
             else:
-                argValue = val
-            argValue = nod.Argo.Type._(argValue)
-            if nod not in matchedNodes:
-                nod.Argo.Value = argValue
+                arg_value = val
+            arg_value = node.argo.type._(arg_value)
+            if node not in matched_nodes:
+                node.argo.value = arg_value
             else:
-                if type(nod.Argo.Value) == list:
-                    nod.Argo.Value.append(argValue)
+                if type(node.argo.value) == list:
+                    node.argo.value.append(arg_value)
                 else:
-                    nod.Argo.Value = [nod.Argo.Value, argValue]
-            matchedNodes.append(nod)
-        useArgs = theCmdArgos.getIndexedValues()
-        return useArgs
+                    node.argo.value = [node.argo.value, arg_value]
+            matched_nodes.append(node)
+        use_args = cmd_argos.get_indexed_values()
+        return use_args
 
-    def buildCommandArgumentsFromSyntax(self, theFunc, theInst, theLine):
+    def build_command_arguments_from_syntax(self, f, instance, line):
         """Method that build arguments to be passed to the command function.
 
         Args:
-            theFunc (function) : command function.
-            theInst (object) : instance for the command function.
-            theLine (str) : string with the command line input.
+            f (function) : command function.
+            instance (object) : instance for the command function.
+            line (str) : string with the command line input.
 
         Returns:
             list: list with argument to be passed to the command function.
         """
-        cmdArgos, cliArgos = self.getCmdAndCliArgos(theFunc, theInst, theLine)
+        cmd_argos, cli_args = self.get_cmd_and_cli_args(f, instance, line)
 
-        root = getattr(theFunc, TREE_ATTR, None)
-        rules = getattr(theFunc, RULES_ATTR, None)
-        if len(cliArgos) < RuleHandler.syntaxMinArgs(rules):
+        root = getattr(f, TREE_ATTR, None)
+        rules = getattr(f, RULES_ATTR, None)
+        if len(cli_args) < RuleHandler.syntax_min_args(rules):
             raise CliException(MODULE, "Number of Args: Too few arguments")
 
-        useArgs = self.mapPassedArgosToCommandArgos(root, cmdArgos, cliArgos)
-        if useArgs is None:
+        use_args = self.map_passed_args_to_command_argos(root, cmd_argos, cli_args)
+        if use_args is None:
             raise CliException(MODULE, 'Incorrect arguments"')
-        if not all(map(lambda x: x is not None, useArgs)):
+        if not all(map(lambda x: x is not None, use_args)):
             raise CliException(MODULE, 'Mandatory argument is not present')
 
-        return useArgs
+        return use_args
 
-    def buildCommandArgumentsFromArgos(self, theFunc, theLine):
+    def build_command_arguments_from_args(self, f, line):
         """Method that build arguments to be passed to the command function.
 
         Args:
-            theFunc (function) : command function.
-            theLine (str) : string with the command line input.
+            f (function) : command function.
+            line (str) : string with the command line input.
 
         Returns:
             list: pair with the list with argument to be passed to the\
                     command function and remaining entries in the command\
                     line.
         """
-        cmdArgos = getattr(theFunc, ARGOS_ATTR, None)
-        if cmdArgos:
-            cmdArgos.index()
-            cliArgs = shlex.split(theLine)
-            cliArgs.reverse()
-            for arg in cmdArgos.traverse():
-                arg.Value = arg.Type._(cliArgs.pop())
-            useArgs = cmdArgos.getIndexedValues()
-            if all(map(lambda x: x is not None, useArgs)):
-                return useArgs, cliArgs
+        cmd_argos = getattr(f, ARGOS_ATTR, None)
+        if cmd_argos:
+            cmd_argos.index()
+            cli_args = shlex.split(line)
+            cli_args.reverse()
+            for arg in cmd_argos.traverse():
+                arg.value = arg.type._(cli_args.pop())
+            use_args = cmd_argos.get_indexed_values()
+            if all(map(lambda x: x is not None, use_args)):
+                return use_args, cli_args
             else:
                 raise NotImplementedError('Mandatory argument is not present')
         else:
             raise NotImplementedError('Command with SYNTAX without ARGOS')
-
-
-if __name__ == '__main__':
-    pass

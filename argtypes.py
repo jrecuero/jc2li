@@ -18,26 +18,17 @@ class CliType(object):
             cte (boolean) : constant argument.
             seq (boolean): argument is a sequence.
         """
-        self._argo = kwargs.get('theArgo', None)
-        self._prefix = '{}='.format(self._argo.Name) if self._argo.Default is not None else None
+        self.argo = kwargs.get('argo', None)
+        self._prefix = '{}='.format(self.argo.name) if self.argo.default is not None else None
 
     @property
-    def Argo(self):
-        """Get property that returns attribute _argo
-
-        Returns:
-            Argument : argument instance
-        """
-        return self._argo
-
-    @property
-    def Journal(self):
+    def journal(self):
         """Get property that returns the argument journal.
 
         Returns:
             Journal : journal instance.
         """
-        return self.Argo.Journal
+        return self.argo.journal
 
     @staticmethod
     def _(val):
@@ -48,7 +39,7 @@ class CliType(object):
         """
         return str(val)
 
-    def _helpStr(self):
+    def _help_str(self):
         """Method that should return default string to be displayed as help.
 
         Returns:
@@ -66,15 +57,15 @@ class CliType(object):
             str : string with help to send to the display.
         """
         if not self._prefix:
-            return self._helpStr()
+            return self._help_str()
         if self._prefix and self._prefix in text:
-            return self._helpStr()
+            return self._help_str()
         if self._prefix:
             if text == ' ' or self._prefix.startswith(text):
                 return 'Enter "{}"'.format(self._prefix)
         return ""
 
-    def completeGetList(self, document, text):
+    def get_complete_list(self, document, text):
         """Gets a list with all possible options to be included in complete.
 
         Args:
@@ -100,14 +91,14 @@ class CliType(object):
         Returns:
             str : string with completion to send to the display.
         """
-        textToProcess = text.replace(self._prefix, '') if self._prefix else text
+        text_to_proc = text.replace(self._prefix, '') if self._prefix else text
         prefix = self._prefix if self._prefix else ''
-        options = self.completeGetList(document, text)
+        options = self.get_complete_list(document, text)
         if options:
-            if textToProcess in [' ', '']:
+            if text_to_proc in [' ', '']:
                 return [prefix + x for x in options]
             else:
-                return [prefix + x for x in options if x.startswith(textToProcess)]
+                return [prefix + x for x in options if x.startswith(text_to_proc)]
         return None
 
     @staticmethod
@@ -133,7 +124,7 @@ class Int(CliType):
         """
         return int(val)
 
-    def _helpStr(self):
+    def _help_str(self):
         """Method that should return default string to be displayed as help.
 
         Returns:
@@ -155,7 +146,7 @@ class Str(CliType):
     """Str class is the class for any string argument.
     """
 
-    def _helpStr(self):
+    def _help_str(self):
         """Method that should return default string to be displayed as help.
 
         Returns:
