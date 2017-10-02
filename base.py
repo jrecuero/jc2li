@@ -67,9 +67,11 @@ class Cli(object):
                 for m in matches:
                     yield Completion(m, start_position=-len(word_before_cursor))
             else:
-                linelist = document.text.split()
-                last_token = linelist[-1] if document.text[-1] != ' ' else ' '
-                cmdlabel = linelist[0]
+                line_as_list = document.text.split()
+                if len(line_as_list) == 0:
+                    return
+                last_token = line_as_list[-1] if document.text[-1] != ' ' else ' '
+                cmdlabel = line_as_list[0]
                 command = self._cli.get_command_cb(cmdlabel)
                 if command is not None:
                     # Required for partial methods
@@ -77,7 +79,7 @@ class Cli(object):
                         command = command.func
                     root = getattr(command, TREE_ATTR, None)
                     journal = self._cli.journal
-                    _, cli_argos = journal.get_cmd_and_cli_args(command, None, " ".join(linelist[1:]))
+                    _, cli_argos = journal.get_cmd_and_cli_args(command, None, " ".join(line_as_list[1:]))
                     nodepath = None
                     children_nodes = None
                     try:
@@ -116,7 +118,7 @@ class Cli(object):
                     # TODO: Trace and debug information to be removed or optimized.
                     logger.debug('completer command: {0}'.format(command))
                     logger.debug('document text is "{}"'.format(document.text))
-                    logger.debug('last document text is [{}]'.format(linelist[-1]))
+                    logger.debug('last document text is [{}]'.format(line_as_list[-1]))
                     logger.debug('children nodes are {}'.format(children_nodes))
                     if children_nodes:
                         logger.debug('children nodes are {}'.format([x.name for x in children_nodes]))
@@ -431,6 +433,8 @@ class Cli(object):
                 print(user_input)
             if user_input:
                 line_as_list = user_input.split()
+                if len(line_as_list) == 0:
+                    continue
                 command = line_as_list[0]
                 if self.is_command(command):
                     if kwargs.get('precmd', False):
