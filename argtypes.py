@@ -30,6 +30,26 @@ class CliType(object):
         """
         return self.argo.journal
 
+    def store(self, value, matched=False):
+        """Stores a value in the argument for the type.
+
+        Args:
+            value (object) : Value to store in the argument.
+
+            matched (bool) : True is argument was already matched and found\
+                    in the command line entry.
+
+        Returns:
+            None
+        """
+        if matched:
+            if type(self.argo.value) == list:
+                self.argo.value.append(value)
+            else:
+                self.argo.value = [self.argo.value, value]
+        else:
+            self.argo.value = value
+
     @staticmethod
     def _(val):
         """Method that types any value as Tenant.
@@ -153,3 +173,26 @@ class Str(CliType):
             str : string with default help.
         """
         return 'Enter a string'
+
+
+class Dicta(Str):
+    """Dicta class is the class for any dictionary argument.
+    """
+
+    def store(self, value, matched=False):
+        """Stores a value in the argument for the type.
+
+        Args:
+            value (object) : Value to store in the argument.
+
+            matched (bool) : True is argument was already matched and found\
+                    in the command line entry.
+
+        Returns:
+            None
+        """
+        name, val = value.split('=')
+        if matched:
+            self.argo.value.update({name: val})
+        else:
+            self.argo.value = {name: val}

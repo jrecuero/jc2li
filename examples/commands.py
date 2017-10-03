@@ -131,3 +131,13 @@ class CliCommands(Cli):
         """Display tenant or system configuration.
         """
         print('configure {0} tenant {1} or system {2}'.format(name, tname, system))
+
+    @Cli.command()
+    @setsyntax
+    @syntax('dbg name [options]@')
+    @argo('name', Str, None)
+    @argo('options', Str, 'None')
+    def do_dbg(self, name, options):
+        """Display dbg information
+        """
+        print('dbg {0} options {1}'.format(name, options))

@@ -1,4 +1,4 @@
-from rules import RuleHandler
+from rules import RuleHandler as RH
 from clierror import CliException
 import loggerator
 
@@ -302,6 +302,37 @@ class Node(object):
         """
         return child in self.__loops
 
+    def map_arg_to_value(self, value):
+        """Maps the CLI argument entered to the value to be passed to the
+        cli commana callback for the given node.
+
+        Args:
+            value (str) : String with the value entered by the user.
+
+        Returns:
+            str : String mapped for the given node.
+        """
+        if '=' in value:
+            _, arg_value = value.split('=')
+        else:
+            arg_value = value
+        arg_value = self.argo.type._(arg_value)
+        return arg_value
+
+    def store_value_in_argo(self, value, matched=False):
+        """Stores a value in the argument for the node.
+
+        Args:
+            value (object) : Value to store in the argument.
+
+            matched (bool) : True is argument was already matched and found\
+                    in the command line entry.
+
+        Returns:
+            None
+        """
+        self.argo.completer.store(value, matched)
+
     def find_path(self, path_patterns):
         """Method that given a list of strings, finds a path in the syntax
         tree.
@@ -352,27 +383,43 @@ class Node(object):
         Returns:
             Node: child node that matches the syntax rule.
         """
-        if RuleHandler.is_only_one_rule(rule) or RuleHandler.is_constant_rule(rule):
-            child = Node(argos.get_argo_from_name(RuleHandler.get_args_from_rule(rule)), parent=self)
+        if RH.is_only_one_rule(rule) or RH.is_constant_rule(rule):
+            args_from_rule = RH.get_args_from_rule(rule)
+            argo_from_name = argos.get_argo_from_name(args_from_rule)
+            child = Node(argo_from_name, parent=self)
             end_child = child
-        elif RuleHandler.is_end_rule(rule):
+
+        elif RH.is_free_form_param_rule(rule):
+            args_from_rule = RH.get_args_from_rule(rule)
+            argo_from_name = argos.get_argo_from_name(args_from_rule)
+            child = FreeformNode(argo_from_name, parent=self)
+            end_child = child
+
+        elif RH.is_end_rule(rule):
             child = End(parent=self)
             end_child = child
-        elif RuleHandler.is_zero_or_one_rule(rule) or RuleHandler.is_only_one_option_rule(rule):
+
+        elif RH.is_zero_or_one_rule(rule) or RH.is_only_one_option_rule(rule):
             child = Hook(parent=self, label="Hook-Start")
             end_child = Hook(label="Hook-End")
-            end_child = child.build_hook_from_rule(RuleHandler.get_args_from_rule(rule), argos, end_child)
-            if RuleHandler.is_zero_or_one_rule(rule):
+            args_from_rule = RH.get_args_from_rule(rule)
+            end_child = child.build_hook_from_rule(args_from_rule, argos, end_child)
+            if RH.is_zero_or_one_rule(rule):
                 child.add_child(end_child)
-        elif RuleHandler.is_zero_or_more_rule(rule) or RuleHandler.is_one_or_more_rule(rule):
+
+        elif RH.is_zero_or_more_rule(rule) or\
+                RH.is_one_or_more_rule(rule) or\
+                RH.is_free_form_rule(rule):
             child = Hook(parent=self, label="Hook-Start")
             loop_child = Loop(parent=self, label="Hook-Loop")
             end_child = Hook(parent=self, label="Hook-End")
-            loop_child = child.build_hook_from_rule(RuleHandler.get_args_from_rule(rule), argos, loop_child)
+            args_from_rule = RH.get_args_from_rule(rule)
+            loop_child = child.build_hook_from_rule(args_from_rule, argos, loop_child)
             loop_child.add_child(end_child)
             loop_child.add_child(child, isloop=True)
-            if RuleHandler.is_zero_or_more_rule(rule):
+            if RH.is_zero_or_more_rule(rule):
                 child.add_child(end_child)
+
         else:
             raise CliException(MODULE, 'Unkown type of rule.')
 
@@ -425,6 +472,47 @@ class Node(object):
             str: string with node information.
         """
         return self.to_str(0)
+
+
+class FreeformNode(Node):
+    """FreeformNode class provides a container for every node that can
+    contain any kind of information.
+    """
+
+    def map_arg_to_value(self, value):
+        """Maps the CLI argument entered to the value to be passed to the
+        cli commana callback for the given node.
+
+        Args:
+            value (str) : String with the value entered by the user.
+
+        Returns:
+            str : String mapped for the given node.
+        """
+        value = self.argo.type._(value)
+        return value
+
+    def find_by_name(self, name, **kwargs):
+        """Method that checks if the node has the given name
+
+        When looking for nodes in a path from the arguments passed in the
+        command line, required arguments don't use the argument name, just
+        the value, when looking for those in the parsing tree, they will not
+        be found, but such as a mandatory and positional arguments, they
+        should be a direct match for the direct position, that is the reason
+        we use the argument check_default=True when we want to make a path
+        search, for any other scenario, where just the argument name will be
+        used, set that argument to False.
+
+        Args:
+            name (str): string with the node name.
+            check_default (bool): if True validates the node if it has a\
+                    valid default attribute (not None).
+
+        Returns:
+            Node: Node with the given name, None is not found.
+        """
+        return self
 
 
 class Hook(Node):
@@ -569,9 +657,9 @@ class Hook(Node):
             grant_child = None
             # Every rule can be visited only one time
             for rule in rule:
-                if RuleHandler.is_end_rule(rule):
+                if RH.is_end_rule(rule):
                     raise TypeError('Error : Hook : endpoint not allowed in rule')
-                if RuleHandler.get_counter_from_rule(rule) == 0:
+                if RH.get_counter_from_rule(rule) == 0:
                     _add_grant_child(child, end_hook)
                     child = self.build_children_node_from_rule(rule, argos)
                 else:

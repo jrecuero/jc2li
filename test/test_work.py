@@ -4,21 +4,21 @@ cliPath = '.'
 sys.path.append(cliPath)
 
 from base import Cli
-from decorators import argo, syntax, setsyntax
-from argtypes import Str
+from decorators import argo, setsyntax, syntax
+from argtypes import Str, Dicta
 
 
 class CliTestWorkClass(Cli):
 
     @setsyntax
-    @syntax('multi f1 [f2 f3 f4]+')
+    @syntax('setsyntax f1 [dicta]@')
     @argo('f1', Str, None)
-    @argo('f2', Str, 'F2')
-    @argo('f3', Str, 'F3')
-    @argo('f4', Str, 'F4')
-    def do_test_syntax_sequence_multiple(self, f1, f2, f3, f4):
-        return f1, f2, f3, f4
+    @argo('dicta', Dicta, {})
+    def do_test_syntax_work(self, f1, dicta):
+        return f1, dicta
 
 
 def test_decorator_setsyntax_work():
-    CliTestWorkClass()
+    cli = CliTestWorkClass()
+    assert cli.do_test_syntax_work('10 one=1') == ('10', {'one': '1'})
+    assert cli.do_test_syntax_work('10 one=1 two=2') == ('10', {'one': '1', 'two': '2'})

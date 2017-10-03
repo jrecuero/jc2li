@@ -1,5 +1,5 @@
 import shlex
-from rules import RuleHandler
+from rules import RuleHandler as RH
 from common import ARGOS_ATTR, RULES_ATTR, TREE_ATTR
 from node import Start
 from clierror import CliException
@@ -121,19 +121,9 @@ class Journal(object):
         """
         node_path = root.find_path(cli_args)
         matched_nodes = list()
-        for node, val in zip(node_path, cli_args):
-            if '=' in val:
-                _, arg_value = val.split('=')
-            else:
-                arg_value = val
-            arg_value = node.argo.type._(arg_value)
-            if node not in matched_nodes:
-                node.argo.value = arg_value
-            else:
-                if type(node.argo.value) == list:
-                    node.argo.value.append(arg_value)
-                else:
-                    node.argo.value = [node.argo.value, arg_value]
+        for node, value in zip(node_path, cli_args):
+            arg_value = node.map_arg_to_value(value)
+            node.store_value_in_argo(arg_value, node in matched_nodes)
             matched_nodes.append(node)
         use_args = cmd_argos.get_indexed_values()
         return use_args
@@ -153,7 +143,7 @@ class Journal(object):
 
         root = getattr(f, TREE_ATTR, None)
         rules = getattr(f, RULES_ATTR, None)
-        if len(cli_args) < RuleHandler.syntax_min_args(rules):
+        if len(cli_args) < RH.syntax_min_args(rules):
             raise CliException(MODULE, "Number of Args: Too few arguments")
 
         use_args = self.map_passed_args_to_command_argos(root, cmd_argos, cli_args)
@@ -185,6 +175,7 @@ class Journal(object):
                 arg.value = arg.type._(cli_args.pop())
             use_args = cmd_argos.get_indexed_values()
             if all(map(lambda x: x is not None, use_args)):
+                cli_args.reverse()
                 return use_args, cli_args
             else:
                 raise NotImplementedError('Mandatory argument is not present')

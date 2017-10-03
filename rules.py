@@ -95,6 +95,34 @@ class RuleHandler(object):
         return rule['type'] == '!'
 
     @staticmethod
+    def is_free_form_rule(rule):
+        """Static method that checks if the rule contains a free form
+        argument.
+
+        Args:
+            rule (dict): dictionary with the given rule to check.
+
+        Returns:
+            boolean : True if the argument contains a free form name option,
+            False else
+        """
+        return rule['type'] == '@'
+
+    @staticmethod
+    def is_free_form_param_rule(rule):
+        """Static method that checks if the rule contains a free form
+        argument.
+
+        Args:
+            rule (dict): dictionary with the given rule to check.
+
+        Returns:
+            boolean : True if the argument contains a free form name option,
+            False else
+        """
+        return rule['type'] == '3'
+
+    @staticmethod
     def is_required_rule(rule):
         """Static method that checks if the rule contains an argument that
         is required
@@ -108,7 +136,8 @@ class RuleHandler(object):
         """
         return (RuleHandler.is_only_one_rule(rule) or
                 RuleHandler.is_one_or_more_rule(rule) or
-                RuleHandler.is_only_one_option_rule(rule))
+                RuleHandler.is_only_one_option_rule(rule) or
+                RuleHandler.is_free_form_rule(rule))
 
     @staticmethod
     def is_inner_rule(rule):
@@ -124,7 +153,8 @@ class RuleHandler(object):
         """
         return (RuleHandler.is_zero_or_one_rule(rule) or
                 RuleHandler.is_zero_or_more_rule(rule) or
-                RuleHandler.is_one_or_more_rule(rule))
+                RuleHandler.is_one_or_more_rule(rule) or
+                RuleHandler.is_free_form_rule(rule))
 
     @staticmethod
     def check_for_inner_rule(rule):

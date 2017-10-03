@@ -6,7 +6,7 @@ sys.path.append(cliPath)
 
 from base import Cli
 from decorators import argo, syntax, setsyntax, argos
-from argtypes import Int, Str
+from argtypes import Int, Str, Dicta
 from clierror import CliException
 
 
@@ -138,6 +138,25 @@ class CliTestClass(Cli):
     @argo('f5', Str, 'F5')
     def do_test_syntax_multiple_arguments(self, f1, f2, f3, f4, f5):
         return f1, f2, f3, f4, f5
+
+    @setsyntax
+    @syntax('setsyntax f1 [f2]@')
+    @argo('f1', Int, None)
+    @argo('f2', Str, 'None')
+    def do_test_syntax_free_form(self, f1, f2):
+        return f1, f2
+
+    @setsyntax
+    @argo('f1', Int, None)
+    def do_test_syntax_argo_no_syntax(self, f1, lista):
+        return f1, lista
+
+    @setsyntax
+    @syntax('setsyntax f1 [dicta]@')
+    @argo('f1', Str, None)
+    @argo('dicta', Dicta, {})
+    def do_test_syntax_free_form_with_dicta(self, f1, dicta):
+        return f1, dicta
 
 
 def test_decorator_setsyntax_work():
@@ -291,3 +310,23 @@ def test_decorator_setsyntax_multiple_arguments():
     with pytest.raises(CliException) as ex:
         cli.do_test_syntax_multiple_arguments('100 f3="+f3" f2="?f2" f4="*f4" f5="?f5"')
     assert ex.value.message == '<f2=?f2> not found'
+
+
+def test_decorator_setsyntax_free_form():
+    cli = CliTestClass()
+    assert cli.do_test_syntax_free_form('10 one') == (10, 'one')
+    assert cli.do_test_syntax_free_form('10 one two three') == (10, ['one', 'two', 'three'])
+    assert cli.do_test_syntax_free_form('10 one p=two three f=four') == (10, ['one', 'p=two', 'three', 'f=four'])
+
+
+def test_decorator_setsyntax_argo_no_syntax():
+    cli = CliTestClass()
+    assert cli.do_test_syntax_argo_no_syntax('10 one') == (10, ['one'])
+    assert cli.do_test_syntax_argo_no_syntax('10 one two three') == (10, ['one', 'two', 'three'])
+    assert cli.do_test_syntax_argo_no_syntax('10 one p=two three f=four') == (10, ['one', 'p=two', 'three', 'f=four'])
+
+
+def test_decorator_setsyntax_free_form_with_dicta():
+    cli = CliTestClass()
+    assert cli.do_test_syntax_free_form_with_dicta('10 one=1') == ('10', {'one': '1'})
+    assert cli.do_test_syntax_free_form_with_dicta('10 one=1 two=2') == ('10', {'one': '1', 'two': '2'})
