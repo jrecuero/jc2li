@@ -28,7 +28,8 @@ if __name__ == '__main__':
                 print ('Module {0} not found'.format(args.module))
                 sys.exit(0)
 
-    cli = mod.CliCommands()
+    # cli = mod.CliCommands()
+    cli = getattr(mod, mod.MODULE)()
     try:
         cli.cmdloop(thePrompt='CLI> ')
     except KeyboardInterrupt:

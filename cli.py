@@ -1,6 +1,5 @@
 import os
 import sys
-from functools import partial
 from base import CliBase
 from common import SYNTAX_ATTR
 
@@ -14,16 +13,15 @@ class Cli(CliBase):
         """Cli class initialization method.
 
         Args:
-            include_basic (bool) : Flag that marks if the Cli class basic
-            methods (exit, help, syntax and shell) should be included as
-            commands for any derived class.
+            include_basic (bool) : Flag that marks if the Cli class basic\
+                    methods (exit, help, syntax and shell) should be included\
+                    as commands for any derived class.
         """
         super(Cli, self).__init__()
         # This is required to add the Cli class method to any derived
         # class.
         if include_basic:
-            for name, func_cb, desc in self._WALL.get('Cli', []):
-                self.add_command(name, partial(func_cb, self), desc)
+            self.extend_commands_from_class('Cli')
 
     @CliBase.command('exit')
     def do_exit(self, line):

@@ -14,8 +14,8 @@ from prompt_toolkit.styles import style_from_dict
 from common import TREE_ATTR, SYNTAX_ATTR, ARGOS_ATTR
 from journal import Journal
 
-MODULE = 'BASE'
-logger = loggerator.getLoggerator(MODULE)
+MODULE = 'CliBase'
+LOGGER = loggerator.getLoggerator(MODULE)
 
 
 class CliBase(object):
@@ -84,7 +84,7 @@ class CliBase(object):
                     try:
                         nodepath = root.find_path(cli_argos)
                     except Exception as ex:
-                        logger.error('{0}, {1} | {2}'.format(ex, ex.__traceback__.tb_lineno, self._nodepath))
+                        LOGGER.error('{0}, {1} | {2}'.format(ex, ex.__traceback__.tb_lineno, self._nodepath))
 
                     if not nodepath and self._nodepath is None:
                         # if there is not path being found and there is not any
@@ -107,7 +107,7 @@ class CliBase(object):
                         helps = [c.completer.help(last_token) for c in children_nodes]
                         self._cli.toolbar_str = " | ".join(helps)
                         for child in children_nodes:
-                            logger.debug('child is: {0}'.format(child.label))
+                            LOGGER.debug('child is: {0}'.format(child.label))
                             matches = child.completer.complete(document, last_token)
                             if matches is None:
                                 continue
@@ -116,18 +116,18 @@ class CliBase(object):
                                 # TODO: Remove help displayed in the completer
                                 # yield Completion(m, start_position=-len(word_before_cursor), display_meta=helps[i])
                     # TODO: Trace and debug information to be removed or optimized.
-                    logger.debug('completer command: {0}'.format(command))
-                    logger.debug('document text is "{}"'.format(document.text))
-                    logger.debug('last document text is [{}]'.format(line_as_list[-1]))
-                    logger.debug('children nodes are {}'.format(children_nodes))
+                    LOGGER.debug('completer command: {0}'.format(command))
+                    LOGGER.debug('document text is "{}"'.format(document.text))
+                    LOGGER.debug('last document text is [{}]'.format(line_as_list[-1]))
+                    LOGGER.debug('children nodes are {}'.format(children_nodes))
                     if children_nodes:
-                        logger.debug('children nodes are {}'.format([x.name for x in children_nodes]))
-                    logger.debug('nodepath is {}'.format(nodepath))
+                        LOGGER.debug('children nodes are {}'.format([x.name for x in children_nodes]))
+                    LOGGER.debug('nodepath is {}'.format(nodepath))
                     if nodepath:
-                        logger.debug('nodepath is {}'.format([x.name for x in nodepath]))
+                        LOGGER.debug('nodepath is {}'.format([x.name for x in nodepath]))
                     if self._nodepath and self._nodepath[-1] is not None:
-                        logger.debug('self._nodepath is {}'.format(self._nodepath))
-                        logger.debug('self._nodepath is {}'.format([x.name for x in self._nodepath]))
+                        LOGGER.debug('self._nodepath is {}'.format(self._nodepath))
+                        LOGGER.debug('self._nodepath is {}'.format([x.name for x in self._nodepath]))
 
     def __init__(self):
         """CliBase class initialization method.
@@ -197,7 +197,7 @@ class CliBase(object):
             bool : True if command was added.
         """
         if self.is_command(command):
-            logger.warning('[{}] Command [{}] already present.'.format(MODULE, command))
+            LOGGER.warning('[{}] Command [{}] already present.'.format(MODULE, command))
         self.__commands[command] = (command_cb, desc)
 
         # At this point, inject the context in every argument attributes using
@@ -305,6 +305,25 @@ class CliBase(object):
         """
         return [(Token.Prompt, '{}'.format(self.prompt_str)), ]
 
+    def extend_commands_from_class(self, classname):
+        """Extends commands defined in a class to be included in the full
+        command line.
+
+        This is required only for commands defined in a class that is being
+        derived, and the derived class is the one being used in the command
+        line. This method allows to include all commands from the base
+        class.
+
+        Args:
+            classname (str) : String with class name for the class which\
+                    methods should be imported.
+
+        Returns:
+            None
+        """
+        for name, func_cb, desc in self._WALL.get(classname, []):
+            self.add_command(name, partial(func_cb, self), desc)
+
     def setup_commands(self):
         """Register all commands to be used by the command line interface.
 
@@ -314,7 +333,7 @@ class CliBase(object):
         classname = self.__class__.__name__
         calls = self._WALL.get(classname, [])
         for name, func_cb, desc in calls:
-            logger.debug('{0}::setup_commands add command {1}::{2}'.format(classname, name, func_cb))
+            LOGGER.debug('{0}::setup_commands add command {1}::{2}'.format(classname, name, func_cb))
             self.add_command(name, partial(func_cb, self), desc)
 
     def run(self, **kwargs):
@@ -436,7 +455,7 @@ class CliBase(object):
             def _wrapper(self, *args, **kwargs):
                 return f(self, *args, **kwargs)
 
-            logger.debug(f, "YELLOW")
+            LOGGER.debug(f, "YELLOW")
             module_name = sys._getframe(1).f_code.co_name
             CliBase._WALL.setdefault(module_name, [])
             if desc is not None:

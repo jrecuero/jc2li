@@ -4,8 +4,8 @@ import shlex
 from decorators import argo, syntax, setsyntax
 import loggerator
 
-MODULE = 'COMMANDS'
-logger = loggerator.getLoggerator('base')
+MODULE = 'CliCommands'
+LOGGER = loggerator.getLoggerator(MODULE)
 
 # import sys
 # import os
@@ -42,7 +42,7 @@ class T_System(CliType):
         return 'Enter the system name'
 
     def get_complete_list(self, document, text):
-        logger.debug('calling get_complete_list and return {0}'.format(self._systems), 'YELLOW')
+        LOGGER.debug('calling get_complete_list and return {0}'.format(self._systems), 'YELLOW')
         return self._systems
 
 
