@@ -1,6 +1,8 @@
 import os
 import sys
 from base import CliBase
+from argtypes import Str
+from decorators import setsyntax, syntax, argo
 from common import SYNTAX_ATTR
 
 
@@ -28,27 +30,21 @@ class Cli(CliBase):
         """Command that exit the CLI when "exit" is entered.
 
         Exit the application to the operating system.
-
-        Args:
-            line (str): string entered in the command line.
-
-        Returns:
-            :any:`None`
         """
         sys.exit(0)
 
-    @CliBase.command('help')
-    def do_help(self, line):
+    @CliBase.command()
+    @setsyntax
+    @syntax('help [name]?')
+    @argo('name', Str, 'None')
+    def do_help(self, name):
         """Command that displays all possible commands.
-
-        Args:
-            line (str): string entered in the command line.
-
-        Returns:
-            :any:`None`
         """
-        for command in self.commands:
-            print('- {0} : {1}'.format(command, self.get_command_desc(command)))
+        if name == 'None':
+            for command in self.commands:
+                print('- {0} : {1}'.format(command, self.get_command_desc(command)))
+        else:
+            print('- {0} : {1}'.format(name, self.get_command_desc(name)))
 
     @CliBase.command('syntax')
     def do_syntax(self, line):
@@ -56,9 +52,6 @@ class Cli(CliBase):
 
         Args:
             line (str): string entered in the command line.
-
-        Returns:
-            :any:`None`
         """
         for command in self.commands:
             command_cb = self.get_command_cb(command)
@@ -75,11 +68,20 @@ class Cli(CliBase):
         """Comand that runs a shell command when "shell" is entered.
 
         Args:
-            line (str): string entered in the command line.
-
-        Returns:
-            :any:`None`
+            line (str): String with shell command to be executed.
         """
         print("running shell command:", line)
         output = os.popen(line).read()
         print(output)
+
+    @CliBase.command()
+    @setsyntax
+    @syntax('import filename')
+    @argo('filename', Str, None)
+    def do_import(self, filename):
+        """Command that imports commands from a JSON file.
+
+        Args:
+            filename (str) : String with the filename to import.
+        """
+        self.load_commands_from_file(filename)

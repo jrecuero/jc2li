@@ -25,13 +25,17 @@ if __name__ == '__main__':
             try:
                 mod = importlib.import_module(args.module)
             except:
-                print ('Module {0} not found'.format(args.module))
+                print('Module {0} not found'.format(args.module))
                 sys.exit(0)
 
-    # cli = mod.CliCommands()
-    cli = getattr(mod, mod.MODULE)()
     try:
-        cli.cmdloop(thePrompt='CLI> ')
-    except KeyboardInterrupt:
-        print("")
+        cli = getattr(mod, mod.MODULE)()
+    except AttributeError:
+        print("Module {0} don't have MODULE attribute".format(args.module))
+        sys.exit(0)
+    try:
+        cli_kwargs = {'prompt': 'CLI> '}
+        cli_kwargs.update(getattr(mod, mod.MODULE_KWARGS))
+    except AttributeError:
         pass
+    cli.run(**cli_kwargs)

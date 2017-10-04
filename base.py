@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from functools import wraps, partial
 import sys
 import inspect
+import json
 # import shlex
 import loggerator
 from prompt_toolkit import prompt
@@ -336,7 +337,7 @@ class CliBase(object):
             LOGGER.debug('{0}::setup_commands add command {1}::{2}'.format(classname, name, func_cb))
             self.add_command(name, partial(func_cb, self), desc)
 
-    def run(self, **kwargs):
+    def run_prompt(self, **kwargs):
         """Execute the command line.
 
         Args:
@@ -428,11 +429,68 @@ class CliBase(object):
             None
         """
         while True:
-            user_input = self.run(**kwargs)
+            user_input = self.run_prompt(**kwargs)
             if kwargs.get('echo', False):
                 print(user_input)
             if not self.exec_user_input(user_input, **kwargs):
                 return
+
+    def run(self, **kwargs):
+        """Runs the command line interface for the given cli class.
+
+        Keyword Args:
+            prompt (:any:`str` or :any:`function`) : string or callback with prompt value
+
+            toolbar (:class:`str` or :any:`function`) : string or callback with toolbar value.
+
+            rprompt (:any:`str` or :any:`function`) : string or callback with right prompt value.
+
+            echo (bool) : True is command should be echoed.
+
+            precmd (bool) : True if precmd shoud be called.
+
+            postcmd (bool) : True if postcmd should be called.
+
+        Returns:
+            None
+        """
+        try:
+            self.cmdloop(**kwargs)
+        except KeyboardInterrupt:
+            print("")
+            pass
+
+    def load_commands_from_json(self, json_data):
+        """Loads CLI commands from a JSON variable.
+
+        The content of the JSON data should be a list of dictionaries, where
+        every dictionary at least shoudl contain a field called 'command'
+        which will contains the command to be executed.
+
+        Args:
+            json_data (json) : Variable with JSON data.
+
+        Returns:
+            None
+        """
+        lista = json.loads(json_data)
+        for entry in lista:
+            self.exec_user_input(entry['command'])
+
+    def load_commands_from_file(self, filename):
+        """Loads a file with the given filename with CLI commands in
+        JSON format.
+
+        Args:
+            filename (string) : String with the filename that contains\
+                    the json data.
+
+        Returns:
+            None
+        """
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        self.load_commands_from_json(json.dumps(data))
 
     @staticmethod
     def command(label=None, desc=None):
