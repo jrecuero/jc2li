@@ -165,57 +165,57 @@ def test_decorator_setsyntax_work():
 
 def test_decorator_setsyntax_sequence_multiple():
     cli = CliTestClass()
-    assert cli.do_test_syntax_sequence_multiple('F1 f2="2" f3="3" f4="4"') == ('F1', '2', '3', '4')
+    assert cli.do_test_syntax_sequence_multiple('F1 -f2 "2" -f3 "3" -f4 "4"') == ('F1', '2', '3', '4')
     # assert cli.do_test_syntax_sequence_multiple('F1 x2 x3 x4') == ('F1', 'x2', 'x3', 'x4')
 
 
 def test_decorator_setsyntax_argos():
     cli = CliTestClass()
     assert cli.do_test_syntax_argos('F2 100') == ('F2', 100, 'XX', 0)
-    assert cli.do_test_syntax_argos('F2 100 f3="F3"') == ('F2', 100, 'F3', 0)
-    assert cli.do_test_syntax_argos('F2 100 f4=1') == ('F2', 100, 'XX', 1)
+    assert cli.do_test_syntax_argos('F2 100 -f3 "F3"') == ('F2', 100, 'F3', 0)
+    assert cli.do_test_syntax_argos('F2 100 -f4 1') == ('F2', 100, 'XX', 1)
 
 
 def test_decorator_setsyntax_zero_or_one():
     cli = CliTestClass()
     assert cli.do_test_syntax_zero_or_one('50') == (50, 'field 2')
-    assert cli.do_test_syntax_zero_or_one('101 f2="custom f2"') == (101, 'custom f2')
+    assert cli.do_test_syntax_zero_or_one('101 -f2 "custom f2"') == (101, 'custom f2')
 
 
 def test_decorator_setsyntax_zero_or_one_logic_or():
     cli = CliTestClass()
     assert cli.do_test_setsyntax_zero_or_one_logic_or('50') == (50, 'field 2', 1)
-    assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f2="custom f2"') == (101, 'custom f2', 1)
-    assert cli.do_test_setsyntax_zero_or_one_logic_or('101 f3=100') == (101, 'field 2', 100)
+    assert cli.do_test_setsyntax_zero_or_one_logic_or('101 -f2 "custom f2"') == (101, 'custom f2', 1)
+    assert cli.do_test_setsyntax_zero_or_one_logic_or('101 -f3 100') == (101, 'field 2', 100)
     with pytest.raises(CliException) as ex:
-        cli.do_test_setsyntax_zero_or_one_logic_or('101 f2="garbage" f3=100')
-    assert ex.value.message == '<f3=100> not found'
+        cli.do_test_setsyntax_zero_or_one_logic_or('101 -f2 "garbage" -f3 100')
+    assert ex.value.message == '<-f3> not found'
 
 
 def test_decorator_setsyntax_zero_or_more():
     cli = CliTestClass()
     assert cli.do_test_syntax_zero_or_more('myshelf') == ('myshelf', 0)
-    assert cli.do_test_syntax_zero_or_more('myshelf f2=100') == ('myshelf', 100)
-    assert cli.do_test_syntax_zero_or_more('myshelf f2=100 f2=101') == ('myshelf', [100, 101])
+    assert cli.do_test_syntax_zero_or_more('myshelf -f2 100') == ('myshelf', 100)
+    assert cli.do_test_syntax_zero_or_more('myshelf -f2 100 -f2 101') == ('myshelf', [100, 101])
 
 
 def test_decorator_setsyntax_zero_or_more_logic_or():
     cli = CliTestClass()
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf') == ('myshelf', 0, 'field 3')
-    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf f2=100') == ('myshelf', 100, 'field 3')
-    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf f3="custom f3"') == ('myshelf', 0, 'custom f3')
+    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf -f2 100') == ('myshelf', 100, 'field 3')
+    assert cli.do_test_syntax_zero_or_more_logic_or('myshelf -f3 "custom f3"') == ('myshelf', 0, 'custom f3')
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
-            f2=100 f3="custom f3"') == ('myshelf', 100, 'custom f3')
+            -f2 100 -f3 "custom f3"') == ('myshelf', 100, 'custom f3')
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
-            f2=100 f2=102') == ('myshelf', [100, 102], 'field 3')
+            -f2 100 -f2 102') == ('myshelf', [100, 102], 'field 3')
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
-            f3="f3-1" f3="f3-2"') == ('myshelf', 0, ['f3-1', 'f3-2'])
+            -f3 "f3-1" -f3 "f3-2"') == ('myshelf', 0, ['f3-1', 'f3-2'])
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
-            f2=100 f3="custom f3" f2=200') == ('myshelf', [100, 200], 'custom f3')
+            -f2 100 -f3 "custom f3" -f2 200') == ('myshelf', [100, 200], 'custom f3')
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
-            f2=100 f3="f3-1" f3="f3-2"') == ('myshelf', 100, ['f3-1', 'f3-2'])
+            -f2 100 -f3 "f3-1" -f3 "f3-2"') == ('myshelf', 100, ['f3-1', 'f3-2'])
     assert cli.do_test_syntax_zero_or_more_logic_or('myshelf \
-            f2=200 f3="f3-1" f3="f3-2" f2=300') == ('myshelf', [200, 300], ['f3-1', 'f3-2'])
+            -f2 200 -f3 "f3-1" -f3 "f3-2" -f2 300') == ('myshelf', [200, 300], ['f3-1', 'f3-2'])
 
 
 def test_decorator_setsyntax_one_or_more():
@@ -223,8 +223,8 @@ def test_decorator_setsyntax_one_or_more():
     with pytest.raises(CliException) as ex:
         cli.do_test_syntax_one_or_more('myshelf')
     assert ex.value.message == 'Number of Args: Too few arguments'
-    assert cli.do_test_syntax_one_or_more('myshelf f2=100') == ('myshelf', 100)
-    assert cli.do_test_syntax_one_or_more('myshelf f2=100 f2=101') == ('myshelf', [100, 101])
+    assert cli.do_test_syntax_one_or_more('myshelf -f2 100') == ('myshelf', 100)
+    assert cli.do_test_syntax_one_or_more('myshelf -f2 100 -f2 101') == ('myshelf', [100, 101])
 
 
 def test_decorator_setsyntax_one_or_more_logic_or():
@@ -233,13 +233,13 @@ def test_decorator_setsyntax_one_or_more_logic_or():
     with pytest.raises(CliException) as ex:
         cli.do_test_syntax_one_or_more_logic_or('myshelf')
     assert ex.value.message == 'Number of Args: Too few arguments'
-    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100') == ('myshelf', 100, 1)
-    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100 f2=101') == ('myshelf', [100, 101], 1)
-    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f3=300') == ('myshelf', 0, 300)
-    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f3=300 f3=301') == ('myshelf', 0, [300, 301])
-    assert cli.do_test_syntax_one_or_more_logic_or('myshelf f2=100 f3=300') == ('myshelf', 100, 300)
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf -f2 100') == ('myshelf', 100, 1)
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf -f2 100 -f2 101') == ('myshelf', [100, 101], 1)
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf -f3 300') == ('myshelf', 0, 300)
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf -f3 300 -f3 301') == ('myshelf', 0, [300, 301])
+    assert cli.do_test_syntax_one_or_more_logic_or('myshelf -f2 100 -f3 300') == ('myshelf', 100, 300)
     assert cli.do_test_syntax_one_or_more_logic_or('myshelf \
-            f2=100 f3=300 f2=101 f3=301') == ('myshelf', [100, 101], [300, 301])
+            -f2 100 -f3 300 -f2 101 -f3 301') == ('myshelf', [100, 101], [300, 301])
 
 
 def test_decorator_setsyntax_one_only_option():
@@ -248,11 +248,11 @@ def test_decorator_setsyntax_one_only_option():
     with pytest.raises(CliException) as ex:
         cli.do_test_syntax_one_only_option('myshelf')
     assert ex.value.message == 'Number of Args: Too few arguments'
-    assert cli.do_test_syntax_one_only_option('myshelf f2=100') == ('myshelf', 100, 1)
-    assert cli.do_test_syntax_one_only_option('myshelf f3=300') == ('myshelf', 0, 300)
+    assert cli.do_test_syntax_one_only_option('myshelf -f2 100') == ('myshelf', 100, 1)
+    assert cli.do_test_syntax_one_only_option('myshelf -f3 300') == ('myshelf', 0, 300)
     with pytest.raises(CliException) as ex:
-        assert cli.do_test_syntax_one_only_option('myshelf f2=100 f3=300') == ('myshelf', 100, 300)
-    assert ex.value.message == '<f3=300> not found'
+        assert cli.do_test_syntax_one_only_option('myshelf -f2 100 -f3 300') == ('myshelf', 100, 300)
+    assert ex.value.message == '<-f3> not found'
 
 
 def test_decorator_setsyntax_constant():
@@ -276,40 +276,40 @@ def test_decorator_setsyntax_constant_option():
 
 @pytest.mark.parametrize("theInput, theExpected",
                          (('50', (50, 'field 2', 'key', 'id', 'name')),
-                          ('50 f2="f2"', (50, 'f2', 'key', 'id', 'name')),
-                          ('50 f3="f3"', (50, 'field 2', 'f3', 'id', 'name')),
-                          ('50 f3="f3" f4="f4"', (50, 'field 2', 'f3', 'f4', 'name'))))
+                          ('50 -f2 "f2"', (50, 'f2', 'key', 'id', 'name')),
+                          ('50 -f3 "f3"', (50, 'field 2', 'f3', 'id', 'name')),
+                          ('50 -f3 "f3" -f4 "f4"', (50, 'field 2', 'f3', 'f4', 'name'))))
 def test_decorator_setsyntax_zero_or_one_with_inner_rule(theInput, theExpected):
     cli = CliTestClass()
     assert cli.do_test_syntax_zero_or_one_with_inner_rule(theInput) == theExpected
     # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50') == (50, 'field 2', 'key', 'id', 'name')
-    # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 f2="f2"') == (50, 'f2', 'key', 'id', 'name')
-    # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 f3="f3"') == (50, 'field 2', 'f3', 'id', 'name')
+    # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 -f2 "f2"') == (50, 'f2', 'key', 'id', 'name')
+    # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 -f3 "f3"') == (50, 'field 2', 'f3', 'id', 'name')
     # assert cli.do_test_syntax_zero_or_one_with_inner_rule('50 \
-    #         f3="f3" f4="f4"') == (50, 'field 2', 'f3', 'f4', 'name')
+    #         -f3 "f3" -f4 "f4"') == (50, 'field 2', 'f3', 'f4', 'name')
 
 
 def test_decorator_setsyntax_multiple_arguments():
     cli = CliTestClass()
-    assert cli.do_test_syntax_multiple_arguments('100 f3="+f3"') == (100, 'F2', '+f3', 'F4', 'F5')
+    assert cli.do_test_syntax_multiple_arguments('100 -f3 "+f3"') == (100, 'F2', '+f3', 'F4', 'F5')
     assert cli.do_test_syntax_multiple_arguments('100 \
-            f3="+f3" f3="++f3"') == (100, 'F2', ['+f3', '++f3'], 'F4', 'F5')
+            -f3 "+f3" -f3 "++f3"') == (100, 'F2', ['+f3', '++f3'], 'F4', 'F5')
     assert cli.do_test_syntax_multiple_arguments('100 \
-            f2="?f2" f3="+f3"') == (100, '?f2', '+f3', 'F4', 'F5')
+            -f2 "?f2" -f3 "+f3"') == (100, '?f2', '+f3', 'F4', 'F5')
     assert cli.do_test_syntax_multiple_arguments('100 \
-            f3="+f3" f5="?f5"') == (100, 'F2', '+f3', 'F4', '?f5')
+            -f3 "+f3" -f5 "?f5"') == (100, 'F2', '+f3', 'F4', '?f5')
     assert cli.do_test_syntax_multiple_arguments('100 \
-            f3="+f3" f4="*f4"') == (100, 'F2', '+f3', '*f4', 'F5')
+            -f3 "+f3" -f4 "*f4"') == (100, 'F2', '+f3', '*f4', 'F5')
     assert cli.do_test_syntax_multiple_arguments('100 \
-            f2="?f2" f3="+f3" f4="*f4" f5="?f5"') == (100, '?f2', '+f3', '*f4', '?f5')
+            -f2 "?f2" -f3 "+f3" -f4 "*f4" -f5 "?f5"') == (100, '?f2', '+f3', '*f4', '?f5')
     assert cli.do_test_syntax_multiple_arguments('100 \
-            f2="?f2" f3="+f3" f3="++f3" f4="*f4" f4="**f4" f5="?f5"') == (100, '?f2', ['+f3', '++f3'], ['*f4', '**f4'], '?f5')
+            -f2 "?f2" -f3 "+f3" -f3 "++f3" -f4 "*f4" -f4 "**f4" -f5 "?f5"') == (100, '?f2', ['+f3', '++f3'], ['*f4', '**f4'], '?f5')
     with pytest.raises(CliException) as ex:
-        cli.do_test_syntax_multiple_arguments('100 f2="?f2" f4="*f4" f5="?f5"')
-    assert ex.value.message == '<f4=*f4> not found'
+        cli.do_test_syntax_multiple_arguments('100 -f2 "?f2" -f4 "*f4" -f5 "?f5"')
+    assert ex.value.message == '<-f4> not found'
     with pytest.raises(CliException) as ex:
-        cli.do_test_syntax_multiple_arguments('100 f3="+f3" f2="?f2" f4="*f4" f5="?f5"')
-    assert ex.value.message == '<f2=?f2> not found'
+        cli.do_test_syntax_multiple_arguments('100 -f3 "+f3" -f2 "?f2" -f4 "*f4" -f5 "?f5"')
+    assert ex.value.message == '<-f2> not found'
 
 
 def test_decorator_setsyntax_free_form():

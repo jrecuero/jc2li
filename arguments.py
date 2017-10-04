@@ -62,7 +62,10 @@ class Arguments(object):
         self.indexed = None
 
     def traverse(self):
-        """Return the list with all arguments.
+        """Returns the list with all arguments.
+
+        Returns:
+            :any:`list` : List with all arguments.
         """
         return self.arguments
 
@@ -71,6 +74,9 @@ class Arguments(object):
 
         Args:
             argument (Argument) : New argument to the added.
+
+        Returns:
+            :any:`None`
         """
         self.arguments.append(argument)
 
@@ -79,6 +85,9 @@ class Arguments(object):
 
         Args:
             argument (Argument) : New argument to be inserted first.
+
+        Returns:
+            :any:`None`
         """
         self.arguments.insert(0, argument)
 
@@ -113,8 +122,8 @@ class Arguments(object):
             name (str) : Name of the attribute to be retrieved.
 
         Returns:
-            Argument/None : Argument instance if the name is found, None
-            if the name is not found.
+            Argument : Argument instance if the name is found, None\
+                    if the name is not found.
         """
         return self.indexed.get(name, None)
 

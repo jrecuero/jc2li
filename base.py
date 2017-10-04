@@ -83,7 +83,7 @@ class Cli(object):
                     nodepath = None
                     children_nodes = None
                     try:
-                        nodepath = root.findPath(cli_argos)
+                        nodepath = root.find_path(cli_argos)
                     except Exception as ex:
                         logger.error('{0}, {1} | {2}'.format(ex, ex.__traceback__.tb_lineno, self._nodepath))
 
@@ -105,10 +105,11 @@ class Cli(object):
                         children_nodes = root.get_children_nodes()
 
                     if children_nodes:
-                        helps = [c.argo.completer.help(last_token) for c in children_nodes]
+                        helps = [c.completer.help(last_token) for c in children_nodes]
                         self._cli.toolbar_str = " | ".join(helps)
                         for child in children_nodes:
-                            matches = child.argo.completer.complete(document, last_token)
+                            logger.debug('child is: {0}'.format(child.label))
+                            matches = child.completer.complete(document, last_token)
                             if matches is None:
                                 continue
                             for i, m in enumerate(matches):
@@ -243,6 +244,8 @@ class Cli(object):
         Args:
             line (str): string entered in the command line.
 
+        Returns:
+            :any:`None`
         """
         sys.exit(0)
 
@@ -386,6 +389,9 @@ class Cli(object):
             toolbar (:any:`str` or :any:`function`) : string or callback with toolbar value.
 
             rprompt (:any:`str` or :any:`function`) : string or callback with right prompt value.
+
+        Returns:
+            str : String with the input entered by the user.
         """
         toolbar = kwargs.get('toolbar', 'Enter a valid command')
         self.toolbar_str = toolbar if isinstance(toolbar, str) else toolbar()
@@ -424,6 +430,9 @@ class Cli(object):
             precmd (bool) : True if precmd shoud be called.
 
             postcmd (bool) : True if postcmd should be called.
+
+        Returns:
+            None
         """
         while True:
             pre_return = True
@@ -463,6 +472,9 @@ class Cli(object):
                 taken from the @syntax decorator.
 
             desc (str) : command description (optional).
+
+        Returns:
+            func : Function wrapper.
         """
 
         def f_command(f):

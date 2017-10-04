@@ -5,6 +5,19 @@ class RuleHandler(object):
     """
 
     @staticmethod
+    def is_end_rule(rule):
+        """Static method that checks if the rule contains the last rule for the
+        command.
+
+        Args:
+            rule (dict): dictionary with the given rule to check.
+
+        Returns:
+            bool : True if the argument contains the last rule, False else
+        """
+        return rule['type'] == '0'
+
+    @staticmethod
     def is_only_one_rule(rule):
         """Static method that checks if the rule contains an argument name.
 
@@ -12,7 +25,7 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument contains an argument name, False else
+            bool : True if the argument contains an argument name, False else
         """
         return rule['type'] == '1'
 
@@ -24,22 +37,36 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument contains constant, False else
+            bool : True if the argument contains constant, False else
         """
         return rule['type'] == '2'
 
     @staticmethod
-    def is_end_rule(rule):
-        """Static method that checks if the rule contains the last rule for the
-        command.
+    def is_free_form_param_rule(rule):
+        """Static method that checks if the rule contains a free form
+        argument.
 
         Args:
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument contains the last rule, False else
+            bool : True if the argument contains a free form name option,\
+                    False else
         """
-        return rule['type'] == '0'
+        return rule['type'] == '3'
+
+    @staticmethod
+    def is_cte_param_rule(rule):
+        """Static method that checks if the rule contains a constant argument.
+
+        Args:
+            rule (dict): dictionary with the given rule to check.
+
+        Returns:
+            bool : True if the argument contains a free form name option,\
+                    False else
+        """
+        return rule['type'] == '4'
 
     @staticmethod
     def is_zero_or_one_rule(rule):
@@ -50,7 +77,7 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument can be entered zero or one, False else
+            bool : True if the argument can be entered zero or one, False else
         """
         return rule['type'] == '?'
 
@@ -63,7 +90,7 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument can be entered zero or more, False else
+            bool : True if the argument can be entered zero or more, False else
         """
         return rule['type'] == '*'
 
@@ -76,7 +103,7 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument can be entered one or more, False else
+            bool : True if the argument can be entered one or more, False else
         """
         return rule['type'] == '+'
 
@@ -89,8 +116,8 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument contains an argument name option,
-            False else
+            bool : True if the argument contains an argument name option,\
+                    False else
         """
         return rule['type'] == '!'
 
@@ -103,24 +130,10 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument contains a free form name option,
-            False else
+            bool : True if the argument contains a free form name option,\
+                    False else
         """
         return rule['type'] == '@'
-
-    @staticmethod
-    def is_free_form_param_rule(rule):
-        """Static method that checks if the rule contains a free form
-        argument.
-
-        Args:
-            rule (dict): dictionary with the given rule to check.
-
-        Returns:
-            boolean : True if the argument contains a free form name option,
-            False else
-        """
-        return rule['type'] == '3'
 
     @staticmethod
     def is_required_rule(rule):
@@ -131,8 +144,8 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument contains an argument that is
-            required, False else
+            bool : True if the argument contains an argument that is\
+                    required, False else
         """
         return (RuleHandler.is_only_one_rule(rule) or
                 RuleHandler.is_one_or_more_rule(rule) or
@@ -148,8 +161,8 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the argument contains an argument that is
-            an inner rule, False else
+            bool : True if the argument contains an argument that is\
+                    an inner rule, False else
         """
         return (RuleHandler.is_zero_or_one_rule(rule) or
                 RuleHandler.is_zero_or_more_rule(rule) or
@@ -164,7 +177,7 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            boolean : True if the has same inner rules, False else.
+            bool : True if the has same inner rules, False else.
         """
         return RuleHandler.is_inner_rule(rule) or type(rule['args']) == list
 
@@ -180,7 +193,7 @@ class RuleHandler(object):
             theArgName (str) L String with the argument name to check.
 
         Returns:
-            boolean : True if the arguments matches the given name, False else.
+            bool : True if the arguments matches the given name, False else.
         """
         if RuleHandler.is_only_one_rule(rule) and rule['args'] == theArgName:
             return True
@@ -226,8 +239,8 @@ class RuleHandler(object):
             rule (dict): dictionary with the given rule to check.
 
         Returns:
-            list/str : content of 'args' entry, it could be a list with more
-            rules or a string with the argument name.
+            list or str : content of 'args' entry, it could be a list with\
+                    more rules or a string with the argument name.
         """
         return rule['args']
 

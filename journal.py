@@ -92,8 +92,8 @@ class Journal(object):
             instance (object) : instance for the command function.
             line (str) : string with the command line input.
 
-            Returns:
-                tuple: pair with command arguments and cli arguments.
+        Returns:
+            :any:`tuple`: pair with command arguments and cli arguments.
         """
         cmd_argos = getattr(f, ARGOS_ATTR, None)
         if instance and cmd_argos is None:
@@ -118,6 +118,9 @@ class Journal(object):
             root (node): node where mapping should starts.
             cmd_argos (list): list with command arguments.
             cli_args (list): list with CLI arguments.
+
+        Returns:
+            :any:`list` : List with arguments being used.
         """
         node_path = root.find_path(cli_args)
         matched_nodes = list()

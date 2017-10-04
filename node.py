@@ -1,5 +1,6 @@
 from rules import RuleHandler as RH
 from clierror import CliException
+from argtypes import Prefix
 import loggerator
 
 MODULE = 'NODE'
@@ -21,6 +22,7 @@ class Node(object):
         self._parent = kwargs.get('parent', None)
         self.children = list()
         self.argo = argo
+        self.completer = argo.completer if argo else None
         self.browsable = True
         self.label = kwargs.get('label', self.name)
         self.__loops = set()
@@ -49,7 +51,7 @@ class Node(object):
         """Get property that returns _parents attribute.
 
         Returns:
-            list: list with all parents for the node.
+            :any:`list`: list with all parents for the node.
         """
         raise CliException(MODULE, 'parents() operation not allowed.')
 
@@ -69,7 +71,7 @@ class Node(object):
         """Get property that returns a list with all sibling nodes.
 
         Returns:
-            list: list with all Nodes that are sibling in the syntax tree.
+            :any:`list`: list with all Nodes that are sibling in the syntax tree.
         """
         if self.parent and self.parent.has_children():
             return self.parent.children
@@ -247,26 +249,33 @@ class Node(object):
         Returns:
             Node: Node with the given name, None is not found.
         """
+        node = None
         # if the node contains a constant, it has to be checked first and it
         # only should return a match, if the string passed is equal to the name
         # stored in the Node.
         if self.__iscte and self.name == name:
-            return self if self.name == name else None
+            node = self if self.name == name else None
 
         # Mandatory arguments have a default value equal to None, and they are
         # tested with check_default flag is set to True
-        if kwargs.get('check_default', None) and self.default is None:
-            return self
+        elif kwargs.get('check_default', None) and self.default is None:
+            node = self
 
         # for any other parameter, checks the given name is the right one for a
         # proper match.
-        return self if self.name == name else None
+        else:
+            node = self if self.name == name else None
+
+        return node
 
     def find_child_by_name(self, name, **kwargs):
         """Method that returns the children node with the given name.
 
         Args:
             name (str): string with the node name.
+
+        Returns:
+            :any:`None`
         """
         for child in self.traverse_children():
             found_node = child.find_by_name(name, **kwargs)
@@ -383,26 +392,34 @@ class Node(object):
         Returns:
             Node: child node that matches the syntax rule.
         """
-        if RH.is_only_one_rule(rule) or RH.is_constant_rule(rule):
-            args_from_rule = RH.get_args_from_rule(rule)
+        args_from_rule = RH.get_args_from_rule(rule)
+        if isinstance(args_from_rule, str):
             argo_from_name = argos.get_argo_from_name(args_from_rule)
-            child = Node(argo_from_name, parent=self)
+
+        if RH.is_end_rule(rule):
+            child = End(parent=self)
             end_child = child
 
-        elif RH.is_free_form_param_rule(rule):
-            args_from_rule = RH.get_args_from_rule(rule)
-            argo_from_name = argos.get_argo_from_name(args_from_rule)
+        elif RH.is_only_one_rule(rule):
             child = FreeformNode(argo_from_name, parent=self)
             end_child = child
 
-        elif RH.is_end_rule(rule):
-            child = End(parent=self)
+        elif RH.is_constant_rule(rule):
+            child = CteNode(argo_from_name, parent=self)
             end_child = child
+
+        elif RH.is_free_form_param_rule(rule):
+            child = FreeformNode(argo_from_name, parent=self)
+            end_child = child
+
+        elif RH.is_cte_param_rule(rule):
+            child = PrefixNode(argo_from_name, parent=self)
+            end_child = FreeformNode(argo_from_name)
+            child.add_child(end_child)
 
         elif RH.is_zero_or_one_rule(rule) or RH.is_only_one_option_rule(rule):
             child = Hook(parent=self, label="Hook-Start")
             end_child = Hook(label="Hook-End")
-            args_from_rule = RH.get_args_from_rule(rule)
             end_child = child.build_hook_from_rule(args_from_rule, argos, end_child)
             if RH.is_zero_or_one_rule(rule):
                 child.add_child(end_child)
@@ -413,7 +430,6 @@ class Node(object):
             child = Hook(parent=self, label="Hook-Start")
             loop_child = Loop(parent=self, label="Hook-Loop")
             end_child = Hook(parent=self, label="Hook-End")
-            args_from_rule = RH.get_args_from_rule(rule)
             loop_child = child.build_hook_from_rule(args_from_rule, argos, loop_child)
             loop_child.add_child(end_child)
             loop_child.add_child(child, isloop=True)
@@ -430,8 +446,7 @@ class Node(object):
         """Method that returns all nodes to be traversed.
 
         Returns:
-            list: list with all nodes to be traversed underneath the given
-            node.
+            list: list with all nodes to be traversed underneath the given node.
         """
         nodes = [self, ]
         for child in self.traverse_children():
@@ -474,9 +489,109 @@ class Node(object):
         return self.to_str(0)
 
 
+class CteNode(Node):
+    """CteNode class derives from Node and it  provides a container
+    for every node that can contain a constant.
+    """
+
+    def find_by_name(self, name, **kwargs):
+        """Method that checks if the node has the given name
+
+        When looking for nodes in a path from the arguments passed in the
+        command line, required arguments don't use the argument name, just
+        the value, when looking for those in the parsing tree, they will not
+        be found, but such as a mandatory and positional arguments, they
+        should be a direct match for the direct position, that is the reason
+        we use the argument check_default=True when we want to make a path
+        search, for any other scenario, where just the argument name will be
+        used, set that argument to False.
+
+        Args:
+            name (str): string with the node name.
+            check_default (bool): if True validates the node if it has a\
+                    valid default attribute (not None).
+
+        Returns:
+            Node: Node with the given name, None is not found.
+        """
+        return self if self.name == name else None
+
+
+class PrefixNode(Node):
+    """PrefixNode class derives from Node and it provides a container for
+    any node that keeps a prefix for a parameter.
+    """
+
+    def __init__(self, argo, **kwargs):
+        """PrefixNode class initialization method.
+
+        Args:
+            parent (Node): parent node instance.
+            label (str): string to be used as label attribute.
+        """
+        super(PrefixNode, self).__init__(None, **kwargs)
+        self.label = kwargs.get('label', argo.name)
+        self.completer = Prefix(label=self.label)
+
+    def find_by_name(self, name, **kwargs):
+        """Method that checks if the node has the given name
+
+        When looking for nodes in a path from the arguments passed in the
+        command line, required arguments don't use the argument name, just
+        the value, when looking for those in the parsing tree, they will not
+        be found, but such as a mandatory and positional arguments, they
+        should be a direct match for the direct position, that is the reason
+        we use the argument check_default=True when we want to make a path
+        search, for any other scenario, where just the argument name will be
+        used, set that argument to False.
+
+        Args:
+            name (str): string with the node name.
+            check_default (bool): if True validates the node if it has a\
+                    valid default attribute (not None).
+
+        Returns:
+            Node: Node with the given name, None is not found.
+        """
+        if name.startswith('-') and name[1:] == self.label:
+            return self
+        return None
+
+    def map_arg_to_value(self, value):
+        """Maps the CLI argument entered to the value to be passed to the
+        cli commana callback for the given node.
+
+        Args:
+            value (str) : String with the value entered by the user.
+
+        Returns:
+            str : String mapped for the given node.
+        """
+        if value.startswith('-'):
+            arg_value = value[1:]
+        else:
+            raise NotImplementedError
+        arg_value = str(arg_value)
+        return arg_value
+
+    def store_value_in_argo(self, value, matched=False):
+        """Stores a value in the argument for the node.
+
+        Args:
+            value (object) : Value to store in the argument.
+
+            matched (bool) : True is argument was already matched and found\
+                    in the command line entry.
+
+        Returns:
+            None
+        """
+        pass
+
+
 class FreeformNode(Node):
-    """FreeformNode class provides a container for every node that can
-    contain any kind of information.
+    """FreeformNode class derives from Node and it  provides a container
+    for every node that can contain any kind of information.
     """
 
     def map_arg_to_value(self, value):
@@ -758,9 +873,9 @@ class Loop(Hook):
             kwargs.setdefault('matched', True)
             noLoop = False
         for child in self.traverse_children(noloop=noLoop):
-            foundNode = child.find_by_name(name, **kwargs)
-            if foundNode is not None:
-                return foundNode
+            found_node = child.find_by_name(name, **kwargs)
+            if found_node is not None:
+                return found_node
         return None
 
 

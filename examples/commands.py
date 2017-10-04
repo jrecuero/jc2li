@@ -42,6 +42,7 @@ class T_System(CliType):
         return 'Enter the system name'
 
     def get_complete_list(self, document, text):
+        logger.debug('calling get_complete_list and return {0}'.format(self._systems), 'YELLOW')
         return self._systems
 
 
@@ -126,7 +127,7 @@ class CliCommands(Cli):
     @syntax('config name [tname | system]?')
     @argo('name', Str, None)
     @argo('tname', T_Tenant, 'COMMON')
-    @argo('system', T_System, 'localhost', theCompleterKwargs={'systems': ['localhost', 'remote']})
+    @argo('system', T_System, 'localhost', completer_kwargs={'systems': ['localhost', 'remote']})
     def do_configure(self, name, tname, system):
         """Display tenant or system configuration.
         """

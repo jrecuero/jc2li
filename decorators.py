@@ -16,7 +16,10 @@ def argo(name, type, default, **kwargs):
         reference to this argument
         type (object) : argument type, it should be a class name.
         default (object) : default value for the argument.
-        theCompleter (object) : argument completer instance
+        completer (object) : argument completer instance
+
+    Returns:
+        func : Function wrapper.
     """
 
     def f_argo(f):
@@ -39,6 +42,9 @@ def argos(arg_list):
 
     Args:
         arg_list (list) : list of arguments configured as @argo.
+
+    Returns:
+        func : Function wrapper.
     """
 
     def f_setargos(f):
@@ -83,6 +89,9 @@ def syntax(syntax_str):
 
     Args:
         syntax_str (str) : string with the command syntax.
+
+    Returns:
+        func : Function wrapper.
     """
 
     def f_syntax(f):
@@ -110,6 +119,12 @@ def setsyntax(f):
     any command argument entered improperly. Argument type is provided for
     values being entered, and default values are provided for any optional
     argument not being entered.
+
+    Args:
+        f (func) : Function to be decorated.
+
+    Returns:
+        func : Function wrapper.
     """
 
     journal = Journal()

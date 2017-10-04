@@ -15,8 +15,12 @@ def _map_parent_type_to_op(parent_type):
     Returns:
         str : Character with the operation type to be used.
     """
-    if parent_type == '@':
+    if not parent_type:
+        return '1'
+    elif parent_type == '@':
         return '3'
+    elif parent_type in '?+*!':
+        return '4'
     else:
         return '1'
 
@@ -165,7 +169,8 @@ if __name__ == '__main__':
     # toks = get_syntax().parseString("tenant t1 [<t2> | t3]!")
     # toks = get_syntax().parseString("tenant t1 <t2>")
     # toks = get_syntax().parseString("tenant [t1 t2 t3]+")
-    toks = get_syntax().parseString("tenant t1 [t2]@")
+    # toks = get_syntax().parseString("tenant t1 [t2]@")
+    toks = get_syntax().parseString("tenant t1 [t2 | t3]*")
 
     print(toks)
     cmd, rules = _process_syntax(toks)
