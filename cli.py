@@ -22,7 +22,7 @@ if __name__ == '__main__':
             mod = importlib.import_module(args.module)
         else:
             try:
-                mo = importlib.import_module(args.module)
+                mod = importlib.import_module(args.module)
             except:
                 print ('Module {0} not found'.format(args.module))
                 sys.exit(0)

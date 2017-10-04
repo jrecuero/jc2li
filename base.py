@@ -415,10 +415,47 @@ class Cli(object):
                             refresh_interval=1)
         return user_input
 
+    def exec_user_input(self, user_input, **kwargs):
+        """Executes the string with the user input.
+
+        Args:
+            user_input (str) : String with the input entered by the user.
+
+        Keyword Args:
+            precmd (bool) : True if precmd shoud be called.
+
+            postcmd (bool) : True if postcmd should be called.
+
+        Returns:
+            bool : True if application shoudl continue, False else.
+        """
+        pre_return = True
+        post_return = True
+        if user_input:
+            line_as_list = user_input.split()
+            if len(line_as_list) == 0:
+                return True
+            command = line_as_list[0]
+            if self.is_command(command):
+                if kwargs.get('precmd', False):
+                    pre_return = self.precmd(command, user_input)
+                # precmd callback return value can be used to skip command
+                # of it returns False.
+                if pre_return:
+                    self.exec_command(command, ' '.join(line_as_list[1:]))
+                # postcmd callback return value can be used to exit the
+                # command loop if it returns False..
+                if kwargs.get('postcmd', False):
+                    post_return = self.postcmd(command, user_input)
+            self.last_cmd = user_input
+        else:
+            post_return = self.onecmd(user_input)
+        return post_return
+
     def cmdloop(self, **kwargs):
         """Method that is called to wait for any user input.
 
-        Args:
+        Keyword Args:
             prompt (:any:`str` or :any:`function`) : string or callback with prompt value
 
             toolbar (:class:`str` or :any:`function`) : string or callback with toolbar value.
@@ -435,31 +472,10 @@ class Cli(object):
             None
         """
         while True:
-            pre_return = True
-            post_return = True
             user_input = self.run(**kwargs)
             if kwargs.get('echo', False):
                 print(user_input)
-            if user_input:
-                line_as_list = user_input.split()
-                if len(line_as_list) == 0:
-                    continue
-                command = line_as_list[0]
-                if self.is_command(command):
-                    if kwargs.get('precmd', False):
-                        pre_return = self.precmd(command, user_input)
-                    # precmd callback return value can be used to skip command
-                    # of it returns False.
-                    if pre_return:
-                        self.exec_command(command, ' '.join(line_as_list[1:]))
-                    if kwargs.get('postcmd', False):
-                        post_return = self.postcmd(command, user_input)
-                self.last_cmd = user_input
-            else:
-                post_return = self.onecmd(user_input)
-            # postcmd callback return value can be used to exit the
-            # command loop if it returns False..
-            if post_return is False:
+            if not self.exec_user_input(user_input, **kwargs):
                 return
 
     @staticmethod
