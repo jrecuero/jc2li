@@ -1,4 +1,4 @@
-from base import Cli
+from cli import Cli
 from argtypes import CliType, Int, Str
 import shlex
 from decorators import argo, syntax, setsyntax

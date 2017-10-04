@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 from functools import wraps, partial
 import sys
-import os
 import inspect
 # import shlex
 import loggerator
@@ -19,8 +18,8 @@ MODULE = 'BASE'
 logger = loggerator.getLoggerator(MODULE)
 
 
-class Cli(object):
-    """Cli class is the base class for any class that will implement
+class CliBase(object):
+    """CliBase class is the base class for any class that will implement
     commands to be used by the command line interface.
 
     Attributes:
@@ -45,7 +44,7 @@ class Cli(object):
             """CliCompleter initialization method.
 
             Args:
-                cli (Cli) : Cli instance.
+                cli (CliBase) : Cli instance.
             """
             self._nodepath = None
             self._cli = cli
@@ -131,7 +130,7 @@ class Cli(object):
                         logger.debug('self._nodepath is {}'.format([x.name for x in self._nodepath]))
 
     def __init__(self):
-        """Cli class initialization method.
+        """CliBase class initialization method.
         """
         self.command = None
         self.last_cmd = None
@@ -236,63 +235,6 @@ class Cli(object):
         """
         pass
 
-    def do_exit(self, line):
-        """Command that exit the CLI when "exit" is entered.
-
-        Exit the application to the operating system.
-
-        Args:
-            line (str): string entered in the command line.
-
-        Returns:
-            :any:`None`
-        """
-        sys.exit(0)
-
-    def do_help(self, line):
-        """Command that displays all possible commands.
-
-        Args:
-            line (str): string entered in the command line.
-
-        Returns:
-            :any:`None`
-        """
-        for command in self.commands:
-            print('- {0} : {1}'.format(command, self.get_command_desc(command)))
-
-    def do_syntax(self, line):
-        """Command that displays syntax for possible commands.
-
-        Args:
-            line (str): string entered in the command line.
-
-        Returns:
-            :any:`None`
-        """
-        for command in self.commands:
-            command_cb = self.get_command_cb(command)
-            # Required for partial methods.
-            if hasattr(command_cb, SYNTAX_ATTR):
-                print('> {0}'.format(getattr(command_cb, SYNTAX_ATTR)))
-            elif hasattr(command_cb, 'func') and hasattr(command_cb.func, SYNTAX_ATTR):
-                print('> {0}'.format(getattr(command_cb.func, SYNTAX_ATTR)))
-            else:
-                print('> {0}'.format(command))
-
-    def do_shell(self, line):
-        """Comand that runs a shell command when "shell" is entered.
-
-        Args:
-            line (str): string entered in the command line.
-
-        Returns:
-            :any:`None`
-        """
-        print("running shell command:", line)
-        output = os.popen(line).read()
-        print(output)
-
     def precmd(self, command, line):
         """Method to be called before any command is being processed.
 
@@ -369,11 +311,6 @@ class Cli(object):
         Returns:
             None
         """
-        self.add_command('exit', self.do_exit, self.do_exit.__doc__)
-        self.add_command('help', self.do_help, self.do_help.__doc__)
-        self.add_command('syntax', self.do_syntax, self.do_syntax.__doc__)
-        self.add_command('shell', self.do_shell, self.do_help.__doc__)
-
         classname = self.__class__.__name__
         calls = self._WALL.get(classname, [])
         for name, func_cb, desc in calls:
@@ -405,7 +342,7 @@ class Cli(object):
 
         user_input = prompt(history=FileHistory('history.txt'),
                             auto_suggest=AutoSuggestFromHistory(),
-                            completer=Cli.CliCompleter(self),
+                            completer=CliBase.CliCompleter(self),
                             # lexer=SqlLexer,
                             get_bottom_toolbar_tokens=self.get_bottom_toolbar_tokens,
                             get_rprompt_tokens=self.get_rprompt_tokens,
@@ -501,7 +438,7 @@ class Cli(object):
 
             logger.debug(f, "YELLOW")
             module_name = sys._getframe(1).f_code.co_name
-            Cli._WALL.setdefault(module_name, [])
+            CliBase._WALL.setdefault(module_name, [])
             if desc is not None:
                 _desc = desc
             else:
@@ -513,7 +450,7 @@ class Cli(object):
                     _desc = _wrapper.func.__doc__
             label_from_syntax = getattr(f, SYNTAX_ATTR, None)
             _label = f.__name__ if label_from_syntax is None else label_from_syntax.split()[0]
-            Cli._WALL[module_name].append((label if label else _label, _wrapper, _desc))
+            CliBase._WALL[module_name].append((label if label else _label, _wrapper, _desc))
             return _wrapper
 
         return f_command

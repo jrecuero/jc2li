@@ -3,7 +3,7 @@ import sys
 cliPath = '.'
 sys.path.append(cliPath)
 
-from base import Cli
+from cli import Cli
 from decorators import argo, setsyntax, syntax
 from argtypes import Str
 

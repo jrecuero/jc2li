@@ -4,7 +4,7 @@ import pytest
 cliPath = '.'
 sys.path.append(cliPath)
 
-from base import Cli
+from cli import Cli
 from decorators import argo, syntax, setsyntax, argos
 from argtypes import Int, Str, Dicta
 from clierror import CliException
