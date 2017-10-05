@@ -170,7 +170,8 @@ if __name__ == '__main__':
     # toks = get_syntax().parseString("tenant t1 <t2>")
     # toks = get_syntax().parseString("tenant [t1 t2 t3]+")
     # toks = get_syntax().parseString("tenant t1 [t2]@")
-    toks = get_syntax().parseString("tenant t1 [t2 | t3]*")
+    # toks = get_syntax().parseString("tenant t1 [t2 | t3]*")
+    toks = get_syntax().parseString("tenant t1 [t2]? [t3]?")
 
     print(toks)
     cmd, rules = _process_syntax(toks)

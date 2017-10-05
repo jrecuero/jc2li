@@ -142,3 +142,15 @@ class CliCommands(Cli):
         """Display dbg information
         """
         print('dbg {0} options {1}'.format(name, options))
+
+    @Cli.command()
+    @setsyntax
+    @syntax('record filename [start]? [end]?')
+    @argo('filename', Str, None)
+    @argo('start', Int, 0)
+    @argo('end', Int, -1)
+    def do_record(self, filename, start, end):
+        """Record information.
+        """
+        end = 'None' if end == -1 else end
+        print("record {0} from {1} to {2}".format(filename, start, end))

@@ -158,6 +158,14 @@ class CliTestClass(Cli):
     def do_test_syntax_free_form_with_dicta(self, f1, dicta):
         return f1, dicta
 
+    @setsyntax
+    @syntax('setsyntax f1 [f2]? [f3]?')
+    @argo('f1', Str, None)
+    @argo('f2', Int, 0)
+    @argo('f3', Int, 1)
+    def do_test_syntax_two_options(self, f1, f2, f3):
+        return f1, f2, f3
+
 
 def test_decorator_setsyntax_work():
     CliTestWorkClass()
@@ -330,3 +338,11 @@ def test_decorator_setsyntax_free_form_with_dicta():
     cli = CliTestClass()
     assert cli.do_test_syntax_free_form_with_dicta('10 one=1') == ('10', {'one': '1'})
     assert cli.do_test_syntax_free_form_with_dicta('10 one=1 two=2') == ('10', {'one': '1', 'two': '2'})
+
+
+def test_decorator_setsyntax_two_options():
+    cli = CliTestClass()
+    assert cli.do_test_syntax_two_options('F1') == ('F1', 0, 1)
+    assert cli.do_test_syntax_two_options('F1 -f2 10') == ('F1', 10, 1)
+    assert cli.do_test_syntax_two_options('F1 -f3 20') == ('F1', 0, 20)
+    assert cli.do_test_syntax_two_options('F1 -f2 30 -f3 40') == ('F1', 30, 40)
