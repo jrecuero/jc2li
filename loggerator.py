@@ -28,6 +28,8 @@ import sys
 import logging
 import logging.handlers
 import logging.config
+import io
+from contextlib import redirect_stdout
 
 #
 # import dbase python modules
@@ -336,6 +338,9 @@ class Loggerator(object):
     be reused.
     """
 
+    __redirect = False
+    __buffer = None
+
     # =========================================================================
     def __init__(self, name, color, out=sys.stdout, fname='cmd.log'):
         """Loggerator class constructor.
@@ -395,8 +400,26 @@ class Loggerator(object):
         Returns:
             None
         """
-        self.out.write(str(message))
-        self.out.write('\n')
+        if Loggerator.__redirect:
+            with io.StringIO() as buf, redirect_stdout(buf):
+                print(str(message))
+                Loggerator.__buffer.append(buf.getvalue())
+        else:
+            self.out.write(str(message))
+            self.out.write('\n')
+
+    # =========================================================================
+    def redirect_out_to(self, out_buff):
+        Loggerator.__redirect = True
+        Loggerator.__buffer = out_buff
+
+    # =========================================================================
+    def stop_redirect_out(self):
+        Loggerator.__redirect = False
+
+    # =========================================================================
+    def get_redirect_buffer(self):
+        return Loggerator.__buffer
 
     # =========================================================================
     def display(self, message, **kwargs):

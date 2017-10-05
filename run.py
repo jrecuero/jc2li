@@ -5,7 +5,7 @@ import importlib
 import json
 
 
-MODULE = 'cli'
+MODULE = 'run'
 LOGGER = loggerator.getLoggerator(MODULE)
 
 
@@ -102,6 +102,21 @@ def execute_file(cli, filename, raw=False):
         cli.load_commands_from_file(filename)
 
 
+def debug(cli, filename):
+    try:
+        output = []
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        LOGGER.redirect_out_to(output)
+        for entry in data:
+            cli.exec_user_input(entry['command'])
+        LOGGER.stop_redirect_out()
+        print('redirected output is: ')
+        print(output)
+    except OSError:
+        LOGGER.error('File not found {}'.format(filename), out=True)
+
+
 if __name__ == '__main__':
     LOGGER.info("CLI APPLICATION", extended=(('FG', 'BLUE'), ('BG', 'YELLOW'), ))
     LOGGER.info("---------------", "RED")
@@ -113,6 +128,7 @@ if __name__ == '__main__':
     parser.add_argument('--execute', '-E', action='store', help='Execute command', metavar='command')
     parser.add_argument('--file', '-f', action='store', help='Execute command inside file', metavar='file')
     parser.add_argument('--raw', '-r', action='store_true', help='File in raw format')
+    parser.add_argument('--debug', action='store_true', help='Debug file')
     args = parser.parse_args()
 
     if args.module is None:
@@ -123,6 +139,10 @@ if __name__ == '__main__':
 
     if args.execute:
         execute_command(cli, args.execute)
+        sys.exit(0)
+
+    if args.debug and args.file:
+        debug(cli, args.file)
         sys.exit(0)
 
     if args.file:
