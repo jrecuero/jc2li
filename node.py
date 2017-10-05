@@ -1,12 +1,42 @@
+__docformat__ = 'restructuredtext en'
+
+#------------------------------------------------------------------------------
+#  _                            _
+# (_)_ __ ___  _ __   ___  _ __| |_ ___
+# | | '_ ` _ \| '_ \ / _ \| '__| __/ __|
+# | | | | | | | |_) | (_) | |  | |_\__ \
+# |_|_| |_| |_| .__/ \___/|_|   \__|___/
+#             |_|
+#------------------------------------------------------------------------------
+#
 from rules import RuleHandler as RH
 from clierror import CliException
 from argtypes import Prefix
 import loggerator
 
-MODULE = 'NODE'
+
+#------------------------------------------------------------------------------
+#
+#   ___ ___  _ __  ___| |_ __ _ _ __ | |_ ___
+#  / __/ _ \| '_ \/ __| __/ _` | '_ \| __/ __|
+# | (_| (_) | | | \__ \ || (_| | | | | |_\__ \
+#  \___\___/|_| |_|___/\__\__,_|_| |_|\__|___/
+#
+#------------------------------------------------------------------------------
+#
+MODULE = 'CLI.node'
 logger = loggerator.getLoggerator(MODULE)
 
 
+#------------------------------------------------------------------------------
+#       _                     _       __ _       _ _   _
+#   ___| | __ _ ___ ___    __| | ___ / _(_)_ __ (_) |_(_) ___  _ __  ___
+#  / __| |/ _` / __/ __|  / _` |/ _ \ |_| | '_ \| | __| |/ _ \| '_ \/ __|
+# | (__| | (_| \__ \__ \ | (_| |  __/  _| | | | | | |_| | (_) | | | \__ \
+#  \___|_|\__,_|___/___/  \__,_|\___|_| |_|_| |_|_|\__|_|\___/|_| |_|___/
+#
+#------------------------------------------------------------------------------
+#
 class Node(object):
     """Node class provides a container for every node in the syntax tree.
     """
@@ -489,6 +519,8 @@ class Node(object):
         return self.to_str(0)
 
 
+#------------------------------------------------------------------------------
+#
 class CteNode(Node):
     """CteNode class derives from Node and it  provides a container
     for every node that can contain a constant.
@@ -517,6 +549,8 @@ class CteNode(Node):
         return self if self.name == name else None
 
 
+#------------------------------------------------------------------------------
+#
 class PrefixNode(Node):
     """PrefixNode class derives from Node and it provides a container for
     any node that keeps a prefix for a parameter.
@@ -589,6 +623,8 @@ class PrefixNode(Node):
         pass
 
 
+#------------------------------------------------------------------------------
+#
 class FreeformNode(Node):
     """FreeformNode class derives from Node and it  provides a container
     for every node that can contain any kind of information.
@@ -630,6 +666,8 @@ class FreeformNode(Node):
         return self
 
 
+#------------------------------------------------------------------------------
+#
 class Hook(Node):
     """Hook class provides a container for every node that not contains any
     argument information but is used to provides different branches in the
@@ -813,6 +851,8 @@ class Hook(Node):
         return "{}Hook.{}\n".format(indent, self.label)
 
 
+#------------------------------------------------------------------------------
+#
 class Loop(Hook):
     """Loop class provides a container for every node that not contains any
     argument information but is used to provides different loops in the
@@ -879,6 +919,8 @@ class Loop(Hook):
         return None
 
 
+#------------------------------------------------------------------------------
+#
 class Start(Hook):
     """Start class provides a container for every node that not contains any
     argument information but is used to provides the root node fo the syntax
@@ -908,6 +950,8 @@ class Start(Hook):
         return "{}Start.{}\n".format(indent, self.label)
 
 
+#------------------------------------------------------------------------------
+#
 class End(Hook):
     """Start class provides a container for every node that not contains any
     argument information but is used to provides the last node fo the syntax

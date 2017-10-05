@@ -1,11 +1,33 @@
+__docformat__ = 'restructuredtext en'
+
+#------------------------------------------------------------------------------
+#  _                            _
+# (_)_ __ ___  _ __   ___  _ __| |_ ___
+# | | '_ ` _ \| '_ \ / _ \| '__| __/ __|
+# | | | | | | | |_) | (_) | |  | |_\__ \
+# |_|_| |_| |_| .__/ \___/|_|   \__|___/
+#             |_|
+#------------------------------------------------------------------------------
+#
 from cli import Cli
 from argtypes import CliType, Int, Str
 import shlex
 from decorators import argo, syntax, setsyntax
 import loggerator
 
-MODULE = 'CliCommands'
+
+#------------------------------------------------------------------------------
+#
+#   ___ ___  _ __  ___| |_ __ _ _ __ | |_ ___
+#  / __/ _ \| '_ \/ __| __/ _` | '_ \| __/ __|
+# | (_| (_) | | | \__ \ || (_| | | | | |_\__ \
+#  \___\___/|_| |_|___/\__\__,_|_| |_|\__|___/
+#
+#------------------------------------------------------------------------------
+#
+MODULE = 'CLI.commands'
 LOGGER = loggerator.getLoggerator(MODULE)
+EXPORT = 'CliCommands'
 
 # import sys
 # import os
@@ -14,6 +36,15 @@ LOGGER = loggerator.getLoggerator(MODULE)
 # rpdb2.start_embedded_debugger("jc2li")
 
 
+#------------------------------------------------------------------------------
+#       _                     _       __ _       _ _   _
+#   ___| | __ _ ___ ___    __| | ___ / _(_)_ __ (_) |_(_) ___  _ __  ___
+#  / __| |/ _` / __/ __|  / _` |/ _ \ |_| | '_ \| | __| |/ _ \| '_ \/ __|
+# | (__| | (_| \__ \__ \ | (_| |  __/  _| | | | | | |_| | (_) | | | \__ \
+#  \___|_|\__,_|___/___/  \__,_|\___|_| |_|_| |_|_|\__|_|\___/|_| |_|___/
+#
+#------------------------------------------------------------------------------
+#
 class T_Tenant(CliType):
 
     DEFAULT = ["COMMON", "DEFAULT", "SINGLE", "MULTI"]
@@ -32,6 +63,8 @@ class T_Tenant(CliType):
         return self._tenants
 
 
+#------------------------------------------------------------------------------
+#
 class T_System(CliType):
 
     def __init__(self, **kwargs):
@@ -46,6 +79,8 @@ class T_System(CliType):
         return self._systems
 
 
+#------------------------------------------------------------------------------
+#
 class SuperInnerMode(Cli):
 
     @Cli.command('inner')
@@ -55,6 +90,8 @@ class SuperInnerMode(Cli):
         LOGGER.display('super-inner command: {}'.format(shlex.split(line)))
 
 
+#------------------------------------------------------------------------------
+#
 class InnerMode(Cli):
 
     @Cli.command('inner')
@@ -72,6 +109,8 @@ class InnerMode(Cli):
         new_cli.run_mode(prompt='Super-Inner> ')
 
 
+#------------------------------------------------------------------------------
+#
 class CliCommands(Cli):
 
     def __init__(self):

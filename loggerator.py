@@ -29,7 +29,7 @@ import logging
 import logging.handlers
 import logging.config
 import io
-from contextlib import redirect_stdout
+# from contextlib import redirect_stdout
 
 #
 # import dbase python modules
@@ -338,9 +338,6 @@ class Loggerator(object):
     be reused.
     """
 
-    __redirect = False
-    __buffer = None
-
     # =========================================================================
     def __init__(self, name, color, out=sys.stdout, fname='cmd.log'):
         """Loggerator class constructor.
@@ -388,7 +385,10 @@ class Loggerator(object):
         self.defaultColor['display'] = None
         self.defaultColor['warning'] = (('FG', 'RED'), )
         self.defaultColor['error']   = (('FG', 'WHITE'), ('BG', 'RED'))
-        self.out = out
+        self.__out = out
+        self.__redirect = False
+        self.__buffer = None
+        self.__save_out = None
 
     # =========================================================================
     def _out(self, message):
@@ -400,26 +400,61 @@ class Loggerator(object):
         Returns:
             None
         """
-        if Loggerator.__redirect:
-            with io.StringIO() as buf, redirect_stdout(buf):
-                print(str(message))
-                Loggerator.__buffer.append(buf.getvalue())
-        else:
-            self.out.write(str(message))
-            self.out.write('\n')
+        self.__out.write(str(message))
+        self.__out.write('\n')
+        if self.__redirect:
+            self.__buffer.append(self.__out.getvalue())
 
     # =========================================================================
-    def redirect_out_to(self, out_buff):
-        Loggerator.__redirect = True
-        Loggerator.__buffer = out_buff
+    def redirect_out_to(self, out_buff=None):
+        """Redirects loggerator output to a temporal buffer.
+
+        Args:
+            out_buff (list) : Standard output will be copied to this buffer.
+
+        Returns:
+            bool : True if redirection was created, False, else
+        """
+        if not self.__redirect:
+            self.__redirect = True
+            self.__buffer = out_buff if out_buff else []
+            self.__save_out = self.__out
+            self.__out = io.StringIO()
+            return True
+        return False
 
     # =========================================================================
     def stop_redirect_out(self):
-        Loggerator.__redirect = False
+        """Stops loggerator output redirection.
+
+        Returns:
+            bool : True if redirect could be stopped, False else.
+        """
+        if self.__redirect:
+            self.__redirect = False
+            self.__out = self.__save_out
+            self.__save_out = None
+            return True
+        return False
 
     # =========================================================================
-    def get_redirect_buffer(self):
-        return Loggerator.__buffer
+    def get_redirect_buffer(self, all_buff=False):
+        """Retrieves the content that has been redirected.
+
+        Args:
+            all_buff (bool) : True if all buffer content has to be retrieved,\
+                    False if only the last entry.
+
+        Returns:
+            :any:`list` or str : List (when all_buff is True) or String (when\
+                    all_buff is False) with the output being redirected.
+        """
+        if self.__buffer:
+            if all_buff:
+                return self.__buffer
+            else:
+                return self.__buffer[-1]
+        return []
 
     # =========================================================================
     def display(self, message, **kwargs):
@@ -645,18 +680,3 @@ class Loggerator(object):
         msg = self._extended_log(message, 'error', color=color, mode=mode, *args, **kwargs)
         if kwargs.get('out', False):
             self._out(msg)
-
-
-#------------------------------------------------------------------------------
-#                  _
-#  _ __ ___   __ _(_)_ __
-# | '_ ` _ \ / _` | | '_ \
-# | | | | | | (_| | | | | |
-# |_| |_| |_|\__,_|_|_| |_|
-#
-#------------------------------------------------------------------------------
-#
-
-if __name__ == "__main__":
-    lg = Loggerator('test', FG_RED)
-    lg.debug('testing')

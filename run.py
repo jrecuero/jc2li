@@ -1,3 +1,14 @@
+__docformat__ = 'restructuredtext en'
+
+#------------------------------------------------------------------------------
+#  _                            _
+# (_)_ __ ___  _ __   ___  _ __| |_ ___
+# | | '_ ` _ \| '_ \ / _ \| '__| __/ __|
+# | | | | | | | |_) | (_) | |  | |_\__ \
+# |_|_| |_| |_| .__/ \___/|_|   \__|___/
+#             |_|
+#------------------------------------------------------------------------------
+#
 import sys
 import loggerator
 import argparse
@@ -5,10 +16,28 @@ import importlib
 import json
 
 
-MODULE = 'run'
+#------------------------------------------------------------------------------
+#
+#   ___ ___  _ __  ___| |_ __ _ _ __ | |_ ___
+#  / __/ _ \| '_ \/ __| __/ _` | '_ \| __/ __|
+# | (_| (_) | | | \__ \ || (_| | | | | |_\__ \
+#  \___\___/|_| |_|___/\__\__,_|_| |_|\__|___/
+#
+#------------------------------------------------------------------------------
+#
+MODULE = 'CLI.run'
 LOGGER = loggerator.getLoggerator(MODULE)
 
 
+#------------------------------------------------------------------------------
+#            _                     _   _
+#  ___ _   _| |__  _ __ ___  _   _| |_(_)_ __   ___  ___
+# / __| | | | '_ \| '__/ _ \| | | | __| | '_ \ / _ \/ __|
+# \__ \ |_| | |_) | | | (_) | |_| | |_| | | | |  __/\__ \
+# |___/\__,_|_.__/|_|  \___/ \__,_|\__|_|_| |_|\___||___/
+#
+#------------------------------------------------------------------------------
+#
 def load_module(module, skip_exception=False):
     """Loads the given module.
 
@@ -42,9 +71,9 @@ def create_cli(module):
         :class:`Cli` : Cli object.
     """
     try:
-        cli = getattr(module, module.MODULE)()
+        cli = getattr(module, module.EXPORT)()
     except AttributeError:
-        LOGGER.error("Module {0} don't have MODULE attribute".format(module), out=True)
+        LOGGER.error("Module {0} don't have EXPORT attribute".format(module), out=True)
         sys.exit(0)
     return cli
 
@@ -60,7 +89,7 @@ def setup_kwargs(cli):
     """
     try:
         cli_kwargs = {'prompt': 'CLI> '}
-        cli_kwargs.update(getattr(mod, mod.MODULE_KWARGS))
+        cli_kwargs.update(getattr(mod, mod.EXPORT_KWARGS))
     except AttributeError:
         pass
     return cli_kwargs
@@ -102,47 +131,60 @@ def execute_file(cli, filename, raw=False):
         cli.load_commands_from_file(filename)
 
 
-def debug(cli, filename):
+def test(cli, module, filename):
     try:
-        output = []
         with open(filename, 'r') as f:
             data = json.load(f)
-        LOGGER.redirect_out_to(output)
+        log_module = getattr(module, 'MODULE')
+        cli_logger = loggerator.getLoggerator(log_module)
+        cli_logger.redirect_out_to()
         for entry in data:
             cli.exec_user_input(entry['command'])
-        LOGGER.stop_redirect_out()
-        print('redirected output is: ')
-        print(output)
+        cli_logger.stop_redirect_out()
+        LOGGER.display('redirected output is: ')
+        output = cli_logger.get_redirect_buffer()
+        LOGGER.display(cli_logger.get_redirect_buffer())
+        LOGGER.display(output.rstrip().split('\n'))
+        LOGGER.display(cli_logger.get_redirect_buffer(True))
     except OSError:
         LOGGER.error('File not found {}'.format(filename), out=True)
 
 
+#------------------------------------------------------------------------------
+#                  _
+#  _ __ ___   __ _(_)_ __
+# | '_ ` _ \ / _` | | '_ \
+# | | | | | | (_| | | | | |
+# |_| |_| |_|\__,_|_|_| |_|
+#
+#------------------------------------------------------------------------------
+#
 if __name__ == '__main__':
     LOGGER.info("CLI APPLICATION", extended=(('FG', 'BLUE'), ('BG', 'YELLOW'), ))
     LOGGER.info("---------------", "RED")
 
     parser = argparse.ArgumentParser(description="CLI application launcher.")
-    parser.add_argument('--module', '-M', action='store', help='Module with CLI commands', metavar='module')
+    parser.add_argument('--mod', '-M', action='store', help='Module with CLI commands', metavar='MODULE')
     parser.add_argument('--echo', action='store_true', help='Echo mode')
     parser.add_argument('--exception', '-X', action='store_true', help='Exception mode')
-    parser.add_argument('--execute', '-E', action='store', help='Execute command', metavar='command')
-    parser.add_argument('--file', '-f', action='store', help='Execute command inside file', metavar='file')
+    parser.add_argument('--exec', '-E', action='store', help='Execute command', metavar='CMD')
+    parser.add_argument('--file', '-f', action='store', help='Execute command inside file', metavar='FILE')
     parser.add_argument('--raw', '-r', action='store_true', help='File in raw format')
-    parser.add_argument('--debug', action='store_true', help='Debug file')
+    parser.add_argument('--test', '-t', action='store', help='Test file with commands and results', metavar='FILE')
     args = parser.parse_args()
 
-    if args.module is None:
+    if args.mod is None:
         sys.exit(0)
 
-    mod = load_module(args.module, args.exception)
+    mod = load_module(args.mod, args.exception)
     cli = create_cli(mod)
 
-    if args.execute:
-        execute_command(cli, args.execute)
+    if args.exec:
+        execute_command(cli, args.exec)
         sys.exit(0)
 
-    if args.debug and args.file:
-        debug(cli, args.file)
+    if args.test:
+        test(cli, mod, args.test)
         sys.exit(0)
 
     if args.file:
