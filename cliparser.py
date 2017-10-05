@@ -1,4 +1,8 @@
 import pyparsing as pp
+import loggerator
+
+MODULE = 'CliParser'
+LOGGER = loggerator.getLoggerator(MODULE)
 
 
 def _map_parent_type_to_op(parent_type):
@@ -77,7 +81,7 @@ def process_tokens(tokens, withend=True, parent_type=None):
                 op = '1'
             rules.append({'counter': counter, 'type': op, 'args': process_tokens(tok, False, op)})
         else:
-            print('Invalid Syntax')
+            LOGGER.error('Invalid Syntax', out=True)
         counter += 1
     if withend:
         rules.append({'counter': counter, 'type': '0', 'args': None})
@@ -173,8 +177,8 @@ if __name__ == '__main__':
     # toks = get_syntax().parseString("tenant t1 [t2 | t3]*")
     toks = get_syntax().parseString("tenant t1 [t2]? [t3]?")
 
-    print(toks)
+    LOGGER.display(toks, log=False)
     cmd, rules = _process_syntax(toks)
-    print(cmd)
+    LOGGER.display(cmd, log=False)
     for rule in rules:
-        print(rule)
+        LOGGER.display(rule, log=False)

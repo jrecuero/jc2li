@@ -281,15 +281,14 @@ def getLoggerator(name, color=(BOLD_ON + FG_BLACK)):
     It create a new loggerator to a component, if there is not any instance for
     that component. If there is an instance, it is returned.
 
-    :type name: string
-    :param name: Component name. It is used to assign a loggerator instance.
+    Args:
+        name (str) : Component name. It is used to assign a loggerator instance.
 
-    :type color: string
-    :param color: Color to display the component name.
+        color (str) : Color to display the component name.
 
-    :rtype: loggerator instance.
-    :return: Create a new loggerator instance if there is not anyone for the
-        given component, or return the one previously created.
+    Returns:
+        Loggerator : Create a new loggerator instance if there is not anyone\
+                for the given component, or return the one previously created.
     """
     if name not in _loggerDB:
         _loggerDB[name] = Loggerator(name, color)
@@ -310,6 +309,9 @@ def getLoggerator(name, color=(BOLD_ON + FG_BLACK)):
 # =============================================================================
 #
 class ContextFilter(logging.Filter):
+    """ContextFilter class allows to create two new log operations: TRACE and
+    DISPLAY to be used.
+    """
 
     def filter(self, record):
         fr = sys._getframe(8)
@@ -332,9 +334,6 @@ class Loggerator(object):
 
     Component name is given when Loggerator instance is created, and it will
     be reused.
-
-    :type loggerator: logging instance
-    :ivar loggerator: logging instance, which will be used to log messages.
     """
 
     # =========================================================================
@@ -349,18 +348,15 @@ class Loggerator(object):
             parameter is present, then log information will be sent to
             the logfile instead of to the display.
 
-        :type name: string
-        :param name: Name of the component for logging information.
+        Args:
+            name (str) : Name of the component for logging information.
 
-        :type color: string
-        :param color: String containing the color to display the component name
-            in all logs.
+            color (str) : String containing the color to display the component\
+                    name in all logs.
 
-        :type out: stdout
-        :param out: standard output
+            out (sys.stdout) : standard output
 
-        :type fname: string
-        :param fname: filename for the log file
+            fname (str) : filename for the log file
         """
         self.loggerator = logging.getLogger(name[0:15].center(16, '*'))
         self.loggerator.setLevel(logging.DEBUG)
@@ -390,7 +386,20 @@ class Loggerator(object):
         self.out = out
 
     # =========================================================================
-    def display(self, message):
+    def _out(self, message):
+        """Sends a message in the default standard output provided.
+
+        Args:
+            message (str) : string with the message to be displayed.
+
+        Returns:
+            None
+        """
+        self.out.write(str(message))
+        self.out.write('\n')
+
+    # =========================================================================
+    def display(self, message, **kwargs):
         """Display a message in the default standard output provided.
 
         Args:
@@ -399,12 +408,20 @@ class Loggerator(object):
         Returns:
             None
         """
-        self._extendedLog(message, 'display')
-        self.out.write(str(message))
-        self.out.write('\n')
+        self._out(message)
+        if kwargs.get('log', True):
+            self._extendedLog(message, 'display')
 
     # =========================================================================
     def _filterLevel(self, level):
+        """Translate new logging operation TRACE and DISPLAY.
+
+        Args:
+            level (str) : Logging level to be used.
+
+        Returns:
+            int : Loggin level number to be used by the module.
+        """
         if level in ['debug', 'info', 'warning', 'error']:
             return level
         elif level == 'trace':
@@ -421,14 +438,16 @@ class Loggerator(object):
         It takes an input parameter, which could be a list or a string.
         If the parameter is a string, it is supposed to set as a foreground
         color.
+
         If the parameter is a list, it is supposed to set the foreground and/or
         background color.
 
-        :type color: list, str
-        :param color: foregorund color, or list with fore/background color.
+        Args:
+            color (:any:`list` or :any:`str`) : foregorund color, or list\
+                    with fore/background color.
 
-        :rtype: str
-        :return: string to be used as color for log message.
+        Returns:
+            str : string to be used as color for log message.
         """
         if isinstance(color, str):
             color = (('FG', color), )
@@ -440,17 +459,13 @@ class Loggerator(object):
 
         It logs the given message with the given color.
 
-        :type message: string
-        :param message: Debug message to be logged.
+        Args:
+            message (str) : Debug message to be logged.
 
-        :type color: list, str
-        :param color: foregorund color, or list with fore/background color.
+            color (:any:`list` or :any:`str`) : foregorund color, or list\
+                    with fore/background color.
 
-        :type args: list
-        :param args: List of parameters.
-
-        :type kwargs: dict
-        :param kwargs: Dictionary of parameters
+            level (str) : Logging level.
         """
         color = self._setColor(color)
         formattedMessage = '%s%s%s' % (color, message, COL_RESET)
@@ -465,8 +480,8 @@ class Loggerator(object):
     def getLoggerator(self):
         """Return the loggerator.
 
-        :rtype: logging
-        :return: Return the logging instance used for the current loggerator.
+        Returns:
+            Logging : Return the logging instance used for the current loggerator.
         """
         return self.loggerator
 
@@ -476,14 +491,10 @@ class Loggerator(object):
 
         It logs a debug message.
 
-        :type message: string
-        :param message: Debug message to be logged.
+        Args:
+            message (str) : Debug message to be logged.
 
-        :type args: list
-        :param args: List of parameters.
-
-        :type kwargs: dict
-        :param kwargs: Dictionary of parameters
+            level (str) : Logging level.
         """
         color = kwargs.get('color', None)
         mode = kwargs.pop('mode', 'FG')
@@ -503,17 +514,17 @@ class Loggerator(object):
 
         It logs a debug message.
 
-        :type message: string
-        :param message: Debug message to be logged.
+        Args:
+            message (str) : Debug message to be logged.
 
-        :type color: list, str
-        :param color: foregorund color, or list with fore/background color.
+            color (:any:`list` or :any:`str`) : foregorund color, or list\
+                    with fore/background color.
 
-        :type args: list
-        :param args: List of parameters.
+            mode (str) : Display mode. It could be 'FG' for foreground or\
+                    'BG' for background.
 
-        :type kwargs: dict
-        :param kwargs: Dictionary of parameters
+        Returns:
+            None
         """
         self._extendedLog(message, 'debug', color=color, mode=mode, *args, **kwargs)
 
@@ -523,17 +534,17 @@ class Loggerator(object):
 
         It logs an information message.
 
-        :type message: string
-        :param message: Information message to be logged.
+        Args:
+            message (str) : Debug message to be logged.
 
-        :type color: list, str
-        :param color: foregorund color, or list with fore/background color.
+            color (:any:`list` or :any:`str`) : foregorund color, or list\
+                    with fore/background color.
 
-        :type args: list
-        :param args: List of parameters.
+            mode (str) : Display mode. It could be 'FG' for foreground or\
+                    'BG' for background.
 
-        :type kwargs: dict
-        :param kwargs: Dictionary of parameters
+        Returns:
+            None
         """
         self._extendedLog(message, 'info', color=color, mode=mode, *args, **kwargs)
 
@@ -543,17 +554,17 @@ class Loggerator(object):
 
         It logs a trace message.
 
-        :type message: string
-        :param message: Trace message to be logged.
+        Args:
+            message (str) : Debug message to be logged.
 
-        :type color: list, str
-        :param color: foregorund color, or list with fore/background color.
+            color (:any:`list` or :any:`str`) : foregorund color, or list\
+                    with fore/background color.
 
-        :type args: list
-        :param args: List of parameters.
+            mode (str) : Display mode. It could be 'FG' for foreground or\
+                    'BG' for background.
 
-        :type kwargs: dict
-        :param kwargs: Dictionary of parameters
+        Returns:
+            None
         """
         self._extendedLog(message, 'trace', color=color, mode=mode, *args, **kwargs)
 
@@ -563,19 +574,21 @@ class Loggerator(object):
 
         It logs a warning message.
 
-        :type message: string
-        :param message: Warning message to be logged.
+        Args:
+            message (str) : Debug message to be logged.
 
-        :type color: list, str
-        :param color: foregorund color, or list with fore/background color.
+            color (:any:`list` or :any:`str`) : foregorund color, or list\
+                    with fore/background color.
 
-        :type args: list
-        :param args: List of parameters.
+            mode (str) : Display mode. It could be 'FG' for foreground or\
+                    'BG' for background.
 
-        :type kwargs: dict
-        :param kwargs: Dictionary of parameters
+        Returns:
+            None
         """
         self._extendedLog(message, 'warning', color=color, mode=mode, *args, **kwargs)
+        if kwargs.get('out', False):
+            self._out(message)
 
     # =========================================================================
     def error(self, message, color=None, mode='FG', *args, **kwargs):
@@ -583,19 +596,21 @@ class Loggerator(object):
 
         It logs an error message.
 
-        :type message: string
-        :param message: Error message to be logged.
+        Args:
+            message (str) : Debug message to be logged.
 
-        :type color: list, str
-        :param color: foregorund color, or list with fore/background color.
+            color (:any:`list` or :any:`str`) : foregorund color, or list\
+                    with fore/background color.
 
-        :type args: list
-        :param args: List of parameters.
+            mode (str) : Display mode. It could be 'FG' for foreground or\
+                    'BG' for background.
 
-        :type kwargs: dict
-        :param kwargs: Dictionary of parameters
+        Returns:
+            None
         """
         self._extendedLog(message, 'error', color=color, mode=mode, *args, **kwargs)
+        if kwargs.get('out', False):
+            self._out(message)
 
 
 #------------------------------------------------------------------------------

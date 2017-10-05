@@ -4,6 +4,10 @@ from base import CliBase
 from argtypes import Str, Int
 from decorators import setsyntax, syntax, argo
 from common import SYNTAX_ATTR
+import loggerator
+
+MODULE = 'Cli'
+LOGGER = loggerator.getLoggerator(MODULE)
 
 
 class Cli(CliBase):
@@ -41,9 +45,9 @@ class Cli(CliBase):
         """
         if name == 'None':
             for command in self.commands:
-                print('- {0} : {1}'.format(command, self.get_command_desc(command)))
+                LOGGER.display('- {0} : {1}'.format(command, self.get_command_desc(command)))
         else:
-            print('- {0} : {1}'.format(name, self.get_command_desc(name)))
+            LOGGER.display('- {0} : {1}'.format(name, self.get_command_desc(name)))
 
     @CliBase.command()
     @setsyntax
@@ -60,11 +64,11 @@ class Cli(CliBase):
                 command_cb = self.get_command_cb(command)
                 # Required for partial methods.
                 if hasattr(command_cb, SYNTAX_ATTR):
-                    print('> {0}'.format(getattr(command_cb, SYNTAX_ATTR)))
+                    LOGGER.display('> {0}'.format(getattr(command_cb, SYNTAX_ATTR)))
                 elif hasattr(command_cb, 'func') and hasattr(command_cb.func, SYNTAX_ATTR):
-                    print('> {0}'.format(getattr(command_cb.func, SYNTAX_ATTR)))
+                    LOGGER.display('> {0}'.format(getattr(command_cb.func, SYNTAX_ATTR)))
                 else:
-                    print('> {0}'.format(command))
+                    LOGGER.display('> {0}'.format(command))
 
     @CliBase.command('shell')
     def do_shell(self, line):
@@ -73,9 +77,9 @@ class Cli(CliBase):
         Args:
             line (str): String with shell command to be executed.
         """
-        print("running shell command:", line)
+        LOGGER.display("running shell command:", line)
         output = os.popen(line).read()
-        print(output)
+        LOGGER.display(output)
 
     @CliBase.command()
     @setsyntax
@@ -93,14 +97,14 @@ class Cli(CliBase):
     def do_start_recording(self, line):
         """Starts recording commands.
         """
-        print('start-recording commands')
+        LOGGER.display('start-recording commands')
         self.start_recording()
 
     @CliBase.command("stop-recording")
     def do_stop_recording(self, line):
         """Stops recording commands.
         """
-        print('stop-recording commands')
+        LOGGER.display('stop-recording commands')
         self.stop_recording()
 
     @CliBase.command()
@@ -117,7 +121,7 @@ class Cli(CliBase):
             end (int) : Integer with last command to display.
         """
         end = None if end == -1 else end
-        print("display-recording from {0} to {1}".format(start, end))
+        LOGGER.display("display-recording from {0} to {1}".format(start, end))
         self.display_recording(start, end)
 
     @CliBase.command()
@@ -134,7 +138,7 @@ class Cli(CliBase):
             end (int) : Integer with last command to clear.
         """
         end = None if end == -1 else end
-        print("clear-recording from {0} to {1}".format(start, end))
+        LOGGER.display("clear-recording from {0} to {1}".format(start, end))
         self.clear_recording(start, end)
 
     @CliBase.command()
@@ -154,5 +158,5 @@ class Cli(CliBase):
             end (int) : Integer with last command to save.
         """
         end = None if end == -1 else end
-        print("save-recording to {0} from {1} to {2}".format(filename, start, end))
+        LOGGER.display("save-recording to {0} from {1} to {2}".format(filename, start, end))
         self.save_recording(filename, start, end)

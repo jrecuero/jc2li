@@ -454,7 +454,7 @@ class CliBase(object):
         """
         records = self.select_recording(from_record, to_record)
         for i, record in enumerate(records):
-            print('{0}: {1}'.format(i, record))
+            LOGGER.display('{0}: {1}'.format(i, record))
 
     def save_recording(self, filename, from_record=None, to_record=None):
         """
@@ -542,7 +542,7 @@ class CliBase(object):
         while True:
             user_input = self.run_prompt(**kwargs)
             if kwargs.get('echo', False):
-                print(user_input)
+                LOGGER.display(user_input)
             if not self.exec_user_input(user_input, **kwargs):
                 return
 
@@ -568,7 +568,7 @@ class CliBase(object):
         try:
             self.cmdloop(**kwargs)
         except KeyboardInterrupt:
-            print("")
+            LOGGER.display("")
             pass
 
     def load_commands_from_json(self, json_data):
@@ -599,9 +599,12 @@ class CliBase(object):
         Returns:
             None
         """
-        with open(filename, 'r') as f:
-            data = json.load(f)
-        self.load_commands_from_json(json.dumps(data))
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+            self.load_commands_from_json(json.dumps(data))
+        except OSError:
+            LOGGER.error('File not found {}'.format(filename), out=True)
 
     @staticmethod
     def command(label=None, desc=None):

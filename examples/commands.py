@@ -56,7 +56,7 @@ class CliCommands(Cli):
     def do_cli(self, line):
         """This is the basic CLI command:\t(Cmd) cli arg1 arg2 arg3 ...
         """
-        print('cli arguments: {}'.format(shlex.split(line)))
+        LOGGER.display('cli arguments: {}'.format(shlex.split(line)))
 
     @Cli.command('the-command')
     @setsyntax
@@ -65,7 +65,7 @@ class CliCommands(Cli):
     def do_command(self, info):
         """This is the basic CLI command.
         """
-        print('command arguments: {}'.format((info)))
+        LOGGER.display('command arguments: {}'.format((info)))
 
     @Cli.command('node')
     @setsyntax
@@ -76,8 +76,8 @@ class CliCommands(Cli):
     def do_node(self, name, nid, nsig):
         """Just display a node.
         """
-        print('Running the node')
-        print(name, nid, nsig)
+        LOGGER.display('Running the node')
+        LOGGER.display(name, nid, nsig)
 
     @Cli.command('tenant')
     @setsyntax
@@ -87,7 +87,7 @@ class CliCommands(Cli):
     def do_tenant(self, tname, tid):
         """Display tenant information.
         """
-        print(tname, tid)
+        LOGGER.display(tname, tid)
 
     @Cli.command('interface')
     @setsyntax
@@ -98,7 +98,7 @@ class CliCommands(Cli):
     def do_interface(self, name, iid, iname):
         """Display tenant information.
         """
-        print('interface is {0} {1} | {2}'.format(name, iid, iname))
+        LOGGER.display('interface is {0} {1} | {2}'.format(name, iid, iname))
 
     @Cli.command('leaf')
     @setsyntax
@@ -109,7 +109,7 @@ class CliCommands(Cli):
     def do_leaf(self, name, lid, laddr):
         """Display leaf information.
         """
-        print('leaf {0} has id {1} with address {2}'.format(name, lid, laddr))
+        LOGGER.display('leaf {0} has id {1} with address {2}'.format(name, lid, laddr))
 
     @Cli.command()
     @setsyntax
@@ -120,7 +120,7 @@ class CliCommands(Cli):
     def do_spine(self, name, sid, saddr):
         """Display spine information.
         """
-        print('spine {0} has id {1} with address {2}'.format(name, sid, saddr))
+        LOGGER.display('spine {0} has id {1} with address {2}'.format(name, sid, saddr))
 
     @Cli.command()
     @setsyntax
@@ -131,7 +131,7 @@ class CliCommands(Cli):
     def do_configure(self, name, tname, system):
         """Display tenant or system configuration.
         """
-        print('configure {0} tenant {1} or system {2}'.format(name, tname, system))
+        LOGGER.display('configure {0} tenant {1} or system {2}'.format(name, tname, system))
 
     @Cli.command()
     @setsyntax
@@ -141,7 +141,7 @@ class CliCommands(Cli):
     def do_dbg(self, name, options):
         """Display dbg information
         """
-        print('dbg {0} options {1}'.format(name, options))
+        LOGGER.display('dbg {0} options {1}'.format(name, options))
 
     @Cli.command()
     @setsyntax
@@ -153,4 +153,4 @@ class CliCommands(Cli):
         """Record information.
         """
         end = 'None' if end == -1 else end
-        print("record {0} from {1} to {2}".format(filename, start, end))
+        LOGGER.display("record {0} from {1} to {2}".format(filename, start, end))
