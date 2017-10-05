@@ -46,6 +46,32 @@ class T_System(CliType):
         return self._systems
 
 
+class SuperInnerMode(Cli):
+
+    @Cli.command('inner')
+    def do_inner(self, line):
+        """Super-inner command.
+        """
+        LOGGER.display('super-inner command: {}'.format(shlex.split(line)))
+
+
+class InnerMode(Cli):
+
+    @Cli.command('inner')
+    def do_inner(self, line):
+        """Inner command.
+        """
+        LOGGER.display('inner command: {}'.format(shlex.split(line)))
+
+    @Cli.command('mode')
+    def do_mode(self, line):
+        """Enter in a new mode: super-inner.
+        """
+        LOGGER.display('Entering in new mode: super-inner')
+        new_cli = SuperInnerMode()
+        new_cli.run_mode(prompt='Super-Inner> ')
+
+
 class CliCommands(Cli):
 
     def __init__(self):
@@ -154,3 +180,11 @@ class CliCommands(Cli):
         """
         end = 'None' if end == -1 else end
         LOGGER.display("record {0} from {1} to {2}".format(filename, start, end))
+
+    @Cli.command('mode')
+    def do_mode(self, line):
+        """Enter in a new mode: inner.
+        """
+        LOGGER.display('Entering in new mode: inner')
+        new_cli = InnerMode()
+        new_cli.run_mode(prompt='Inner> ')

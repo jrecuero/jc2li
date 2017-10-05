@@ -34,6 +34,7 @@ class CliBase(object):
     _WALL = {}
     CLI_STYLE = style_from_dict({Token.Toolbar: '#ffffff italic bg:#007777',
                                  Token.RPrompt: 'bg:#ff0066 #ffffff', })
+    __MODES = []
 
     class CliCompleter(Completer):
         """CliCompleter class provide completion to any entry in the command line.
@@ -152,6 +153,10 @@ class CliBase(object):
             :any:`list` : List with all command labels.
         """
         return self.__commands.keys()
+
+    @property
+    def mode_stack(self):
+        return CliBase.__MODES
 
     def get_command_cb(self, command):
         """Get the command callback for the given command label.
@@ -497,6 +502,7 @@ class CliBase(object):
             bool : True if application shoudl continue, False else.
         """
         pre_return = True
+        cb_return = True
         post_return = True
         if user_input:
             line_as_list = user_input.split()
@@ -510,7 +516,7 @@ class CliBase(object):
                 # of it returns False.
                 if pre_return:
                     self.record_command(user_input)
-                    self.exec_command(command, ' '.join(line_as_list[1:]))
+                    cb_return = self.exec_command(command, ' '.join(line_as_list[1:]))
                 # postcmd callback return value can be used to exit the
                 # command loop if it returns False..
                 if kwargs.get('postcmd', False):
@@ -518,7 +524,7 @@ class CliBase(object):
             self.last_cmd = user_input
         else:
             post_return = self.onecmd(user_input)
-        return post_return
+        return post_return if cb_return is not False else cb_return
 
     def cmdloop(self, **kwargs):
         """Method that is called to wait for any user input.
@@ -570,6 +576,29 @@ class CliBase(object):
         except KeyboardInterrupt:
             LOGGER.display("")
             pass
+
+    def run_mode(self, **kwargs):
+        """Enters in a new mode.
+
+        In a new mode, parent commands are not available and the new scope
+        is for commands defined in the created mode.
+
+        Returns:
+            None
+        """
+        mode_name = self.__class__.__name__
+        CliBase.__MODES.append(mode_name)
+        self.run(**kwargs)
+
+    def leave_mode(self, **kwargs):
+        """Exits the running mode.
+
+        Returns:
+            str : Mode exiting name.
+        """
+        if CliBase.__MODES:
+            return CliBase.__MODES.pop()
+        return None
 
     def load_commands_from_json(self, json_data):
         """Loads CLI commands from a JSON variable.

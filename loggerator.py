@@ -380,7 +380,7 @@ class Loggerator(object):
         self.defaultColor['debug']   = (('FG', 'GREEN'), )
         self.defaultColor['info']    = (('FG', 'BLUE'), )
         self.defaultColor['trace']   = (('FG', 'MAGENTA'), )
-        self.defaultColor['display']   = (('FG', 'YELLOW'), )
+        self.defaultColor['display'] = None
         self.defaultColor['warning'] = (('FG', 'RED'), )
         self.defaultColor['error']   = (('FG', 'WHITE'), ('BG', 'RED'))
         self.out = out
@@ -408,9 +408,8 @@ class Loggerator(object):
         Returns:
             None
         """
-        self._out(message)
-        if kwargs.get('log', True):
-            self._extendedLog(message, 'display')
+        msg = self._extended_log(message, 'display', **kwargs)
+        self._out(msg)
 
     # =========================================================================
     def _filterLevel(self, level):
@@ -467,14 +466,26 @@ class Loggerator(object):
 
             level (str) : Logging level.
         """
-        color = self._setColor(color)
-        formattedMessage = '%s%s%s' % (color, message, COL_RESET)
-        function = getattr(self.loggerator, level, None)
-        if function:
-            function(formattedMessage, *args, **kwargs)
+        if color:
+            color = self._setColor(color)
+            formatted_message = '%s%s%s' % (color, message, COL_RESET)
         else:
-            level = self._filterLevel(level)
-            self.loggerator.log(level, formattedMessage, *args, **kwargs)
+            formatted_message = message
+        function = getattr(self.loggerator, level, None)
+        if kwargs.get('log', True):
+            # Remove any kwargs that is not handled by the standard logging
+            # library.
+            if kwargs.get('log', None) is not None:
+                del kwargs['log']
+            if kwargs.get('out', None) is not None:
+                del kwargs['out']
+
+            if function:
+                function(formatted_message, *args, **kwargs)
+            else:
+                level = self._filterLevel(level)
+                self.loggerator.log(level, formatted_message, *args, **kwargs)
+        return formatted_message
 
     # =========================================================================
     def getLoggerator(self):
@@ -486,7 +497,7 @@ class Loggerator(object):
         return self.loggerator
 
     # =========================================================================
-    def _extendedLog(self, message, level, **kwargs):
+    def _extended_log(self, message, level, **kwargs):
         """Debug log.
 
         It logs a debug message.
@@ -506,7 +517,7 @@ class Loggerator(object):
         else:
             useColor = self.defaultColor[level]
         kwargs['color'] = useColor
-        self._log(message, level, **kwargs)
+        return self._log(message, level, **kwargs)
 
     # =========================================================================
     def debug(self, message, color=None, mode='FG', *args, **kwargs):
@@ -526,7 +537,7 @@ class Loggerator(object):
         Returns:
             None
         """
-        self._extendedLog(message, 'debug', color=color, mode=mode, *args, **kwargs)
+        self._extended_log(message, 'debug', color=color, mode=mode, *args, **kwargs)
 
     # =========================================================================
     def info(self, message, color=None, mode='FG', *args, **kwargs):
@@ -546,7 +557,7 @@ class Loggerator(object):
         Returns:
             None
         """
-        self._extendedLog(message, 'info', color=color, mode=mode, *args, **kwargs)
+        self._extended_log(message, 'info', color=color, mode=mode, *args, **kwargs)
 
     # =========================================================================
     def trace(self, message, color=None, mode='FG', *args, **kwargs):
@@ -566,7 +577,7 @@ class Loggerator(object):
         Returns:
             None
         """
-        self._extendedLog(message, 'trace', color=color, mode=mode, *args, **kwargs)
+        self._extended_log(message, 'trace', color=color, mode=mode, *args, **kwargs)
 
     # =========================================================================
     def warning(self, message, color=None, mode='FG', *args, **kwargs):
@@ -586,7 +597,7 @@ class Loggerator(object):
         Returns:
             None
         """
-        self._extendedLog(message, 'warning', color=color, mode=mode, *args, **kwargs)
+        self._extended_log(message, 'warning', color=color, mode=mode, *args, **kwargs)
         if kwargs.get('out', False):
             self._out(message)
 
@@ -608,9 +619,9 @@ class Loggerator(object):
         Returns:
             None
         """
-        self._extendedLog(message, 'error', color=color, mode=mode, *args, **kwargs)
+        msg = self._extended_log(message, 'error', color=color, mode=mode, *args, **kwargs)
         if kwargs.get('out', False):
-            self._out(message)
+            self._out(msg)
 
 
 #------------------------------------------------------------------------------

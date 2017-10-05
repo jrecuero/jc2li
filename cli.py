@@ -36,6 +36,22 @@ class Cli(CliBase):
         """
         sys.exit(0)
 
+    @CliBase.command('leave')
+    def do_leave(self, line):
+        """Command that leaves the running mode
+        """
+        if self.leave_mode() is None:
+            LOGGER.display('Running on main mode. Use <exit> to finish.',
+                           extended=(('FG', 'WHITE'), ('BG', 'RED'), ))
+            return True
+        return False
+
+    @CliBase.command("stack")
+    def do_stack(self, line):
+        """Comamnd that returns the mode stack.
+        """
+        LOGGER.display(self.mode_stack)
+
     @CliBase.command()
     @setsyntax
     @syntax('help [name]?')
