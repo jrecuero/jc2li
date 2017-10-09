@@ -1,17 +1,47 @@
 import http.server
+import urllib.parse
+import time
+import loggerator
+from examples.commands import CliCommands
 
 
 HOST_NAME = "0.0.0.0"
 PORT_NUMBER = 5001
+MODULE = 'CLI.server'
+LOGGER = loggerator.getLoggerator(MODULE)
 
 
 class CliHandler(http.server.BaseHTTPRequestHandler):
-    pass
+
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
+    def do_GET(self):
+        url = urllib.parse.urlparse(self.path)
+        LOGGER.display('url: {}'.format(url), color='YELLOW')
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(bytes('Cli Server up and running', 'utf8'))
+        self.server.cli.exec_user_input('the-cli one two three')
+        return
+
+
+class CliServer(http.server.HTTPServer):
+
+    def __init__(self, host_and_port, handler):
+        super(CliServer, self).__init__(host_and_port, handler)
+        self.cli = CliCommands()
 
 
 if __name__ == '__main__':
-    httpd = http.server.HTTPServer((HOST_NAME, PORT_NUMBER), CliHandler)
+    httpd = CliServer((HOST_NAME, PORT_NUMBER), CliHandler)
+    LOGGER.display('{0} Server Starts - {1}:{2}'.format(time.asctime(), HOST_NAME, PORT_NUMBER))
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         pass
+    httpd.server_close()
+    LOGGER.display('\n{0} Server Stops - {1}:{2}'.format(time.asctime(), HOST_NAME, PORT_NUMBER))

@@ -7,5 +7,4 @@ SERVER_APP=main.py
 
 echo 'Running server.'
 python ${SERVER_PATH}/${SERVER_APP}
-echo ''
 echo 'Server stopped.'
