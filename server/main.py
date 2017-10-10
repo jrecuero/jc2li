@@ -20,12 +20,18 @@ class CliHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urllib.parse.urlparse(self.path)
-        LOGGER.display('url: {}'.format(url), color='YELLOW')
+        LOGGER.display('url: {0}'.format(url), color='YELLOW')
+        LOGGER.display('path: {0}'.format(url.path), color='YELLOW')
+        LOGGER.display('query: {0}'.format(url.query), color='YELLOW')
+        LOGGER.display('query as dict: {0}'.format(urllib.parse.parse_qs(url.query)), color='YELLOW')
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
         self.wfile.write(bytes('Cli Server up and running', 'utf8'))
-        self.server.cli.exec_user_input('the-cli one two three')
+        app = urllib.parse.parse_qs(url.query)['app']
+        command = urllib.parse.parse_qs(url.query)['command']
+        LOGGER.display('app: {0} command: {1}'.format(app, command), color='YELLOW')
+        self.server.cli.exec_user_input(command[0])
         return
 
 

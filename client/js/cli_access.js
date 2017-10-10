@@ -1,0 +1,2 @@
+function do_send() {
+}
