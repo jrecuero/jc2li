@@ -5,6 +5,5 @@ arguments
 arguments module
 ================
 
-.. automodule:: arguments
+.. automodule:: jc2li.arguments
    :members:
-

@@ -1,13 +1,13 @@
-import sys
+# import sys
+#
+# cliPath = '.'
+# sys.path.append(cliPath)
+
 import pytest
-
-cliPath = '.'
-sys.path.append(cliPath)
-
-from cli import Cli
-from decorators import argo, syntax, setsyntax, argos
-from argtypes import Int, Str, Dicta
-from clierror import CliException
+from jc2li.cli import Cli
+from jc2li.decorators import argo, syntax, setsyntax, argos
+from jc2li.argtypes import Int, Str, Dicta
+from jc2li.clierror import CliException
 
 
 MULTI_ARGOS = [{'name': 'f1', 'type': Str, 'default': None},

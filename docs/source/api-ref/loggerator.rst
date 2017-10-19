@@ -5,6 +5,5 @@ loggerator
 loggerator module
 =================
 
-.. automodule:: loggerator
+.. automodule:: jc2li.loggerator
    :members:
-

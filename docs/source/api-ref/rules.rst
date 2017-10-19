@@ -5,6 +5,5 @@ rules
 rules module
 ============
 
-.. automodule:: rules
+.. automodule:: jc2li.rules
    :members:
-

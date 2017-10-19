@@ -5,6 +5,5 @@ cliparser
 cliparser module
 ================
 
-.. automodule:: cliparser
+.. automodule:: jc2li.cliparser
    :members:
-

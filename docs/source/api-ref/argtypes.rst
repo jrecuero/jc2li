@@ -5,5 +5,5 @@ argtypes
 argtypes module
 ===============
 
-.. automodule:: argtypes
+.. automodule:: jc2li.argtypes
    :members:

@@ -1,13 +1,13 @@
-import sys
+# import sys
+#
+# cliPath = '.'
+# sys.path.append(cliPath)
+
 import pytest
-
-cliPath = '.'
-sys.path.append(cliPath)
-
-from node import Node, Hook, Start, End
-from arguments import Argument, Arguments
-from argtypes import Int, Str
-from clierror import CliException
+from jc2li.node import Node, Hook, Start, End
+from jc2li.arguments import Argument, Arguments
+from jc2li.argtypes import Int, Str
+from jc2li.clierror import CliException
 
 
 def test_node():

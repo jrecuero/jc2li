@@ -1,7 +1,7 @@
 import http.server
 import urllib.parse
 import time
-import loggerator
+import jcli.loggerator as loggerator
 from examples.commands import CliCommands
 
 

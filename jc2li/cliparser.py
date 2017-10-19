@@ -1,39 +1,39 @@
 __docformat__ = 'restructuredtext en'
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  _                            _
 # (_)_ __ ___  _ __   ___  _ __| |_ ___
 # | | '_ ` _ \| '_ \ / _ \| '__| __/ __|
 # | | | | | | | |_) | (_) | |  | |_\__ \
 # |_|_| |_| |_| .__/ \___/|_|   \__|___/
 #             |_|
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 import pyparsing as pp
-import loggerator
+import jc2li.loggerator as loggerator
 
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 #   ___ ___  _ __  ___| |_ __ _ _ __ | |_ ___
 #  / __/ _ \| '_ \/ __| __/ _` | '_ \| __/ __|
 # | (_| (_) | | | \__ \ || (_| | | | | |_\__ \
 #  \___\___/|_| |_|___/\__\__,_|_| |_|\__|___/
 #
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 MODULE = 'CLI.parser'
 LOGGER = loggerator.getLoggerator(MODULE)
 
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #            _                     _   _
 #  ___ _   _| |__  _ __ ___  _   _| |_(_)_ __   ___  ___
 # / __| | | | '_ \| '__/ _ \| | | | __| | '_ \ / _ \/ __|
 # \__ \ |_| | |_) | | | (_) | |_| | |_| | | | |  __/\__ \
 # |___/\__,_|_.__/|_|  \___/ \__,_|\__|_|_| |_|\___||___/
 #
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 def _map_parent_type_to_op(parent_type):
     """Provide the operation type to use given the parent type for the rule.
@@ -156,26 +156,26 @@ def get_syntax():
 
     zeroorone = pp.Forward()
     zeroorone.setName('zero-or-one')
-    zeroorone_block = pp.ZeroOrMore(("|"  + pp.OneOrMore(zooarg | zeroorone)) | pp.OneOrMore(zeroorone))
+    zeroorone_block = pp.ZeroOrMore(("|" + pp.OneOrMore(zooarg | zeroorone)) | pp.OneOrMore(zeroorone))
     zeroorone << pp.Group(lbracket + pp.ZeroOrMore(zooarg) + zeroorone_block + rbracket + zeroorone_flag)
 
     zeroormore = pp.Forward()
-    zeroormore_block = pp.ZeroOrMore(("|"  + pp.OneOrMore(zomarg | zeroormore)) | pp.OneOrMore(zeroormore))
+    zeroormore_block = pp.ZeroOrMore(("|" + pp.OneOrMore(zomarg | zeroormore)) | pp.OneOrMore(zeroormore))
     zeroormore << pp.Group(lbracket + pp.ZeroOrMore(zomarg) + zeroormore_block + rbracket + zeroormore_flag)
     zeroormore.setResultsName('zero-or-more')
 
     oneormore = pp.Forward()
-    oneormore_block = pp.ZeroOrMore(("|"  + pp.OneOrMore(oomarg | oneormore)) | pp.OneOrMore(oneormore))
+    oneormore_block = pp.ZeroOrMore(("|" + pp.OneOrMore(oomarg | oneormore)) | pp.OneOrMore(oneormore))
     oneormore << pp.Group(lbracket + pp.ZeroOrMore(oomarg) + oneormore_block + rbracket + oneormore_flag)
     oneormore.setName('one-or-more')
 
     only1opt = pp.Forward()
-    only1opt_block = pp.ZeroOrMore(("|"  + pp.OneOrMore(oooarg | only1opt)) | pp.OneOrMore(only1opt))
+    only1opt_block = pp.ZeroOrMore(("|" + pp.OneOrMore(oooarg | only1opt)) | pp.OneOrMore(only1opt))
     only1opt << pp.Group(lbracket + pp.ZeroOrMore(oooarg) + only1opt_block + rbracket + only1opt_flag)
     only1opt.setName('one-or-more')
 
     freeform = pp.Forward()
-    freeform_block = pp.ZeroOrMore(("|"  + pp.OneOrMore(frearg | freeform)) | pp.OneOrMore(freeform))
+    freeform_block = pp.ZeroOrMore(("|" + pp.OneOrMore(frearg | freeform)) | pp.OneOrMore(freeform))
     freeform << pp.Group(lbracket + pp.ZeroOrMore(frearg) + freeform_block + rbracket + freeform_flag)
     freeform.setName('zero-or-one')
 
@@ -192,14 +192,14 @@ def process_syntax(syntax):
     return cmd, rules
 
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #                  _
 #  _ __ ___   __ _(_)_ __
 # | '_ ` _ \ / _` | | '_ \
 # | | | | | | (_| | | | | |
 # |_| |_| |_|\__,_|_|_| |_|
 #
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 if __name__ == '__main__':
     # toks = (syntax + pp.stringEnd).parseString("tenant tname [t1|t2]? [t3|t4]* [t10]? [t5|t6]+")

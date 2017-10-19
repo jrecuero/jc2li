@@ -5,6 +5,5 @@ cli
 cli module
 ==========
 
-.. automodule:: cli
+.. automodule:: jc2li.cli
    :members:
-

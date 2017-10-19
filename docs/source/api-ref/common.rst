@@ -5,5 +5,5 @@ common
 common module
 =============
 
-.. automodule:: common
+.. automodule:: jc2li.common
    :members:

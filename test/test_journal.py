@@ -1,9 +1,9 @@
-import sys
+# import sys
+#
+# cliPath = '.'
+# sys.path.append(cliPath)
 
-cliPath = '.'
-sys.path.append(cliPath)
-
-from journal import Journal
+from jc2li.journal import Journal
 
 
 def test_journal():

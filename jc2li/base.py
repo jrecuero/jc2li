@@ -1,13 +1,13 @@
 __docformat__ = 'restructuredtext en'
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  _                            _
 # (_)_ __ ___  _ __   ___  _ __| |_ ___
 # | | '_ ` _ \| '_ \ / _ \| '__| __/ __|
 # | | | | | | | |_) | (_) | |  | |_\__ \
 # |_|_| |_| |_| .__/ \___/|_|   \__|___/
 #             |_|
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 # from __future__ import unicode_literals
 from functools import wraps, partial
@@ -15,7 +15,7 @@ import sys
 import inspect
 import json
 # import shlex
-import loggerator
+import jc2li.loggerator as loggerator
 from prompt_toolkit import prompt
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
@@ -23,31 +23,31 @@ from prompt_toolkit.completion import Completer, Completion
 # from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.token import Token
 from prompt_toolkit.styles import style_from_dict
-from common import TREE_ATTR, SYNTAX_ATTR, ARGOS_ATTR
-from journal import Journal
+from jc2li.common import TREE_ATTR, SYNTAX_ATTR, ARGOS_ATTR
+from jc2li.journal import Journal
 
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 #   ___ ___  _ __  ___| |_ __ _ _ __ | |_ ___
 #  / __/ _ \| '_ \/ __| __/ _` | '_ \| __/ __|
 # | (_| (_) | | | \__ \ || (_| | | | | |_\__ \
 #  \___\___/|_| |_|___/\__\__,_|_| |_|\__|___/
 #
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 MODULE = 'CLI.base'
 LOGGER = loggerator.getLoggerator(MODULE)
 
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #       _                     _       __ _       _ _   _
 #   ___| | __ _ ___ ___    __| | ___ / _(_)_ __ (_) |_(_) ___  _ __  ___
 #  / __| |/ _` / __/ __|  / _` |/ _ \ |_| | '_ \| | __| |/ _ \| '_ \/ __|
 # | (__| | (_| \__ \__ \ | (_| |  __/  _| | | | | | |_| | (_) | | | \__ \
 #  \___|_|\__,_|___/___/  \__,_|\___|_| |_|_| |_|_|\__|_|\___/|_| |_|___/
 #
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 class CliBase(object):
     """CliBase class is the base class for any class that will implement

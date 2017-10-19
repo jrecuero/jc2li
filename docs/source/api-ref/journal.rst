@@ -5,6 +5,5 @@ journal
 journal module
 ==============
 
-.. automodule:: journal
+.. automodule:: jc2li.journal
    :members:
-

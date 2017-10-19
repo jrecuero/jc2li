@@ -5,6 +5,5 @@ node
 node module
 ===========
 
-.. automodule:: node
+.. automodule:: jc2li.node
    :members:
-

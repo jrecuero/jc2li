@@ -1,11 +1,11 @@
-import sys
+# import sys
+#
+# cliPath = '.'
+# sys.path.append(cliPath)
 
-cliPath = '.'
-sys.path.append(cliPath)
-
-from cli import Cli
-from decorators import argo, setsyntax, syntax
-from argtypes import Str
+from jc2li.cli import Cli
+from jc2li.decorators import argo, setsyntax, syntax
+from jc2li.argtypes import Str
 
 
 class CliTestWorkClass(Cli):

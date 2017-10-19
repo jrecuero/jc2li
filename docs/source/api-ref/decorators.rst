@@ -5,6 +5,5 @@ decorators
 decorators module
 =================
 
-.. automodule:: decorators
+.. automodule:: jc2li.decorators
    :members:
-

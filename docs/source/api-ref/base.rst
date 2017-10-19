@@ -5,5 +5,5 @@ base
 base module
 ===========
 
-.. automodule:: base
+.. automodule:: jc2li.base
    :members:

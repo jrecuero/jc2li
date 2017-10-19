@@ -1,4 +1,4 @@
-import loggerator
+import jc2li.loggerator as loggerator
 
 logger = loggerator.getLoggerator('error')
 

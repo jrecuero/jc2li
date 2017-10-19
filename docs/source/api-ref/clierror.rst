@@ -5,6 +5,5 @@ clierror
 clierror module
 ===============
 
-.. automodule:: clierror
+.. automodule:: jc2li.clierror
    :members:
-
