@@ -417,7 +417,7 @@ class Loggerator(object):
         """
         if not self.__redirect:
             self.__redirect = True
-            self.__buffer = out_buff if out_buff else []
+            self.__buffer = out_buff if out_buff is not None else []
             self.__save_out = self.__out
             self.__out = io.StringIO()
             return True
