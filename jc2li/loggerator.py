@@ -403,7 +403,8 @@ class Loggerator(object):
         self.__out.write(str(message))
         self.__out.write('\n')
         if self.__redirect:
-            self.__buffer.append(self.__out.getvalue())
+            # self.__buffer.append(self.__out.getvalue())
+            self.__buffer.append("{}\n".format(message))
 
     # =========================================================================
     def redirect_out_to(self, out_buff=None):
